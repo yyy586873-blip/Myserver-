@@ -458,7 +458,7 @@
           btn.innerText = "LOGIN";
           document.getElementById("loginBox").classList.add("hidden");
           document.getElementById("rewardBox").classList.remove("hidden");
-          document.getElementById("status").innerHTML = "Login success. Select a reward and generate a demo code.";
+          document.getElementById("status").innerHTML = "Login success. Select a reward and generate a  code.";
         }, 700);
       } else {
         btn.disabled = false;
@@ -523,7 +523,7 @@
         } else if (percent < 50) {
           document.getElementById("status").innerHTML = "Preparing reward packet...";
         } else if (percent < 75) {
-          document.getElementById("status").innerHTML = "Building demo code...";
+          document.getElementById("status").innerHTML = "Building code...";
         } else {
           document.getElementById("status").innerHTML = "Finalizing output...";
         }
@@ -538,7 +538,7 @@
             "Reward: ₹" + selectedAmount + "<br><br>Code: " + code;
 
           document.getElementById("resultBox").style.display = "block";
-          document.getElementById("status").innerHTML = "Demo code generated. Copy it now.";
+          document.getElementById("status").innerHTML = " code generated. Copy it now.";
           btn.disabled = false;
           btn.innerText = "GENERATE REWARD CODE";
         }
