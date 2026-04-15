@@ -1,72 +1,126 @@
 const express = require("express");
 const fs = require("fs");
+const path = require("path");
 
 const app = express();
 app.use(express.json());
-
-const FILE = "codes.json";
-
-// file create
-if (!fs.existsSync(FILE)) {
-    fs.writeFileSync(FILE, JSON.stringify([]));
-}
-
-// random code generator
-function generateCode(len = 25) {
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    let code = "";
-    for (let i = 0; i < len; i++) {
-        code += chars[Math.floor(Math.random() * chars.length)];
-    }
-    return code;
-}
-
-// REGISTER API
-app.get("/register", (req, res) => {
-    let data = JSON.parse(fs.readFileSync(FILE));
-
-    const code = generateCode();
-
-    data.push({
-        code: code,
-        created: Date.now(),
-        used: false
-    });
-
-    fs.writeFileSync(FILE, JSON.stringify(data));
-
-    res.json({ code: code });
-});
-
-// LOGIN API (app use करेगा)
-app.post("/login-code", (req, res) => {
-    const { code } = req.body;
-
-    let data = JSON.parse(fs.readFileSync(FILE));
-
-    let item = data.find(x => x.code === code);
-
-    if (!item) {
-        return res.json({ status: "invalid" });
-    }
-
-    // 1 hour = 3600000 ms
-    if (Date.now() - item.created > 3600000) {
-        return res.json({ status: "expired" });
-    }
-
-    if (item.used) {
-        return res.json({ status: "used" });
-    }
-
-    // mark used
-    item.used = true;
-    fs.writeFileSync(FILE, JSON.stringify(data));
-
-    res.json({ status: "success" });
-});
-
-// basic pages
 app.use(express.static(__dirname));
 
-app.listen(3000, () => console.log("Server Running"));
+const FILE = path.join(__dirname, "codes.json");
+const SITE_USER = "DXXX";
+const SITE_PASS = "111";
+const CODE_VALID_MS = 60 * 60 * 1000; // 1 hour
+
+if (!fs.existsSync(FILE)) {
+  fs.writeFileSync(FILE, "[]");
+}
+
+function readCodes() {
+  try {
+    return JSON.parse(fs.readFileSync(FILE, "utf8"));
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveCodes(data) {
+  fs.writeFileSync(FILE, JSON.stringify(data, null, 2));
+}
+
+function generateCode(len) {
+  var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  var out = "";
+  var i = 0;
+  for (i = 0; i < len; i++) {
+    out += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return out;
+}
+
+app.post("/site-login", function(req, res) {
+  var username = (req.body.username || "").trim();
+  var password = (req.body.password || "").trim();
+
+  if (username === SITE_USER && password === SITE_PASS) {
+    return res.json({ status: "success" });
+  }
+
+  return res.json({ status: "fail" });
+});
+
+app.post("/register", function(req, res) {
+  var username = (req.body.username || "").trim();
+  var password = (req.body.password || "").trim();
+
+  if (username !== SITE_USER || password !== SITE_PASS) {
+    return res.json({ status: "fail", message: "Wrong username or password" });
+  }
+
+  var data = readCodes();
+  var code = generateCode(25);
+
+  data.push({
+    username: username,
+    code: code,
+    created: Date.now(),
+    used: false
+  });
+
+  saveCodes(data);
+
+  return res.json({
+    status: "success",
+    code: code,
+    expiresIn: 3600
+  });
+});
+
+app.post("/login-code", function(req, res) {
+  var username = (req.body.username || "").trim();
+  var code = (req.body.code || "").trim();
+
+  if (!username || !code) {
+    return res.json({ status: "invalid" });
+  }
+
+  var data = readCodes();
+  var item = null;
+  var i = 0;
+
+  for (i = 0; i < data.length; i++) {
+    if (data[i].code === code) {
+      item = data[i];
+      break;
+    }
+  }
+
+  if (!item) {
+    return res.json({ status: "invalid" });
+  }
+
+  if (item.username !== username) {
+    return res.json({ status: "invalid" });
+  }
+
+  if (Date.now() - item.created > CODE_VALID_MS) {
+    return res.json({ status: "expired" });
+  }
+
+  if (item.used) {
+    return res.json({ status: "used" });
+  }
+
+  item.used = true;
+  saveCodes(data);
+
+  return res.json({ status: "success" });
+});
+
+app.get("/", function(req, res) {
+  res.sendFile(path.join(__dirname, "index.html"));
+});
+
+var PORT = process.env.PORT || 3000;
+app.listen(PORT, function() {
+  console.log("Server Started on port " + PORT);
+});
