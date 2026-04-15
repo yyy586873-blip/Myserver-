@@ -10,8 +10,14 @@ if (!fs.existsSync(PASS_FILE)) {
     fs.writeFileSync(PASS_FILE, "1234");
 }
 
+app.use("/files", express.static(__dirname + "/files"));
+
 app.get("/", (req, res) => {
     res.sendFile(__dirname + "/index.html");
+});
+
+app.get("/dashboard", (req, res) => {
+    res.sendFile(__dirname + "/dashboard.html");
 });
 
 app.post("/login", (req, res) => {
