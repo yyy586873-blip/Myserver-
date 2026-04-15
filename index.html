@@ -2,82 +2,59 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Secure Login</title>
+<title>Register</title>
 
 <style>
 body {
-    margin:0;
-    font-family: Arial;
-    background: black;
-    color: red;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    height:100vh;
-}
-
-.box {
-    width:90%;
-    max-width:300px;
-    background: rgba(255,0,0,0.1);
-    padding:20px;
-    border-radius:10px;
-    text-align:center;
-    box-shadow:0 0 20px red;
-}
-
-h2 {
-    color:red;
-}
-
-input {
-    width:90%;
-    padding:10px;
-    margin:10px 0;
     background:black;
-    border:1px solid red;
     color:red;
+    font-family:Arial;
+    text-align:center;
+    padding-top:50px;
 }
 
 button {
-    width:100%;
-    padding:10px;
+    padding:15px;
     background:red;
     border:none;
     color:white;
+    margin-top:20px;
 }
 
-button:hover {
-    background:darkred;
+.box {
+    margin-top:30px;
 }
 </style>
 </head>
 
 <body>
 
+<h1>🔥 ACCESS SYSTEM</h1>
+
+<button onclick="register()">Generate Code</button>
+
 <div class="box">
-    <h2>🔐 ACCESS PANEL</h2>
-
-    <input id="user" placeholder="Username">
-    <input id="pass" type="password" placeholder="Password">
-
-    <button onclick="login()">LOGIN</button>
-
-    <p id="msg"></p>
+    <p id="code"></p>
+    <button onclick="copy()">Copy</button>
 </div>
 
 <script>
-function login(){
-    let u = document.getElementById("user").value;
-    let p = document.getElementById("pass").value;
+let current = "";
 
-    if(u === "DXXX" && p === "111"){
-        window.location.href = "/dashboard";
-    } else {
-        document.getElementById("msg").innerHTML = "❌ Access Denied";
-    }
+function register(){
+    fetch("/register")
+    .then(res => res.json())
+    .then(data => {
+        current = data.code;
+        document.getElementById("code").innerText = data.code;
+    });
+}
+
+function copy(){
+    navigator.clipboard.writeText(current);
+    alert("Copied!");
 }
 </script>
 
 </body>
-    </html>
+</html>
