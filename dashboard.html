@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard</title>
+<title>File Panel</title>
 
 <style>
 body {
@@ -16,20 +16,20 @@ h1 {
     text-shadow:0 0 10px red;
 }
 
-.file {
-    margin:20px;
-    padding:15px;
+.card {
     border:1px solid red;
+    margin:15px;
+    padding:15px;
     border-radius:10px;
+    box-shadow:0 0 10px red;
 }
 
-a {
-    display:block;
-    margin-top:10px;
-    padding:10px;
+button {
     background:red;
     color:white;
-    text-decoration:none;
+    border:none;
+    padding:10px;
+    margin-top:10px;
 }
 </style>
 </head>
@@ -38,15 +38,29 @@ a {
 
 <h1>🔥 FILE PANEL</h1>
 
-<div class="file">
-    <p>File 1</p>
-    <a href="/files/file1.zip" download>Download</a>
-</div>
+<div id="files"></div>
 
-<div class="file">
-    <p>File 2</p>
-    <a href="/files/file2.apk" download>Download</a>
-</div>
+<script>
+fetch("/files-list")
+.then(res => res.json())
+.then(data => {
+    let html = "";
+
+    data.forEach(file => {
+        html += `
+        <div class="card">
+            <h3>${file.name}</h3>
+            <p>Size: ${file.size}</p>
+            <a href="/files/${file.name}" download>
+                <button>Download</button>
+            </a>
+        </div>
+        `;
+    });
+
+    document.getElementById("files").innerHTML = html;
+});
+</script>
 
 </body>
 </html>
