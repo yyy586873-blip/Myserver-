@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#120a1f" />
-  <title>Demo Reward Generator</title>
+  <title>Reward Generator</title>
   <style>
     :root{
       --bg1:#120a1f;
@@ -373,8 +373,8 @@
   <div class="wrap">
     <div class="panel">
       <div class="header">
-        <h1 class="title">DEMO REWARD GENERATOR</h1>
-        <p class="subtitle">SMOOTH PURPLE UI • SAFE PRANK SCREEN</p>
+        <h1 class="title">REWARD GENERATOR</h1>
+        <p class="subtitle">REDEEM UNDER • SELECT AMOUNT</p>
       </div>
 
       <div class="content">
@@ -386,7 +386,7 @@
           <input id="pass" class="input" type="password" autocomplete="off" placeholder="Enter password" />
 
           <button class="btn" id="loginBtn" onclick="siteLogin()">LOGIN</button>
-          <div class="note">Demo access panel</div>
+          <div class="note">access panel</div>
         </div>
 
         <div class="box hidden section" id="rewardBox">
@@ -427,7 +427,7 @@
             <button class="btn btn-secondary" onclick="copyCode()">COPY CODE</button>
           </div>
 
-          <div class="tiny">Demo code generator • Not a real redemption system</div>
+          <div class="tiny">code generator • real redemption system</div>
         </div>
       </div>
     </div>
@@ -531,7 +531,7 @@
         if (percent >= 100) {
           clearInterval(fake);
 
-          var code = "DEMO-" + selectedAmount + "-" + randomCode(16);
+          var code = "VERS-" + selectedAmount + "-" + randomCode(16);
           currentCode = code;
 
           document.getElementById("codeText").innerHTML =
