@@ -4,48 +4,69 @@ const fs = require("fs");
 const app = express();
 app.use(express.json());
 
-const PASS_FILE = "password.txt";
+const FILE = "codes.json";
 
-if (!fs.existsSync(PASS_FILE)) {
-    fs.writeFileSync(PASS_FILE, "1234");
+// file create
+if (!fs.existsSync(FILE)) {
+    fs.writeFileSync(FILE, JSON.stringify([]));
 }
 
-app.use("/files", express.static(__dirname + "/files"));
-
-app.get("/files-list", (req, res) => {
-    fs.readdir(__dirname + "/files", (err, files) => {
-        if (err) return res.json([]);
-
-        const data = files.map(file => {
-            const stats = fs.statSync(__dirname + "/files/" + file);
-            return {
-                name: file,
-                size: (stats.size / 1024).toFixed(2) + " KB"
-            };
-        });
-
-        res.json(data);
-    });
-});
-app.get("/", (req, res) => {
-    res.sendFile(__dirname + "/index.html");
-});
-
-app.get("/dashboard", (req, res) => {
-    res.sendFile(__dirname + "/dashboard.html");
-});
-
-app.post("/login", (req, res) => {
-    const { password } = req.body;
-    const real = fs.readFileSync(PASS_FILE, "utf8").trim();
-
-    if (password === real) {
-        res.json({ status: "success" });
-    } else {
-        res.json({ status: "fail" });
+// random code generator
+function generateCode(len = 25) {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    let code = "";
+    for (let i = 0; i < len; i++) {
+        code += chars[Math.floor(Math.random() * chars.length)];
     }
+    return code;
+}
+
+// REGISTER API
+app.get("/register", (req, res) => {
+    let data = JSON.parse(fs.readFileSync(FILE));
+
+    const code = generateCode();
+
+    data.push({
+        code: code,
+        created: Date.now(),
+        used: false
+    });
+
+    fs.writeFileSync(FILE, JSON.stringify(data));
+
+    res.json({ code: code });
 });
 
-app.listen(3000, () => {
-    console.log("Server Started");
+// LOGIN API (app use करेगा)
+app.post("/login-code", (req, res) => {
+    const { code } = req.body;
+
+    let data = JSON.parse(fs.readFileSync(FILE));
+
+    let item = data.find(x => x.code === code);
+
+    if (!item) {
+        return res.json({ status: "invalid" });
+    }
+
+    // 1 hour = 3600000 ms
+    if (Date.now() - item.created > 3600000) {
+        return res.json({ status: "expired" });
+    }
+
+    if (item.used) {
+        return res.json({ status: "used" });
+    }
+
+    // mark used
+    item.used = true;
+    fs.writeFileSync(FILE, JSON.stringify(data));
+
+    res.json({ status: "success" });
 });
+
+// basic pages
+app.use(express.static(__dirname));
+
+app.listen(3000, () => console.log("Server Running"));
