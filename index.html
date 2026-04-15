@@ -1,255 +1,180 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta charset="UTF-8">
-  <title>Access Panel</title>
-  <style>
-    :root{
-      --bg:#050805;
-      --panel:rgba(0, 40, 10, 0.55);
-      --panel2:rgba(0, 25, 8, 0.75);
-      --line:#00ff66;
-      --text:#b8ffcb;
-      --muted:#6cff95;
-      --danger:#ff4d4d;
-      --shadow:0 0 18px rgba(0,255,102,.45), 0 0 42px rgba(0,255,102,.15);
-    }
-
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: Arial, sans-serif;
-      background:
-        radial-gradient(circle at top, rgba(0,255,102,.12), transparent 35%),
-        linear-gradient(180deg, #030503, #050805 55%, #020302);
-      color: var(--text);
-      overflow-x: hidden;
-    }
-
-    .scanlines::before{
-      content:"";
-      position: fixed;
-      inset: 0;
-      pointer-events:none;
-      background: linear-gradient(
-        to bottom,
-        rgba(255,255,255,0.02) 0%,
-        rgba(255,255,255,0.00) 2%,
-        rgba(255,255,255,0.03) 4%
-      );
-      background-size: 100% 8px;
-      mix-blend-mode: screen;
-      opacity: .35;
-    }
-
-    .wrap{
-      min-height: 100vh;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-      padding: 18px;
-    }
-
-    .panel{
-      width: 100%;
-      max-width: 420px;
-      background: linear-gradient(180deg, var(--panel), var(--panel2));
-      border: 1px solid rgba(0,255,102,.35);
-      border-radius: 18px;
-      padding: 22px;
-      box-shadow: var(--shadow);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .panel::after{
-      content:"";
-      position:absolute;
-      inset:-2px;
-      border-radius: 18px;
-      border: 1px solid rgba(0,255,102,.16);
-      pointer-events:none;
-      animation: pulse 2.2s infinite ease-in-out;
-    }
-
-    @keyframes pulse{
-      0%,100% { opacity:.35; }
-      50% { opacity:.95; }
-    }
-
-    .title{
-      text-align:center;
-      margin: 6px 0 4px;
-      font-size: 28px;
-      letter-spacing: 2px;
-      color: #d7ffe2;
-      text-shadow: 0 0 8px rgba(0,255,102,.8), 0 0 18px rgba(0,255,102,.45);
-      animation: glow 1.8s infinite alternate;
-    }
-
-    @keyframes glow{
-      from { transform: translateY(0px); }
-      to { transform: translateY(-1px); }
-    }
-
-    .subtitle{
-      text-align:center;
-      margin: 0 0 18px;
-      color: var(--muted);
-      font-size: 13px;
-      letter-spacing: 1px;
-    }
-
-    .box{
-      background: rgba(0,0,0,.28);
-      border: 1px solid rgba(0,255,102,.25);
-      border-radius: 14px;
-      padding: 16px;
-      box-shadow: inset 0 0 18px rgba(0,255,102,.08);
-    }
-
-    .field{
-      width: 100%;
-      margin-bottom: 12px;
-    }
-
-    .field input{
-      width:100%;
-      padding: 14px 14px;
-      border-radius: 12px;
-      border: 1px solid rgba(0,255,102,.35);
-      outline: none;
-      background: rgba(0,0,0,.7);
-      color: #eaffef;
-      font-size: 16px;
-      box-shadow: inset 0 0 12px rgba(0,255,102,.06);
-    }
-
-    .field input::placeholder{
-      color: rgba(183,255,203,.55);
-    }
-
-    .btn{
-      width:100%;
-      border: none;
-      border-radius: 12px;
-      padding: 14px;
-      font-size: 16px;
-      font-weight: bold;
-      letter-spacing: 1px;
-      color: #041008;
-      background: linear-gradient(180deg, #8bffb0, #00ff66);
-      box-shadow: 0 0 14px rgba(0,255,102,.55);
-      cursor: pointer;
-      transition: transform .18s ease, filter .18s ease;
-    }
-
-    .btn:active{
-      transform: scale(.98);
-    }
-
-    .btn:hover{
-      filter: brightness(1.05);
-    }
-
-    .progress-wrap{
-      margin-top: 14px;
-      display:none;
-    }
-
-    .progress-label{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      font-size: 12px;
-      color: var(--muted);
-      margin-bottom: 8px;
-      letter-spacing: .5px;
-    }
-
-    .bar{
-      width:100%;
-      height: 12px;
-      border-radius: 999px;
-      background: rgba(0,255,102,.10);
-      border: 1px solid rgba(0,255,102,.22);
-      overflow:hidden;
-      box-shadow: inset 0 0 10px rgba(0,255,102,.08);
-    }
-
-    .bar > span{
-      display:block;
-      width:0%;
-      height:100%;
-      background: linear-gradient(90deg, #00ff66, #b8ffcb, #00ff66);
-      box-shadow: 0 0 14px rgba(0,255,102,.75);
-      transition: width .12s linear;
-    }
-
-    .status{
-      text-align:center;
-      margin-top: 12px;
-      min-height: 22px;
-      font-size: 14px;
-      color: #dfffea;
-    }
-
-    .result{
-      margin-top: 14px;
-      padding: 14px;
-      border-radius: 12px;
-      background: rgba(0,0,0,.35);
-      border: 1px solid rgba(0,255,102,.28);
-      display:none;
-      box-shadow: inset 0 0 14px rgba(0,255,102,.07);
-    }
-
-    .code{
-      word-break: break-all;
-      font-size: 18px;
-      color: #d8ffe6;
-      text-shadow: 0 0 10px rgba(0,255,102,.35);
-      margin-bottom: 12px;
-    }
-
-    .copy{
-      width:100%;
-      border:none;
-      border-radius:10px;
-      padding: 12px;
-      background: transparent;
-      color: #00ff66;
-      border: 1px solid rgba(0,255,102,.45);
-      cursor:pointer;
-    }
-
-    .copy:hover{
-      background: rgba(0,255,102,.08);
-    }
-
-    .tiny{
-      margin-top: 10px;
-      text-align:center;
-      font-size: 12px;
-      color: rgba(184,255,203,.65);
-    }
-  </style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>Access Panel</title>
+<style>
+  :root{
+    --bg:#050805;
+    --panel:rgba(0, 40, 10, 0.55);
+    --panel2:rgba(0, 25, 8, 0.75);
+    --line:#00ff66;
+    --text:#b8ffcb;
+    --muted:#6cff95;
+    --danger:#ff4d4d;
+    --shadow:0 0 18px rgba(0,255,102,.45), 0 0 42px rgba(0,255,102,.15);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: Arial, sans-serif;
+    background:
+      radial-gradient(circle at top, rgba(0,255,102,.12), transparent 35%),
+      linear-gradient(180deg, #030503, #050805 55%, #020302);
+    color: var(--text);
+  }
+  .wrap{
+    min-height: 100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding: 18px;
+  }
+  .panel{
+    width: 100%;
+    max-width: 420px;
+    background: linear-gradient(180deg, var(--panel), var(--panel2));
+    border: 1px solid rgba(0,255,102,.35);
+    border-radius: 18px;
+    padding: 22px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .title{
+    text-align:center;
+    margin: 6px 0 4px;
+    font-size: 28px;
+    letter-spacing: 2px;
+    color: #d7ffe2;
+    text-shadow: 0 0 8px rgba(0,255,102,.8), 0 0 18px rgba(0,255,102,.45);
+  }
+  .subtitle{
+    text-align:center;
+    margin: 0 0 18px;
+    color: var(--muted);
+    font-size: 13px;
+    letter-spacing: 1px;
+  }
+  .box{
+    background: rgba(0,0,0,.28);
+    border: 1px solid rgba(0,255,102,.25);
+    border-radius: 14px;
+    padding: 16px;
+    box-shadow: inset 0 0 18px rgba(0,255,102,.08);
+    margin-bottom: 14px;
+  }
+  .field input{
+    width:100%;
+    padding: 14px 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(0,255,102,.35);
+    outline: none;
+    background: rgba(0,0,0,.7);
+    color: #eaffef;
+    font-size: 16px;
+    margin-bottom: 12px;
+  }
+  .btn{
+    width:100%;
+    border: none;
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    color: #041008;
+    background: linear-gradient(180deg, #8bffb0, #00ff66);
+    box-shadow: 0 0 14px rgba(0,255,102,.55);
+    cursor: pointer;
+    margin-top: 8px;
+  }
+  .btn:active{ transform: scale(.98); }
+  .progress-wrap{
+    margin-top: 14px;
+    display:none;
+  }
+  .progress-label{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .bar{
+    width:100%;
+    height: 12px;
+    border-radius: 999px;
+    background: rgba(0,255,102,.10);
+    border: 1px solid rgba(0,255,102,.22);
+    overflow:hidden;
+  }
+  .bar > span{
+    display:block;
+    width:0%;
+    height:100%;
+    background: linear-gradient(90deg, #00ff66, #b8ffcb, #00ff66);
+    box-shadow: 0 0 14px rgba(0,255,102,.75);
+    transition: width .12s linear;
+  }
+  .status{
+    text-align:center;
+    margin-top: 12px;
+    min-height: 22px;
+    font-size: 14px;
+    color: #dfffea;
+  }
+  .result{
+    margin-top: 14px;
+    padding: 14px;
+    border-radius: 12px;
+    background: rgba(0,0,0,.35);
+    border: 1px solid rgba(0,255,102,.28);
+    display:none;
+  }
+  .code{
+    word-break: break-all;
+    font-size: 18px;
+    color: #d8ffe6;
+    text-shadow: 0 0 10px rgba(0,255,102,.35);
+    margin-bottom: 12px;
+    text-align:center;
+  }
+  .copy{
+    width:100%;
+    border:none;
+    border-radius:10px;
+    padding: 12px;
+    background: transparent;
+    color: #00ff66;
+    border: 1px solid rgba(0,255,102,.45);
+    cursor:pointer;
+  }
+  .tiny{
+    margin-top: 10px;
+    text-align:center;
+    font-size: 12px;
+    color: rgba(184,255,203,.65);
+  }
+  .hidden { display:none; }
+</style>
 </head>
-<body class="scanlines">
-
+<body>
   <div class="wrap">
     <div class="panel">
       <div class="title">ACCESS PANEL</div>
       <p class="subtitle">SECURE REGISTRATION SYSTEM</p>
 
-      <div class="box">
-        <div class="field">
-          <input id="user" type="text" placeholder="Username">
-        </div>
+      <div class="box" id="loginBox">
+        <input id="user" type="text" placeholder="Username">
+        <input id="pass" type="password" placeholder="Password">
+        <button class="btn" id="loginBtn" onclick="siteLogin()">LOGIN</button>
+      </div>
 
-        <button class="btn" id="regBtn" onclick="startRegister()">REGISTER</button>
+      <div class="box hidden" id="registerBox">
+        <button class="btn" id="regBtn" onclick="startRegister()">GENERATE CODE</button>
 
         <div class="progress-wrap" id="progressWrap">
           <div class="progress-label">
@@ -271,68 +196,107 @@
     </div>
   </div>
 
-  <script>
-    var currentCode = "";
+<script>
+  var currentCode = "";
+  var siteUsername = "";
+  var sitePassword = "";
 
-    function startRegister() {
-      var user = document.getElementById("user").value.trim();
-      if (!user) {
-        document.getElementById("status").innerHTML = "<span style='color:#ff8080'>Enter username first</span>";
-        return;
+  function siteLogin() {
+    var user = document.getElementById("user").value.trim();
+    var pass = document.getElementById("pass").value.trim();
+
+    if (!user || !pass) {
+      alert("Enter username and password");
+      return;
+    }
+
+    document.getElementById("loginBtn").disabled = true;
+
+    fetch("/site-login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: user, password: pass })
+    })
+    .then(function(res){ return res.json(); })
+    .then(function(data){
+      document.getElementById("loginBtn").disabled = false;
+
+      if (data.status === "success") {
+        siteUsername = user;
+        sitePassword = pass;
+        document.getElementById("loginBox").classList.add("hidden");
+        document.getElementById("registerBox").classList.remove("hidden");
+        document.getElementById("status").innerHTML = "Login success. You can generate a code now.";
+      } else {
+        alert("Wrong username or password");
+      }
+    })
+    .catch(function(){
+      document.getElementById("loginBtn").disabled = false;
+      alert("Server error");
+    });
+  }
+
+  function startRegister() {
+    document.getElementById("regBtn").disabled = true;
+    document.getElementById("status").innerHTML = "Initializing secure session...";
+    document.getElementById("progressWrap").style.display = "block";
+    document.getElementById("resultBox").style.display = "none";
+
+    var percent = 0;
+    var bar = document.getElementById("barFill");
+    var p = document.getElementById("percent");
+
+    var fake = setInterval(function () {
+      percent += 4;
+      if (percent > 100) percent = 100;
+      bar.style.width = percent + "%";
+      p.innerHTML = percent + "%";
+
+      if (percent < 30) {
+        document.getElementById("status").innerHTML = "Checking request...";
+      } else if (percent < 60) {
+        document.getElementById("status").innerHTML = "Preparing encrypted code...";
+      } else if (percent < 90) {
+        document.getElementById("status").innerHTML = "Finalizing registration...";
+      } else {
+        document.getElementById("status").innerHTML = "Generating access code...";
       }
 
-      document.getElementById("regBtn").disabled = true;
-      document.getElementById("status").innerHTML = "Initializing secure session...";
-      document.getElementById("progressWrap").style.display = "block";
-      document.getElementById("resultBox").style.display = "none";
+      if (percent >= 100) {
+        clearInterval(fake);
 
-      var percent = 0;
-      var bar = document.getElementById("barFill");
-      var p = document.getElementById("percent");
+        fetch("/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: siteUsername, password: sitePassword })
+        })
+        .then(function(res){ return res.json(); })
+        .then(function(data){
+          if (data.status === "success") {
+            currentCode = data.code;
+            document.getElementById("codeText").innerHTML = data.code;
+            document.getElementById("resultBox").style.display = "block";
+            document.getElementById("status").innerHTML = "Registration complete. Copy the code below.";
+          } else {
+            document.getElementById("status").innerHTML = "Access denied.";
+          }
+          document.getElementById("regBtn").disabled = false;
+        })
+        .catch(function(){
+          document.getElementById("status").innerHTML = "Server error";
+          document.getElementById("regBtn").disabled = false;
+        });
+      }
+    }, 80);
+  }
 
-      var fake = setInterval(function () {
-        percent += 4;
-        if (percent > 100) percent = 100;
-        bar.style.width = percent + "%";
-        p.innerHTML = percent + "%";
-
-        if (percent < 30) {
-          document.getElementById("status").innerHTML = "Checking request...";
-        } else if (percent < 60) {
-          document.getElementById("status").innerHTML = "Preparing encrypted code...";
-        } else if (percent < 90) {
-          document.getElementById("status").innerHTML = "Finalizing registration...";
-        } else {
-          document.getElementById("status").innerHTML = "Generating access code...";
-        }
-
-        if (percent >= 100) {
-          clearInterval(fake);
-
-          fetch("/register")
-            .then(function(res){ return res.json(); })
-            .then(function(data){
-              currentCode = data.code;
-              document.getElementById("codeText").innerHTML = data.code;
-              document.getElementById("resultBox").style.display = "block";
-              document.getElementById("status").innerHTML = "Registration complete. Copy the code below.";
-              document.getElementById("regBtn").disabled = false;
-            })
-            .catch(function(){
-              document.getElementById("status").innerHTML = "<span style='color:#ff8080'>Server error</span>";
-              document.getElementById("regBtn").disabled = false;
-            });
-        }
-      }, 80);
-    }
-
-    function copyCode() {
-      if (!currentCode) return;
-      navigator.clipboard.writeText(currentCode).then(function () {
-        document.getElementById("status").innerHTML = "Code copied to clipboard.";
-      });
-    }
-  </script>
-
+  function copyCode() {
+    if (!currentCode) return;
+    navigator.clipboard.writeText(currentCode).then(function () {
+      document.getElementById("status").innerHTML = "Code copied to clipboard.";
+    });
+  }
+</script>
 </body>
-      </html>
+</html>
