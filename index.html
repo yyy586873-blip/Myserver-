@@ -4,13 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#120a1f" />
-  <title>Reward Generator</title>
+  <title>Access Panel</title>
+
   <style>
     :root{
       --bg1:#120a1f;
       --bg2:#090611;
       --panel1:rgba(98, 44, 163, 0.34);
-      --panel2:rgba(28, 12, 49, 0.82);
+      --panel2:rgba(28, 12, 49, 0.78);
       --border:rgba(196, 145, 255, 0.26);
       --border2:rgba(196, 145, 255, 0.42);
       --text:#f4ecff;
@@ -22,10 +23,14 @@
       --shadow:0 16px 60px rgba(0,0,0,.45), 0 0 28px rgba(167, 94, 255, .22);
       --radius:22px;
       --radius2:16px;
-      --maxw: 470px;
+      --maxw: 460px;
     }
 
-    *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+    *{
+      box-sizing:border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
     html, body{
       margin:0;
       min-height:100%;
@@ -38,7 +43,10 @@
         linear-gradient(180deg, var(--bg1), var(--bg2) 70%);
     }
 
-    body{ min-height:100svh; overflow-x:hidden; }
+    body{
+      min-height:100svh;
+      overflow-x:hidden;
+    }
 
     .scanlines::before{
       content:"";
@@ -66,6 +74,7 @@
       background: radial-gradient(circle, rgba(199,125,255,.9), rgba(199,125,255,0));
       animation: drift 8s ease-in-out infinite;
     }
+
     .orb1{ top:-70px; left:-60px; }
     .orb2{
       right:-60px;
@@ -118,7 +127,7 @@
     }
 
     .header{
-      padding: 22px;
+      padding: clamp(18px, 4vw, 24px);
       text-align:center;
       border-bottom:1px solid rgba(255,255,255,.08);
       background: linear-gradient(180deg, rgba(199,125,255,.10), transparent);
@@ -143,18 +152,20 @@
 
     .subtitle{
       margin: 8px 0 0;
-      font-size: 13px;
+      font-size: clamp(12px, 3vw, 14px);
       letter-spacing: 1.2px;
       color: var(--muted);
     }
 
-    .content{ padding: 20px; }
+    .content{
+      padding: clamp(16px, 4vw, 22px);
+    }
 
     .box{
       background: rgba(12, 8, 21, .42);
       border:1px solid rgba(199,125,255,.18);
       border-radius: var(--radius2);
-      padding: 16px;
+      padding: clamp(14px, 3.5vw, 16px);
       box-shadow: inset 0 0 18px rgba(199,125,255,.08);
       backdrop-filter: blur(10px);
     }
@@ -168,7 +179,7 @@
       color:#e3c8ff;
     }
 
-    .input, select{
+    .input{
       width:100%;
       appearance:none;
       border:none;
@@ -184,12 +195,16 @@
       transition: border-color .2s ease, transform .2s ease, box-shadow .2s ease;
     }
 
-    .input:focus, select:focus{
+    .input:focus{
       border-color: var(--border2);
       box-shadow:
         inset 0 0 12px rgba(199,125,255,.10),
         0 0 0 3px rgba(199,125,255,.08);
       transform: translateY(-1px);
+    }
+
+    .input::placeholder{
+      color: rgba(244,236,255,.42);
     }
 
     .btn{
@@ -210,9 +225,18 @@
       touch-action: manipulation;
     }
 
-    .btn:active{ transform: scale(.985); }
-    .btn:hover{ filter: brightness(1.05); }
-    .btn[disabled]{ opacity:.6; cursor:not-allowed; }
+    .btn:hover{
+      filter: brightness(1.05);
+    }
+
+    .btn:active{
+      transform: scale(.985);
+    }
+
+    .btn[disabled]{
+      opacity:.6;
+      cursor:not-allowed;
+    }
 
     .btn-secondary{
       margin-top:10px;
@@ -222,50 +246,8 @@
       box-shadow: inset 0 0 10px rgba(199,125,255,.05);
     }
 
-    .section{ margin-top: 14px; }
-
-    .grid{
-      display:grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap:10px;
-      margin-bottom: 12px;
-    }
-
-    .pill{
-      padding:12px 10px;
-      border-radius: 14px;
-      background: rgba(255,255,255,.04);
-      border:1px solid rgba(199,125,255,.18);
-      color:#f6edff;
-      font-size:14px;
-      text-align:center;
-      cursor:pointer;
-      transition: transform .15s ease, background .15s ease, border-color .15s ease;
-      user-select:none;
-    }
-
-    .pill:hover{ transform: translateY(-1px); }
-    .pill.active{
-      background: rgba(199,125,255,.18);
-      border-color: rgba(199,125,255,.45);
-      box-shadow: 0 0 0 3px rgba(199,125,255,.08);
-    }
-
-    .range-wrap{
-      margin: 10px 0 14px;
-    }
-
-    input[type="range"]{
-      width:100%;
-      accent-color: #c77dff;
-    }
-
-    .range-info{
-      display:flex;
-      justify-content:space-between;
-      font-size:12px;
-      color: var(--muted);
-      margin-top: 6px;
+    .section{
+      margin-top: 14px;
     }
 
     .progress-wrap{
@@ -322,7 +304,7 @@
 
     .code{
       text-align:center;
-      font-size: 17px;
+      font-size: clamp(16px, 4vw, 19px);
       word-break: break-all;
       line-height:1.5;
       color:#fff;
@@ -345,24 +327,31 @@
       text-align:center;
       font-size:12px;
       color: rgba(244,236,255,.48);
-      line-height:1.5;
-    }
-
-    @media (max-width: 420px){
-      .grid{ grid-template-columns: 1fr 1fr; }
-    }
-
-    @media (max-width: 360px){
-      .header{ padding: 16px; }
-      .content{ padding: 14px; }
-      .input, select{ font-size: 15px; padding: 13px 12px; }
-      .btn{ font-size: 15px; }
     }
 
     @media (min-width: 720px){
-      .panel{ width:min(100%, 520px); }
-      .content{ padding: 24px; }
-      .btn{ font-size:17px; }
+      .panel{
+        width:min(100%, 520px);
+      }
+      .content{
+        padding: 24px;
+      }
+      .btn{
+        font-size:17px;
+      }
+    }
+
+    @media (max-width: 360px){
+      .header{
+        padding: 16px;
+      }
+      .content{
+        padding: 14px;
+      }
+      .input{
+        font-size: 15px;
+        padding: 13px 12px;
+      }
     }
   </style>
 </head>
@@ -373,8 +362,8 @@
   <div class="wrap">
     <div class="panel">
       <div class="header">
-        <h1 class="title">REWARD GENERATOR</h1>
-        <p class="subtitle">REDEEM UNDER • SELECT AMOUNT</p>
+        <h1 class="title">ACCESS PANEL</h1>
+        <p class="subtitle">SMOOTH PURPLE UI • RESPONSIVE DESIGN</p>
       </div>
 
       <div class="content">
@@ -386,35 +375,15 @@
           <input id="pass" class="input" type="password" autocomplete="off" placeholder="Enter password" />
 
           <button class="btn" id="loginBtn" onclick="siteLogin()">LOGIN</button>
-          <div class="note">access panel</div>
+          <div class="note">Only valid users can open the panel</div>
         </div>
 
-        <div class="box hidden section" id="rewardBox">
-          <span class="label">SELECT REWARD</span>
-          <div class="grid" id="rewardGrid">
-            <div class="pill active" onclick="pickReward(this,10)">₹10</div>
-            <div class="pill" onclick="pickReward(this,20)">₹20</div>
-            <div class="pill" onclick="pickReward(this,25)">₹25</div>
-            <div class="pill" onclick="pickReward(this,50)">₹50</div>
-            <div class="pill" onclick="pickReward(this,100)">₹100</div>
-            <div class="pill" onclick="pickReward(this,250)">₹250</div>
-          </div>
-
-          <span class="label">CUSTOM VALUE</span>
-          <div class="range-wrap">
-            <input id="amountRange" type="range" min="10" max="250" value="25" oninput="updateRange()" />
-            <div class="range-info">
-              <span>₹10</span>
-              <span id="rangeValue">₹25</span>
-              <span>₹250</span>
-            </div>
-          </div>
-
-          <button class="btn" id="genBtn" onclick="generateCode()">GENERATE REWARD CODE</button>
+        <div class="box hidden section" id="registerBox">
+          <button class="btn" id="regBtn" onclick="startRegister()">GENERATE CODE</button>
 
           <div class="progress-wrap" id="progressWrap">
             <div class="progress-label">
-              <span>Processing request</span>
+              <span>Generating code</span>
               <span id="percent">0%</span>
             </div>
             <div class="bar"><span id="barFill"></span></div>
@@ -427,7 +396,7 @@
             <button class="btn btn-secondary" onclick="copyCode()">COPY CODE</button>
           </div>
 
-          <div class="tiny">code generator • real redemption system</div>
+          <div class="tiny">Code valid for 1 hour • Single use only</div>
         </div>
       </div>
     </div>
@@ -435,9 +404,8 @@
 
   <script>
     var currentCode = "";
-    var selectedAmount = 10;
-    var siteUsername = "DXXX";
-    var sitePassword = "111";
+    var siteUsername = "";
+    var sitePassword = "";
 
     function siteLogin() {
       var user = document.getElementById("user").value.trim();
@@ -452,58 +420,39 @@
       btn.disabled = true;
       btn.innerText = "CHECKING...";
 
-      if (user === siteUsername && pass === sitePassword) {
-        setTimeout(function() {
-          btn.disabled = false;
-          btn.innerText = "LOGIN";
-          document.getElementById("loginBox").classList.add("hidden");
-          document.getElementById("rewardBox").classList.remove("hidden");
-          document.getElementById("status").innerHTML = "Login success. Select a reward and generate a  code.";
-        }, 700);
-      } else {
+      fetch("/site-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: user, password: pass })
+      })
+      .then(function(res){ return res.json(); })
+      .then(function(data){
         btn.disabled = false;
         btn.innerText = "LOGIN";
-        alert("Wrong username or password");
-      }
+
+        if (data.status === "success") {
+          siteUsername = user;
+          sitePassword = pass;
+          document.getElementById("loginBox").classList.add("hidden");
+          document.getElementById("registerBox").classList.remove("hidden");
+          document.getElementById("status").innerHTML = "Login success. You can generate a code now.";
+        } else {
+          alert("Wrong username or password");
+        }
+      })
+      .catch(function(){
+        btn.disabled = false;
+        btn.innerText = "LOGIN";
+        alert("Server error");
+      });
     }
 
-    function pickReward(el, amount) {
-      selectedAmount = amount;
-      var pills = document.querySelectorAll(".pill");
-      for (var i = 0; i < pills.length; i++) {
-        pills[i].classList.remove("active");
-      }
-      el.classList.add("active");
-      document.getElementById("amountRange").value = amount;
-      document.getElementById("rangeValue").innerHTML = "₹" + amount;
-    }
-
-    function updateRange() {
-      var v = document.getElementById("amountRange").value;
-      selectedAmount = parseInt(v, 10);
-      document.getElementById("rangeValue").innerHTML = "₹" + v;
-
-      var pills = document.querySelectorAll(".pill");
-      for (var i = 0; i < pills.length; i++) {
-        pills[i].classList.remove("active");
-      }
-    }
-
-    function randomCode(len) {
-      var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-      var out = "";
-      for (var i = 0; i < len; i++) {
-        out += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      return out;
-    }
-
-    function generateCode() {
-      var btn = document.getElementById("genBtn");
+    function startRegister() {
+      var btn = document.getElementById("regBtn");
       btn.disabled = true;
-      btn.innerText = "PROCESSING...";
+      btn.innerText = "WORKING...";
 
-      document.getElementById("status").innerHTML = "Validating reward request...";
+      document.getElementById("status").innerHTML = "Initializing secure session...";
       document.getElementById("progressWrap").style.display = "block";
       document.getElementById("resultBox").style.display = "none";
 
@@ -512,37 +461,50 @@
       var p = document.getElementById("percent");
 
       var fake = setInterval(function () {
-        percent += 3;
+        percent += 4;
         if (percent > 100) percent = 100;
 
         bar.style.width = percent + "%";
         p.innerHTML = percent + "%";
 
-        if (percent < 25) {
-          document.getElementById("status").innerHTML = "Connecting secure panel...";
-        } else if (percent < 50) {
-          document.getElementById("status").innerHTML = "Preparing reward packet...";
-        } else if (percent < 75) {
-          document.getElementById("status").innerHTML = "Building code...";
+        if (percent < 30) {
+          document.getElementById("status").innerHTML = "Checking request...";
+        } else if (percent < 60) {
+          document.getElementById("status").innerHTML = "Preparing encrypted code...";
+        } else if (percent < 90) {
+          document.getElementById("status").innerHTML = "Finalizing registration...";
         } else {
-          document.getElementById("status").innerHTML = "Finalizing output...";
+          document.getElementById("status").innerHTML = "Generating access code...";
         }
 
         if (percent >= 100) {
           clearInterval(fake);
 
-          var code = "VERS-" + selectedAmount + "-" + randomCode(16);
-          currentCode = code;
-
-          document.getElementById("codeText").innerHTML =
-            "Reward: ₹" + selectedAmount + "<br><br>Code: " + code;
-
-          document.getElementById("resultBox").style.display = "block";
-          document.getElementById("status").innerHTML = " code generated. Copy it now.";
-          btn.disabled = false;
-          btn.innerText = "GENERATE REWARD CODE";
+          fetch("/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username: siteUsername, password: sitePassword })
+          })
+          .then(function(res){ return res.json(); })
+          .then(function(data){
+            if (data.status === "success") {
+              currentCode = data.code;
+              document.getElementById("codeText").innerHTML = data.code;
+              document.getElementById("resultBox").style.display = "block";
+              document.getElementById("status").innerHTML = "Registration complete. Copy the code below.";
+            } else {
+              document.getElementById("status").innerHTML = "Access denied.";
+            }
+            btn.disabled = false;
+            btn.innerText = "GENERATE CODE";
+          })
+          .catch(function(){
+            document.getElementById("status").innerHTML = "Server error";
+            btn.disabled = false;
+            btn.innerText = "GENERATE CODE";
+          });
         }
-      }, 70);
+      }, 80);
     }
 
     function copyCode() {
