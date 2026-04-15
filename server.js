@@ -12,6 +12,21 @@ if (!fs.existsSync(PASS_FILE)) {
 
 app.use("/files", express.static(__dirname + "/files"));
 
+app.get("/files-list", (req, res) => {
+    fs.readdir(__dirname + "/files", (err, files) => {
+        if (err) return res.json([]);
+
+        const data = files.map(file => {
+            const stats = fs.statSync(__dirname + "/files/" + file);
+            return {
+                name: file,
+                size: (stats.size / 1024).toFixed(2) + " KB"
+            };
+        });
+
+        res.json(data);
+    });
+});
 app.get("/", (req, res) => {
     res.sendFile(__dirname + "/index.html");
 });
