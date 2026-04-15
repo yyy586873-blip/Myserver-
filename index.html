@@ -2,36 +2,45 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#050805" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#120a1f" />
   <title>Access Panel</title>
 
   <style>
     :root{
-      --bg:#050805;
-      --bg2:#020302;
-      --panel:rgba(0, 40, 10, 0.60);
-      --panel2:rgba(0, 25, 8, 0.82);
-      --line:#00ff66;
-      --line2:#8bffb0;
-      --text:#d8ffe6;
-      --muted:#7cff9a;
-      --danger:#ff5c5c;
-      --shadow:0 0 18px rgba(0,255,102,.35), 0 0 42px rgba(0,255,102,.12);
-      --radius:18px;
-      --radius2:14px;
+      --bg1:#120a1f;
+      --bg2:#090611;
+      --panel1:rgba(98, 44, 163, 0.34);
+      --panel2:rgba(28, 12, 49, 0.78);
+      --border:rgba(196, 145, 255, 0.26);
+      --border2:rgba(196, 145, 255, 0.42);
+      --text:#f4ecff;
+      --muted:#c9a8ff;
+      --accent:#c77dff;
+      --accent2:#8f5cff;
+      --success:#cdb6ff;
+      --danger:#ff7db8;
+      --shadow:0 16px 60px rgba(0,0,0,.45), 0 0 28px rgba(167, 94, 255, .22);
+      --radius:22px;
+      --radius2:16px;
       --maxw: 460px;
     }
 
-    *{ box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
+    *{
+      box-sizing:border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
     html, body{
       margin:0;
       min-height:100%;
       font-family: Arial, Helvetica, sans-serif;
+      color:var(--text);
       background:
-        radial-gradient(circle at top, rgba(0,255,102,.12), transparent 35%),
-        linear-gradient(180deg, var(--bg), var(--bg2) 70%);
-      color: var(--text);
+        radial-gradient(circle at 15% 15%, rgba(199,125,255,.22), transparent 28%),
+        radial-gradient(circle at 85% 20%, rgba(143,92,255,.18), transparent 26%),
+        radial-gradient(circle at 50% 100%, rgba(255,125,184,.10), transparent 25%),
+        linear-gradient(180deg, var(--bg1), var(--bg2) 70%);
     }
 
     body{
@@ -44,15 +53,39 @@
       position:fixed;
       inset:0;
       pointer-events:none;
-      background: linear-gradient(
-        to bottom,
-        rgba(255,255,255,0.02) 0%,
-        rgba(255,255,255,0.00) 2%,
-        rgba(255,255,255,0.03) 4%
-      );
+      background:
+        linear-gradient(to bottom,
+          rgba(255,255,255,0.03) 0%,
+          rgba(255,255,255,0.00) 2%,
+          rgba(255,255,255,0.025) 4%);
       background-size:100% 8px;
-      opacity:.28;
+      opacity:.20;
       mix-blend-mode: screen;
+    }
+
+    .float-orb{
+      position:fixed;
+      width:220px;
+      height:220px;
+      border-radius:50%;
+      filter: blur(24px);
+      opacity:.22;
+      pointer-events:none;
+      background: radial-gradient(circle, rgba(199,125,255,.9), rgba(199,125,255,0));
+      animation: drift 8s ease-in-out infinite;
+    }
+
+    .orb1{ top:-70px; left:-60px; }
+    .orb2{
+      right:-60px;
+      bottom:-80px;
+      background: radial-gradient(circle, rgba(143,92,255,.85), rgba(143,92,255,0));
+      animation-delay: -3s;
+    }
+
+    @keyframes drift{
+      0%,100%{ transform: translate(0,0) scale(1); }
+      50%{ transform: translate(18px, 22px) scale(1.08); }
     }
 
     .wrap{
@@ -69,13 +102,13 @@
 
     .panel{
       width:min(100%, var(--maxw));
-      background: linear-gradient(180deg, var(--panel), var(--panel2));
-      border: 1px solid rgba(0,255,102,.30);
+      background: linear-gradient(180deg, var(--panel1), var(--panel2));
+      border:1px solid var(--border);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
       overflow:hidden;
       position:relative;
-      backdrop-filter: blur(10px);
     }
 
     .panel::after{
@@ -84,7 +117,7 @@
       inset:0;
       border-radius: var(--radius);
       pointer-events:none;
-      border: 1px solid rgba(139,255,176,.10);
+      border:1px solid rgba(255,255,255,.05);
       animation: pulse 2.2s ease-in-out infinite;
     }
 
@@ -96,17 +129,25 @@
     .header{
       padding: clamp(18px, 4vw, 24px);
       text-align:center;
-      border-bottom: 1px solid rgba(0,255,102,.14);
-      background: linear-gradient(180deg, rgba(0,255,102,.07), transparent);
+      border-bottom:1px solid rgba(255,255,255,.08);
+      background: linear-gradient(180deg, rgba(199,125,255,.10), transparent);
     }
 
     .title{
       margin:0;
       font-size: clamp(24px, 6vw, 32px);
       letter-spacing: 2px;
-      color:#e8fff0;
-      text-shadow: 0 0 8px rgba(0,255,102,.7), 0 0 18px rgba(0,255,102,.28);
       line-height:1.1;
+      color:#fff7ff;
+      text-shadow:
+        0 0 10px rgba(199,125,255,.75),
+        0 0 22px rgba(143,92,255,.28);
+      animation: titleGlow 2.4s ease-in-out infinite alternate;
+    }
+
+    @keyframes titleGlow{
+      from{ transform: translateY(0); }
+      to{ transform: translateY(-1px); }
     }
 
     .subtitle{
@@ -121,20 +162,21 @@
     }
 
     .box{
-      background: rgba(0,0,0,.28);
-      border: 1px solid rgba(0,255,102,.18);
+      background: rgba(12, 8, 21, .42);
+      border:1px solid rgba(199,125,255,.18);
       border-radius: var(--radius2);
       padding: clamp(14px, 3.5vw, 16px);
-      box-shadow: inset 0 0 18px rgba(0,255,102,.06);
+      box-shadow: inset 0 0 18px rgba(199,125,255,.08);
+      backdrop-filter: blur(10px);
     }
 
     .label{
       display:block;
-      margin: 0 0 8px;
-      font-size: 12px;
+      margin:0 0 8px;
+      font-size:12px;
       font-weight:700;
-      letter-spacing: 1.3px;
-      color: var(--line2);
+      letter-spacing:1.4px;
+      color:#e3c8ff;
     }
 
     .input{
@@ -142,51 +184,66 @@
       appearance:none;
       border:none;
       outline:none;
-      border-radius: 12px;
+      border-radius: 14px;
       padding: 14px 14px;
       font-size: 16px;
       color: var(--text);
-      background: rgba(0,0,0,.72);
-      border: 1px solid rgba(0,255,102,.30);
-      box-shadow: inset 0 0 12px rgba(0,255,102,.06);
+      background: rgba(8, 6, 15, .82);
+      border:1px solid rgba(199,125,255,.28);
+      box-shadow: inset 0 0 12px rgba(199,125,255,.08);
       margin-bottom: 12px;
+      transition: border-color .2s ease, transform .2s ease, box-shadow .2s ease;
+    }
+
+    .input:focus{
+      border-color: var(--border2);
+      box-shadow:
+        inset 0 0 12px rgba(199,125,255,.10),
+        0 0 0 3px rgba(199,125,255,.08);
+      transform: translateY(-1px);
     }
 
     .input::placeholder{
-      color: rgba(216,255,230,.45);
-    }
-
-    .row{
-      display:grid;
-      grid-template-columns: 1fr;
-      gap: 10px;
+      color: rgba(244,236,255,.42);
     }
 
     .btn{
       width:100%;
       border:none;
-      border-radius: 12px;
+      border-radius: 14px;
       padding: 14px 16px;
       font-size: 16px;
-      font-weight: 800;
-      letter-spacing: 1px;
-      color:#041008;
-      background: linear-gradient(180deg, #c5ffd7, #00ff66);
-      box-shadow: 0 0 16px rgba(0,255,102,.42);
+      font-weight:800;
+      letter-spacing:1px;
+      color:#fff;
+      background: linear-gradient(180deg, #d39dff, #8f5cff);
+      box-shadow:
+        0 10px 24px rgba(143,92,255,.25),
+        0 0 20px rgba(199,125,255,.18);
       cursor:pointer;
       transition: transform .16s ease, filter .16s ease, opacity .16s ease;
       touch-action: manipulation;
     }
 
-    .btn:active{ transform: scale(.985); }
-    .btn:hover{ filter: brightness(1.05); }
-    .btn[disabled]{ opacity:.55; cursor:not-allowed; }
+    .btn:hover{
+      filter: brightness(1.05);
+    }
+
+    .btn:active{
+      transform: scale(.985);
+    }
+
+    .btn[disabled]{
+      opacity:.6;
+      cursor:not-allowed;
+    }
 
     .btn-secondary{
+      margin-top:10px;
       background: transparent;
-      color: var(--line);
-      border: 1px solid rgba(0,255,102,.40);
-      box-shadow: inset 0 0 10px rgba(0,255,102,.05);
+      color:#e8d7ff;
+      border:1px solid rgba(199,125,255,.35);
+      box-shadow: inset 0 0 10px rgba(199,125,255,.05);
     }
 
     .section{
@@ -210,19 +267,19 @@
 
     .bar{
       width:100%;
-      height: 12px;
-      border-radius: 999px;
+      height:12px;
+      border-radius:999px;
       overflow:hidden;
-      background: rgba(0,255,102,.10);
-      border: 1px solid rgba(0,255,102,.20);
+      background: rgba(199,125,255,.10);
+      border:1px solid rgba(199,125,255,.18);
     }
 
     .bar > span{
       display:block;
       width:0%;
       height:100%;
-      background: linear-gradient(90deg, var(--line), var(--line2), var(--line));
-      box-shadow: 0 0 14px rgba(0,255,102,.75);
+      background: linear-gradient(90deg, #d39dff, #ffffff, #8f5cff, #d39dff);
+      box-shadow: 0 0 14px rgba(199,125,255,.55);
       transition: width .12s linear;
     }
 
@@ -233,15 +290,16 @@
       font-size: 14px;
       color: var(--text);
       word-break: break-word;
+      line-height:1.5;
     }
 
     .result{
       display:none;
       margin-top: 14px;
       padding: 14px;
-      border-radius: 12px;
-      background: rgba(0,0,0,.35);
-      border: 1px solid rgba(0,255,102,.22);
+      border-radius: 14px;
+      background: rgba(10, 7, 18, .52);
+      border: 1px solid rgba(199,125,255,.20);
     }
 
     .code{
@@ -249,8 +307,8 @@
       font-size: clamp(16px, 4vw, 19px);
       word-break: break-all;
       line-height:1.5;
-      color: #eaffef;
-      text-shadow: 0 0 10px rgba(0,255,102,.25);
+      color:#fff;
+      text-shadow: 0 0 10px rgba(199,125,255,.30);
       margin-bottom: 12px;
     }
 
@@ -258,28 +316,28 @@
       margin-top: 10px;
       text-align:center;
       font-size: 12px;
-      color: rgba(216,255,230,.60);
+      color: rgba(244,236,255,.60);
       line-height:1.5;
     }
 
     .hidden{ display:none; }
 
     .note{
-      margin-top: 12px;
+      margin-top:12px;
       text-align:center;
-      font-size: 12px;
-      color: rgba(216,255,230,.45);
+      font-size:12px;
+      color: rgba(244,236,255,.48);
     }
 
     @media (min-width: 720px){
       .panel{
-        width: min(100%, 520px);
+        width:min(100%, 520px);
       }
       .content{
         padding: 24px;
       }
       .btn{
-        font-size: 17px;
+        font-size:17px;
       }
     }
 
@@ -298,11 +356,14 @@
   </style>
 </head>
 <body class="scanlines">
+  <div class="float-orb orb1"></div>
+  <div class="float-orb orb2"></div>
+
   <div class="wrap">
     <div class="panel">
       <div class="header">
         <h1 class="title">ACCESS PANEL</h1>
-        <p class="subtitle">MOBILE OPTIMIZED • NEON GREEN UI</p>
+        <p class="subtitle">SMOOTH PURPLE UI • RESPONSIVE DESIGN</p>
       </div>
 
       <div class="content">
@@ -454,4 +515,4 @@
     }
   </script>
 </body>
-              </html>
+</html>
