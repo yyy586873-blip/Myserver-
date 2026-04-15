@@ -11,7 +11,7 @@ if (!fs.existsSync(PASS_FILE)) {
 }
 
 app.get("/", (req, res) => {
-    res.send("🔥 Permanent Server Running");
+    res.sendFile(__dirname + "/index.html");
 });
 
 app.post("/login", (req, res) => {
