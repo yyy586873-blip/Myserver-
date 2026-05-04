@@ -11,22 +11,6 @@ const SITE_USER = "DXXX";
 const SITE_PASS = "111";
 const CODE_VALID_MS = 60 * 60 * 1000; // 1 hour
 
-// ===== MUSIC SETUP =====
-const PUBLIC_DIR = path.join(__dirname, "public");
-const MUSIC_DIR = path.join(PUBLIC_DIR, "music");
-const FILE_DIR = path.join(MUSIC_DIR, "file");
-const SONGS_JSON = path.join(MUSIC_DIR, "songs.json");
-
-// Ensure folders exist
-if (!fs.existsSync(PUBLIC_DIR)) fs.mkdirSync(PUBLIC_DIR);
-if (!fs.existsSync(MUSIC_DIR)) fs.mkdirSync(MUSIC_DIR);
-if (!fs.existsSync(FILE_DIR)) fs.mkdirSync(FILE_DIR);
-
-// Ensure songs.json exists
-if (!fs.existsSync(SONGS_JSON)) {
-  fs.writeFileSync(SONGS_JSON, "[]");
-}
-
 if (!fs.existsSync(FILE)) {
   fs.writeFileSync(FILE, "[]");
 }
@@ -132,17 +116,6 @@ app.post("/login-code", function(req, res) {
   return res.json({ status: "success" });
 });
 
-// ===== MUSIC API =====
-
-// direct JSON for app
-app.get("/api/songs.json", function(req, res) {
-  res.sendFile(SONGS_JSON);
-});
-
-// optional: serve public folder explicitly
-app.use("/public", express.static(PUBLIC_DIR));
-
-// root page
 app.get("/", function(req, res) {
   res.sendFile(path.join(__dirname, "index.html"));
 });
