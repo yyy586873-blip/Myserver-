@@ -4,330 +4,498 @@ const path = require('path');
 const crypto = require('crypto');
 
 const app = express();
-app.use(express.json({ limit: '1mb' }));
+app.use(express.json({ limit: '2mb' }));
 
 const DATA_DIR = path.join(__dirname, 'data');
-const ACCOUNTS_FILE = path.join(DATA_DIR, 'accounts.json');
-const SESSIONS_FILE = path.join(DATA_DIR, 'sessions.json');
-const MESSAGES_FILE = path.join(DATA_DIR, 'messages.json');
-const GROUPS_FILE = path.join(DATA_DIR, 'groups.json');
+const DB_FILE = path.join(DATA_DIR, 'db.json');
+const PUBLIC_ROTATE_MS = 15 * 60 * 1000;
 
-function ensureDataFiles() {
+function ensureDb() {
   if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
-  if (!fs.existsSync(ACCOUNTS_FILE)) fs.writeFileSync(ACCOUNTS_FILE, JSON.stringify([], null, 2));
-  if (!fs.existsSync(SESSIONS_FILE)) fs.writeFileSync(SESSIONS_FILE, JSON.stringify({}, null, 2));
-  if (!fs.existsSync(MESSAGES_FILE)) fs.writeFileSync(MESSAGES_FILE, JSON.stringify([], null, 2));
-  if (!fs.existsSync(GROUPS_FILE)) fs.writeFileSync(GROUPS_FILE, JSON.stringify([], null, 2));
-}
-
-function readJson(file, fallback) {
-  try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch (e) { return fallback; }
-}
-function writeJson(file, data) { fs.writeFileSync(file, JSON.stringify(data, null, 2)); }
-function sha256(text) { return crypto.createHash('sha256').update(String(text)).digest('hex'); }
-function randomToken(len) { return crypto.randomBytes(len).toString('hex'); }
-function makeTempId() { return 'U' + crypto.randomBytes(6).toString('hex').toUpperCase(); }
-function now() { return Date.now(); }
-
-function authMiddleware(req, res, next) {
-  const token = req.headers['x-session-token'];
-  if (!token) return res.status(401).json({ ok: false, error: 'Missing session token' });
-  const sessions = readJson(SESSIONS_FILE, {});
-  const sess = sessions[token];
-  if (!sess) return res.status(401).json({ ok: false, error: 'Invalid session token' });
-  if (sess.expiresAt <= now()) {
-    delete sessions[token];
-    writeJson(SESSIONS_FILE, sessions);
-    return res.status(401).json({ ok: false, error: 'Session expired' });
+  if (!fs.existsSync(DB_FILE)) {
+    const initial = {
+      accounts: [],
+      sessions: {},
+      contacts: {},
+      groups: [],
+      messages: []
+    };
+    fs.writeFileSync(DB_FILE, JSON.stringify(initial, null, 2));
   }
-  req.session = sess;
-  next();
 }
 
-function getAccounts() { return readJson(ACCOUNTS_FILE, []); }
-function saveAccounts(accounts) { writeJson(ACCOUNTS_FILE, accounts); }
-function getSessions() { return readJson(SESSIONS_FILE, {}); }
-function saveSessions(sessions) { writeJson(SESSIONS_FILE, sessions); }
-function getMessages() { return readJson(MESSAGES_FILE, []); }
-function saveMessages(messages) { writeJson(MESSAGES_FILE, messages); }
-function getGroups() { return readJson(GROUPS_FILE, []); }
-function saveGroups(groups) { writeJson(GROUPS_FILE, groups); }
-
-function uniqueUsername(accounts, username) {
-  return accounts.some(function (a) { return a.username.toLowerCase() === username.toLowerCase(); });
-}
-function getAccountByDeviceId(accounts, deviceId) {
-  return accounts.find(function (a) { return a.deviceId === deviceId; });
-}
-function getAccountByUsername(accounts, username) {
-  return accounts.find(function (a) { return a.username.toLowerCase() === username.toLowerCase(); });
-}
-function getAccountById(accounts, userId) {
-  return accounts.find(function (a) { return a.userId === userId; });
+function loadDb() {
+  ensureDb();
+  try {
+    return JSON.parse(fs.readFileSync(DB_FILE, 'utf8'));
+  } catch (e) {
+    return { accounts: [], sessions: {}, contacts: {}, groups: [], messages: [] };
+  }
 }
 
-function createTempPublicIdMap(account) {
-  var map = account.publicIds || {};
-  var slot = Math.floor(now() / (15 * 60 * 1000));
-  if (!map[String(slot)]) map[String(slot)] = makeTempId();
-  account.publicIds = map;
+function saveDb(db) {
+  fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
+}
+
+function sha256(text) {
+  return crypto.createHash('sha256').update(String(text)).digest('hex');
+}
+
+function token(bytes) {
+  return crypto.randomBytes(bytes).toString('hex');
+}
+
+function now() {
+  return Date.now();
+}
+
+function error(res, code, message) {
+  return res.status(code).json({ ok: false, error: message });
+}
+
+function ok(res, payload) {
+  return res.json(Object.assign({ ok: true }, payload || {}));
+}
+
+function getSlot() {
+  return Math.floor(now() / PUBLIC_ROTATE_MS);
+}
+
+function makePublicId() {
+  return 'U' + crypto.randomBytes(4).toString('hex').toUpperCase();
+}
+
+function ensurePublicId(account) {
+  const slot = String(getSlot());
+  if (!account.publicIds) account.publicIds = {};
+  if (!account.publicIds[slot]) {
+    account.publicIds[slot] = makePublicId();
+  }
   account.currentSlot = slot;
-  account.currentPublicId = map[String(slot)];
+  account.currentPublicId = account.publicIds[slot];
   return account.currentPublicId;
 }
 
-function resolveRecipient(accounts, query) {
-  const q = String(query || '').trim();
-  if (!q) return null;
-  let found = getAccountByUsername(accounts, q);
-  if (found) return found;
-  for (let i = 0; i < accounts.length; i++) {
-    const a = accounts[i];
-    if (a.currentPublicId === q) return a;
-    if (a.publicIds && Object.values(a.publicIds).indexOf(q) !== -1) return a;
-  }
-  return null;
+function normalize(str) {
+  return String(str || '').trim();
 }
 
-ensureDataFiles();
+function findAccountByUserId(db, userId) {
+  return db.accounts.find(function (a) { return a.userId === userId; }) || null;
+}
+
+function findAccountByUsername(db, username) {
+  const q = normalize(username).toLowerCase();
+  return db.accounts.find(function (a) { return a.username.toLowerCase() === q; }) || null;
+}
+
+function findAccountByDeviceId(db, deviceId) {
+  const q = normalize(deviceId);
+  return db.accounts.find(function (a) { return a.deviceId === q; }) || null;
+}
+
+function resolveAccount(db, value) {
+  const q = normalize(value);
+  if (!q) return null;
+  let byUsername = findAccountByUsername(db, q);
+  if (byUsername) return byUsername;
+  let byId = findAccountByUserId(db, q);
+  if (byId) return byId;
+  return db.accounts.find(function (a) {
+    if (a.currentPublicId === q) return true;
+    if (!a.publicIds) return false;
+    for (const k in a.publicIds) {
+      if (Object.prototype.hasOwnProperty.call(a.publicIds, k) && a.publicIds[k] === q) return true;
+    }
+    return false;
+  }) || null;
+}
+
+function auth(req, res, next) {
+  const tokenValue = req.headers['x-session-token'];
+  if (!tokenValue) return error(res, 401, 'Missing session token');
+  const db = loadDb();
+  const session = db.sessions[tokenValue];
+  if (!session) return error(res, 401, 'Invalid session token');
+  if (session.expiresAt <= now()) {
+    delete db.sessions[tokenValue];
+    saveDb(db);
+    return error(res, 401, 'Session expired');
+  }
+  const account = findAccountByUserId(db, session.userId);
+  if (!account) return error(res, 401, 'Account missing');
+  req.db = db;
+  req.account = account;
+  req.sessionToken = tokenValue;
+  next();
+}
+
+function conversationKeyDirect(a, b) {
+  return [a, b].sort().join('|');
+}
+
+function lastMessageForDirect(db, userId, otherId) {
+  const key = conversationKeyDirect(userId, otherId);
+  const msgs = db.messages.filter(function (m) { return m.threadType === 'direct' && m.threadId === key; });
+  return msgs.length ? msgs[msgs.length - 1] : null;
+}
+
+function lastMessageForGroup(db, groupId) {
+  const msgs = db.messages.filter(function (m) { return m.threadType === 'group' && m.threadId === groupId; });
+  return msgs.length ? msgs[msgs.length - 1] : null;
+}
+
+function isContact(db, ownerId, otherId) {
+  const list = db.contacts[ownerId] || [];
+  return list.indexOf(otherId) !== -1;
+}
+
+function resolveThread(db, threadType, threadId) {
+  const t = normalize(threadType);
+  const id = normalize(threadId);
+  if (t === 'group') {
+    return db.groups.find(function (g) { return g.groupId === id; }) || null;
+  }
+  return resolveAccount(db, id);
+}
+
+app.get('/', function (req, res) {
+  res.json({ ok: true, name: 'Chat server running' });
+});
 
 app.post('/api/create-account', function (req, res) {
-  const username = String(req.body.username || '').trim();
-  const password = String(req.body.password || '');
-  const deviceId = String(req.body.deviceId || '').trim();
+  const username = normalize(req.body.username);
+  const password = normalize(req.body.password);
+  const deviceId = normalize(req.body.deviceId);
 
-  if (username.length < 3) return res.status(400).json({ ok: false, error: 'Username too short' });
-  if (password.length < 6) return res.status(400).json({ ok: false, error: 'Password too short' });
-  if (!deviceId) return res.status(400).json({ ok: false, error: 'Missing deviceId' });
+  if (username.length < 3) return error(res, 400, 'Username too short');
+  if (password.length < 6) return error(res, 400, 'Password too short');
+  if (!deviceId) return error(res, 400, 'Missing deviceId');
 
-  const accounts = getAccounts();
-  if (getAccountByDeviceId(accounts, deviceId)) {
-    return res.status(409).json({ ok: false, error: 'This phone/device already has an account' });
-  }
-  if (uniqueUsername(accounts, username)) {
-    return res.status(409).json({ ok: false, error: 'Username already taken' });
-  }
-
-  const userId = randomToken(8);
-  const tempPublicId = makeTempId();
-  const passHash = sha256(password + ':chat_salt_v1');
+  const db = loadDb();
+  if (findAccountByUsername(db, username)) return error(res, 409, 'Username already exists');
+  if (findAccountByDeviceId(db, deviceId)) return error(res, 409, 'This device already has an account');
 
   const account = {
-    userId: userId,
+    userId: token(8),
     username: username,
-    passwordHash: passHash,
+    passwordHash: sha256(password + ':chatchain_salt_v1'),
     deviceId: deviceId,
     createdAt: now(),
     publicIds: {},
     currentSlot: null,
-    currentPublicId: tempPublicId
+    currentPublicId: null
   };
-  account.publicIds[String(Math.floor(now() / (15 * 60 * 1000)))] = tempPublicId;
+  ensurePublicId(account);
+  db.accounts.push(account);
+  db.contacts[account.userId] = [];
 
-  accounts.push(account);
-  saveAccounts(accounts);
-
-  const token = randomToken(24);
-  const sessions = getSessions();
-  sessions[token] = {
-    userId: userId,
+  const sessionToken = token(24);
+  db.sessions[sessionToken] = {
+    userId: account.userId,
     deviceId: deviceId,
     createdAt: now(),
-    expiresAt: now() + (7 * 24 * 60 * 60 * 1000)
+    expiresAt: now() + 7 * 24 * 60 * 60 * 1000
   };
-  saveSessions(sessions);
 
-  return res.json({
-    ok: true,
-    userId: userId,
-    username: username,
-    publicId: tempPublicId,
-    sessionToken: token
+  saveDb(db);
+  return ok(res, {
+    userId: account.userId,
+    username: account.username,
+    publicId: account.currentPublicId,
+    sessionToken: sessionToken
   });
 });
 
 app.post('/api/login', function (req, res) {
-  const username = String(req.body.username || '').trim();
-  const password = String(req.body.password || '');
-  const deviceId = String(req.body.deviceId || '').trim();
+  const username = normalize(req.body.username);
+  const password = normalize(req.body.password);
+  const deviceId = normalize(req.body.deviceId);
 
-  const accounts = getAccounts();
-  const account = getAccountByUsername(accounts, username);
-  if (!account) return res.status(404).json({ ok: false, error: 'Account not found' });
+  const db = loadDb();
+  const account = findAccountByUsername(db, username);
+  if (!account) return error(res, 404, 'Account not found');
+  if (account.deviceId !== deviceId) return error(res, 403, 'This account is locked to another device');
+  if (account.passwordHash !== sha256(password + ':chatchain_salt_v1')) return error(res, 401, 'Wrong password');
 
-  if (account.deviceId !== deviceId) {
-    return res.status(403).json({ ok: false, error: 'This account is locked to the original device' });
-  }
-
-  const passHash = sha256(password + ':chat_salt_v1');
-  if (passHash !== account.passwordHash) {
-    return res.status(401).json({ ok: false, error: 'Wrong password' });
-  }
-
-  const token = randomToken(24);
-  const sessions = getSessions();
-  sessions[token] = {
+  const sessionToken = token(24);
+  db.sessions[sessionToken] = {
     userId: account.userId,
     deviceId: deviceId,
     createdAt: now(),
-    expiresAt: now() + (7 * 24 * 60 * 60 * 1000)
+    expiresAt: now() + 7 * 24 * 60 * 60 * 1000
   };
-  saveSessions(sessions);
+  ensurePublicId(account);
+  saveDb(db);
 
-  const publicId = createTempPublicIdMap(account);
-  saveAccounts(accounts);
-
-  return res.json({
-    ok: true,
+  return ok(res, {
     userId: account.userId,
     username: account.username,
-    publicId: publicId,
-    sessionToken: token
+    publicId: account.currentPublicId,
+    sessionToken: sessionToken
   });
 });
 
-app.get('/api/search', authMiddleware, function (req, res) {
-  const q = String(req.query.q || '').trim();
-  const accounts = getAccounts();
-  const account = resolveRecipient(accounts, q);
-  if (!account) return res.json({ ok: true, found: false });
-  return res.json({
-    ok: true,
-    found: true,
-    userId: account.userId,
-    username: account.username,
-    publicId: createTempPublicIdMap(account)
+app.get('/api/me', auth, function (req, res) {
+  ensurePublicId(req.account);
+  saveDb(req.db);
+  return ok(res, {
+    userId: req.account.userId,
+    username: req.account.username,
+    publicId: req.account.currentPublicId
   });
 });
 
-app.post('/api/send', authMiddleware, function (req, res) {
-  const to = String(req.body.to || '').trim();
-  const text = String(req.body.text || '').trim();
-  const isGroup = String(req.body.isGroup || '') === '1';
+app.get('/api/search', auth, function (req, res) {
+  const q = normalize(req.query.q).toLowerCase();
+  const db = req.db;
+  const results = db.accounts.filter(function (a) {
+    if (a.userId === req.account.userId) return false;
+    if (!q) return true;
+    return a.username.toLowerCase().indexOf(q) !== -1 || a.currentPublicId.toLowerCase().indexOf(q) !== -1;
+  }).slice(0, 20).map(function (a) {
+    ensurePublicId(a);
+    return {
+      userId: a.userId,
+      username: a.username,
+      publicId: a.currentPublicId,
+      isContact: isContact(db, req.account.userId, a.userId)
+    };
+  });
+  saveDb(db);
+  return ok(res, { results: results });
+});
 
-  if (!text) return res.status(400).json({ ok: false, error: 'Empty message' });
-  if (text.length > 2000) return res.status(400).json({ ok: false, error: 'Message too long' });
+app.get('/api/contacts/list', auth, function (req, res) {
+  const db = req.db;
+  const ids = db.contacts[req.account.userId] || [];
+  const results = ids.map(function (id) {
+    const user = findAccountByUserId(db, id);
+    if (!user) return null;
+    ensurePublicId(user);
+    const last = lastMessageForDirect(db, req.account.userId, user.userId);
+    return {
+      userId: user.userId,
+      username: user.username,
+      publicId: user.currentPublicId,
+      lastMessage: last ? last.text : '',
+      lastTime: last ? last.createdAt : 0
+    };
+  }).filter(Boolean);
+  saveDb(db);
+  return ok(res, { contacts: results });
+});
 
-  const accounts = getAccounts();
-  const sender = getAccountById(accounts, req.session.userId);
-  if (!sender) return res.status(404).json({ ok: false, error: 'Sender missing' });
+app.post('/api/contacts/add', auth, function (req, res) {
+  const target = normalize(req.body.target);
+  const db = req.db;
+  const user = resolveAccount(db, target);
+  if (!user) return error(res, 404, 'User not found');
+  if (user.userId === req.account.userId) return error(res, 400, 'Cannot add yourself');
+  const list = db.contacts[req.account.userId] || [];
+  if (list.indexOf(user.userId) === -1) list.push(user.userId);
+  db.contacts[req.account.userId] = list;
+  saveDb(db);
+  return ok(res, { added: true, userId: user.userId, username: user.username, publicId: user.currentPublicId });
+});
 
-  const messages = getMessages();
+app.post('/api/contacts/remove', auth, function (req, res) {
+  const target = normalize(req.body.target);
+  const db = req.db;
+  const user = resolveAccount(db, target);
+  if (!user) return error(res, 404, 'User not found');
+  const list = db.contacts[req.account.userId] || [];
+  db.contacts[req.account.userId] = list.filter(function (id) { return id !== user.userId; });
+  saveDb(db);
+  return ok(res, { removed: true, userId: user.userId });
+});
 
-  if (isGroup) {
-    const groups = getGroups();
-    const group = groups.find(function (g) { return g.groupId === to; });
-    if (!group) return res.status(404).json({ ok: false, error: 'Group not found' });
-    if (group.members.indexOf(sender.userId) === -1) {
-      return res.status(403).json({ ok: false, error: 'Not a member of group' });
+app.get('/api/conversations', auth, function (req, res) {
+  const db = req.db;
+  const convMap = {};
+  const myId = req.account.userId;
+
+  (db.contacts[myId] || []).forEach(function (otherId) {
+    const other = findAccountByUserId(db, otherId);
+    if (!other) return;
+    ensurePublicId(other);
+    const last = lastMessageForDirect(db, myId, otherId);
+    const key = 'direct:' + conversationKeyDirect(myId, otherId);
+    convMap[key] = {
+      threadType: 'direct',
+      threadId: otherId,
+      title: other.username,
+      publicId: other.currentPublicId,
+      preview: last ? last.text : '',
+      lastTime: last ? last.createdAt : 0
+    };
+  });
+
+  db.messages.forEach(function (m) {
+    if (m.threadType === 'direct') {
+      const parts = m.threadId.split('|');
+      if (parts.indexOf(myId) === -1) return;
+      const otherId = parts[0] === myId ? parts[1] : parts[0];
+      const other = findAccountByUserId(db, otherId);
+      if (!other) return;
+      ensurePublicId(other);
+      const key = 'direct:' + conversationKeyDirect(myId, otherId);
+      convMap[key] = {
+        threadType: 'direct',
+        threadId: otherId,
+        title: other.username,
+        publicId: other.currentPublicId,
+        preview: m.text,
+        lastTime: m.createdAt
+      };
+    } else if (m.threadType === 'group') {
+      const grp = db.groups.find(function (g) { return g.groupId === m.threadId; });
+      if (!grp) return;
+      if (grp.members.indexOf(myId) === -1) return;
+      const key = 'group:' + grp.groupId;
+      convMap[key] = {
+        threadType: 'group',
+        threadId: grp.groupId,
+        title: grp.name,
+        publicId: grp.groupId,
+        preview: m.text,
+        lastTime: m.createdAt
+      };
     }
-    group.members.forEach(function (memberId) {
-      if (memberId === sender.userId) return;
-      messages.push({
-        id: randomToken(10),
-        type: 'group',
-        groupId: group.groupId,
-        fromUserId: sender.userId,
-        toUserId: memberId,
-        text: text,
-        createdAt: now(),
-        delivered: false
-      });
-    });
-    saveMessages(messages);
-    return res.json({ ok: true, sent: true });
-  }
-
-  const receiver = resolveRecipient(accounts, to);
-  if (!receiver) return res.status(404).json({ ok: false, error: 'User not found' });
-
-  messages.push({
-    id: randomToken(10),
-    type: 'direct',
-    fromUserId: sender.userId,
-    toUserId: receiver.userId,
-    text: text,
-    createdAt: now(),
-    delivered: false
   });
-  saveMessages(messages);
-  return res.json({ ok: true, sent: true });
+
+  const list = Object.keys(convMap).map(function (k) { return convMap[k]; });
+  list.sort(function (a, b) { return (b.lastTime || 0) - (a.lastTime || 0); });
+  return ok(res, { conversations: list });
 });
 
-app.get('/api/poll', authMiddleware, function (req, res) {
-  const userId = req.session.userId;
-  const messages = getMessages();
-  const accounts = getAccounts();
-  const out = [];
-  const kept = [];
-
-  for (let i = 0; i < messages.length; i++) {
-    const m = messages[i];
-    if (m.toUserId === userId) {
-      const sender = getAccountById(accounts, m.fromUserId);
-      out.push({
-        id: m.id,
-        type: m.type,
-        groupId: m.groupId || null,
-        fromUserId: m.fromUserId,
-        fromUsername: sender ? sender.username : 'unknown',
-        text: m.text,
-        createdAt: m.createdAt
-      });
-    } else {
-      kept.push(m);
-    }
-  }
-
-  saveMessages(kept);
-  return res.json({ ok: true, messages: out });
+app.get('/api/groups/list', auth, function (req, res) {
+  const db = req.db;
+  const myId = req.account.userId;
+  const groups = db.groups.filter(function (g) { return g.members.indexOf(myId) !== -1; }).map(function (g) {
+    const last = lastMessageForGroup(db, g.groupId);
+    return {
+      groupId: g.groupId,
+      name: g.name,
+      adminUserId: g.adminUserId,
+      membersCount: g.members.length,
+      preview: last ? last.text : '',
+      lastTime: last ? last.createdAt : 0
+    };
+  });
+  groups.sort(function (a, b) { return (b.lastTime || 0) - (a.lastTime || 0); });
+  return ok(res, { groups: groups });
 });
 
-app.post('/api/create-group', authMiddleware, function (req, res) {
-  const name = String(req.body.name || '').trim();
+app.post('/api/groups/create', auth, function (req, res) {
+  const name = normalize(req.body.name);
   const membersRaw = Array.isArray(req.body.members) ? req.body.members : [];
-  if (!name) return res.status(400).json({ ok: false, error: 'Group name required' });
+  if (!name) return error(res, 400, 'Group name required');
 
-  const accounts = getAccounts();
-  const creator = getAccountById(accounts, req.session.userId);
-  if (!creator) return res.status(404).json({ ok: false, error: 'Creator missing' });
-
+  const db = req.db;
   const memberIds = {};
-  memberIds[creator.userId] = true;
-  for (let i = 0; i < membersRaw.length; i++) {
-    const found = resolveRecipient(accounts, String(membersRaw[i]).trim());
-    if (found) memberIds[found.userId] = true;
-  }
+  memberIds[req.account.userId] = true;
+
+  membersRaw.forEach(function (item) {
+    const account = resolveAccount(db, item);
+    if (account) memberIds[account.userId] = true;
+  });
+
+  const members = Object.keys(memberIds);
+  if (members.length < 2) return error(res, 400, 'Add at least one other member');
 
   const group = {
-    groupId: 'G' + randomToken(6),
+    groupId: 'G' + token(6),
     name: name,
-    adminUserId: creator.userId,
-    members: Object.keys(memberIds),
+    adminUserId: req.account.userId,
+    members: members,
     createdAt: now()
   };
-
-  const groups = getGroups();
-  groups.push(group);
-  saveGroups(groups);
-  return res.json({ ok: true, groupId: group.groupId, name: group.name });
+  db.groups.push(group);
+  saveDb(db);
+  return ok(res, { groupId: group.groupId, name: group.name, membersCount: group.members.length });
 });
 
-app.get('/api/groups', authMiddleware, function (req, res) {
-  const groups = getGroups();
-  const userId = req.session.userId;
-  const mine = groups.filter(function (g) { return g.members.indexOf(userId) !== -1; });
-  return res.json({ ok: true, groups: mine });
+app.get('/api/messages', auth, function (req, res) {
+  const db = req.db;
+  const threadType = normalize(req.query.threadType || 'direct');
+  const threadId = normalize(req.query.threadId);
+  if (!threadId) return error(res, 400, 'Missing threadId');
+
+  let messages = db.messages.filter(function (m) {
+    return m.threadType === threadType && m.threadId === threadId;
+  });
+
+  if (threadType === 'direct') {
+    const other = resolveAccount(db, threadId);
+    if (!other) return error(res, 404, 'Thread not found');
+    const key = conversationKeyDirect(req.account.userId, other.userId);
+    messages = db.messages.filter(function (m) {
+      return m.threadType === 'direct' && m.threadId === key;
+    });
+  } else if (threadType === 'group') {
+    const group = db.groups.find(function (g) { return g.groupId === threadId; });
+    if (!group) return error(res, 404, 'Group not found');
+    if (group.members.indexOf(req.account.userId) === -1) return error(res, 403, 'Not a group member');
+  } else {
+    return error(res, 400, 'Invalid threadType');
+  }
+
+  const results = messages.map(function (m) {
+    const sender = findAccountByUserId(db, m.fromUserId);
+    return {
+      id: m.id,
+      threadType: m.threadType,
+      threadId: m.threadId,
+      fromUserId: m.fromUserId,
+      fromUsername: sender ? sender.username : 'unknown',
+      text: m.text,
+      createdAt: m.createdAt
+    };
+  });
+  return ok(res, { messages: results });
 });
 
-app.post('/api/cleanup', function (req, res) {
-  const messages = getMessages().filter(function (m) { return !m.delivered; });
-  saveMessages(messages);
-  return res.json({ ok: true });
+app.post('/api/send', auth, function (req, res) {
+  const text = normalize(req.body.text);
+  const threadType = normalize(req.body.threadType || 'direct');
+  const threadId = normalize(req.body.threadId);
+  if (!text) return error(res, 400, 'Empty message');
+  if (!threadId) return error(res, 400, 'Missing threadId');
+
+  const db = req.db;
+  let resolvedThread = null;
+  let storedThreadId = threadId;
+
+  if (threadType === 'direct') {
+    const peer = resolveAccount(db, threadId);
+    if (!peer) return error(res, 404, 'User not found');
+    if (peer.userId === req.account.userId) return error(res, 400, 'Cannot message yourself');
+    storedThreadId = conversationKeyDirect(req.account.userId, peer.userId);
+    resolvedThread = peer;
+  } else if (threadType === 'group') {
+    const group = db.groups.find(function (g) { return g.groupId === threadId; });
+    if (!group) return error(res, 404, 'Group not found');
+    if (group.members.indexOf(req.account.userId) === -1) return error(res, 403, 'Not a group member');
+    resolvedThread = group;
+  } else {
+    return error(res, 400, 'Invalid threadType');
+  }
+
+  const message = {
+    id: token(10),
+    threadType: threadType,
+    threadId: storedThreadId,
+    fromUserId: req.account.userId,
+    text: text,
+    createdAt: now()
+  };
+  db.messages.push(message);
+  saveDb(db);
+  return ok(res, { sent: true, messageId: message.id, threadType: threadType, threadId: threadId, resolved: !!resolvedThread });
 });
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, function () {
   console.log('Server running on port ' + PORT);
 });
-  
