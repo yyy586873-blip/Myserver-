@@ -4,10 +4,9 @@ const path = require('path');
 const crypto = require('crypto');
 
 const app = express();
-app.use(express.json({ limit: '15mb' }));
+app.use(express.json({ limit: '30mb' }));
 
-const ROOT = __dirname;
-const DATA_DIR = path.join(ROOT, 'data');
+const DATA_DIR = path.join(__dirname, 'data');
 const FILES_DIR = path.join(DATA_DIR, 'files');
 const SESSIONS_FILE = path.join(DATA_DIR, 'sessions.json');
 const MESSAGES_FILE = path.join(DATA_DIR, 'messages.json');
@@ -43,18 +42,14 @@ function makeToken() {
   return crypto.randomBytes(18).toString('hex');
 }
 
-function makeId() {
-  return crypto.randomBytes(8).toString('hex');
-}
-
 function cleanName(name) {
   return String(name || '').trim().replace(/\s+/g, ' ').slice(0, 24);
 }
 
-function sessionsLive(sessions) {
+function liveSessions(sessions) {
   const t = now();
   const out = {};
-  Object.keys(sessions).forEach((k) => {
+  Object.keys(sessions).forEach(function (k) {
     const s = sessions[k];
     if (!s) return;
     if (t - (s.lastHeartbeat || 0) <= 30000) {
@@ -64,12 +59,43 @@ function sessionsLive(sessions) {
   return out;
 }
 
-function deleteFileIfExists(filePath) {
-  try {
-    if (filePath && fs.existsSync(filePath)) fs.unlinkSync(filePath);
-  } catch (e) {
-    // ignore
+function requireSession(req, res) {
+  const token = String((req.body && req.body.token) || req.query.token || '').trim();
+  if (!token) {
+    res.status(401).json({ ok: false, error: 'Missing token' });
+    return null;
   }
+
+  const sessions = readJson(SESSIONS_FILE, {});
+  const session = sessions[token];
+  if (!session) {
+    res.status(401).json({ ok: false, error: 'Invalid token' });
+    return null;
+  }
+
+  if (now() - (session.lastHeartbeat || 0) > 60000) {
+    res.status(401).json({ ok: false, error: 'Session expired' });
+    return null;
+  }
+
+  return { token: token, sessions: sessions, session: session };
+}
+
+function appendMessage(message) {
+  const meta = readJson(META_FILE, { lastMessageId: 0 });
+  meta.lastMessageId = (meta.lastMessageId || 0) + 1;
+  message.id = meta.lastMessageId;
+
+  const messages = readJson(MESSAGES_FILE, []);
+  messages.push(message);
+
+  writeJson(META_FILE, meta);
+  writeJson(MESSAGES_FILE, messages);
+  return message.id;
+}
+
+function safeFileName(name) {
+  return String(name || 'file').replace(/[^a-zA-Z0-9._-]/g, '_').slice(0, 120);
 }
 
 ensureDir(DATA_DIR);
@@ -78,102 +104,54 @@ ensureJson(SESSIONS_FILE, {});
 ensureJson(MESSAGES_FILE, []);
 ensureJson(META_FILE, { lastMessageId: 0 });
 
-app.get('/', (req, res) => {
+app.get('/', function (req, res) {
   res.json({ ok: true, name: 'Chat server running' });
 });
 
-app.post('/api/join', (req, res) => {
+app.post('/api/join', function (req, res) {
   const name = cleanName(req.body && req.body.name);
   if (!name) return res.status(400).json({ ok: false, error: 'Name required' });
 
   const sessions = readJson(SESSIONS_FILE, {});
   const token = makeToken();
+
   sessions[token] = {
-    name,
+    name: name,
     createdAt: now(),
     lastHeartbeat: now(),
     typing: false,
     typingAt: 0
   };
+
   writeJson(SESSIONS_FILE, sessions);
-  return res.json({ ok: true, token, name });
+  return res.json({ ok: true, token: token, name: name });
 });
 
-app.post('/api/heartbeat', (req, res) => {
-  const token = String(req.body && req.body.token || '').trim();
-  const sessions = readJson(SESSIONS_FILE, {});
-  const s = sessions[token];
-  if (!s) return res.status(401).json({ ok: false, error: 'Invalid token' });
+app.post('/api/heartbeat', function (req, res) {
+  const auth = requireSession(req, res);
+  if (!auth) return;
 
-  s.lastHeartbeat = now();
-  sessions[token] = s;
-  writeJson(SESSIONS_FILE, sessions);
+  auth.session.lastHeartbeat = now();
+  auth.sessions[auth.token] = auth.session;
+  writeJson(SESSIONS_FILE, auth.sessions);
+
   return res.json({ ok: true });
 });
 
-app.post('/api/typing', (req, res) => {
-  const token = String(req.body && req.body.token || '').trim();
-  const typing = !!(req.body && req.body.typing);
-  const sessions = readJson(SESSIONS_FILE, {});
-  const s = sessions[token];
-  if (!s) return res.status(401).json({ ok: false, error: 'Invalid token' });
+app.post('/api/typing', function (req, res) {
+  const auth = requireSession(req, res);
+  if (!auth) return;
 
-  s.lastHeartbeat = now();
-  s.typing = typing;
-  s.typingAt = now();
-  sessions[token] = s;
-  writeJson(SESSIONS_FILE, sessions);
+  auth.session.lastHeartbeat = now();
+  auth.session.typing = !!(req.body && req.body.typing);
+  auth.session.typingAt = now();
+  auth.sessions[auth.token] = auth.session;
+  writeJson(SESSIONS_FILE, auth.sessions);
+
   return res.json({ ok: true });
 });
 
-function authToken(req) {
-  return String((req.body && req.body.token) || req.query.token || '').trim();
-}
-
-function requireSession(req, res) {
-  const token = authToken(req);
-  const sessions = readJson(SESSIONS_FILE, {});
-  const s = sessions[token];
-  if (!s) {
-    res.status(401).json({ ok: false, error: 'Invalid token' });
-    return null;
-  }
-  if (now() - (s.lastHeartbeat || 0) > 60000) {
-    res.status(401).json({ ok: false, error: 'Session expired' });
-    return null;
-  }
-  return { token, sessions, session: s };
-}
-
-function messageBase(obj) {
-  return {
-    id: String(obj.id),
-    fromToken: obj.fromToken,
-    fromName: obj.fromName,
-    type: obj.type,
-    text: obj.text || '',
-    caption: obj.caption || '',
-    fileName: obj.fileName || '',
-    fileUrl: obj.fileUrl || '',
-    mimeType: obj.mimeType || '',
-    size: obj.size || 0,
-    ts: obj.ts,
-    seenCount: Array.isArray(obj.seenBy) ? obj.seenBy.length : 0
-  };
-}
-
-function appendMessage(message) {
-  const meta = readJson(META_FILE, { lastMessageId: 0 });
-  meta.lastMessageId = (meta.lastMessageId || 0) + 1;
-  message.id = meta.lastMessageId;
-  const messages = readJson(MESSAGES_FILE, []);
-  messages.push(message);
-  writeJson(META_FILE, meta);
-  writeJson(MESSAGES_FILE, messages);
-  return message.id;
-}
-
-app.post('/api/send-text', (req, res) => {
+app.post('/api/send-text', function (req, res) {
   const auth = requireSession(req, res);
   if (!auth) return;
 
@@ -185,7 +163,7 @@ app.post('/api/send-text', (req, res) => {
     fromToken: auth.token,
     fromName: auth.session.name,
     type: 'text',
-    text,
+    text: text,
     caption: '',
     fileName: '',
     fileUrl: '',
@@ -204,44 +182,41 @@ app.post('/api/send-text', (req, res) => {
   return res.json({ ok: true, id: String(id) });
 });
 
-app.post('/api/send-media', (req, res) => {
+app.post('/api/send-media', function (req, res) {
   const auth = requireSession(req, res);
   if (!auth) return;
 
   const mimeType = String(req.body && req.body.mimeType || '').trim();
-  const fileName = String(req.body && req.body.fileName || 'file').trim().slice(0, 120);
+  const fileName = safeFileName(req.body && req.body.fileName);
   const caption = String(req.body && req.body.caption || '').trim().slice(0, 1200);
   const dataBase64 = String(req.body && req.body.dataBase64 || '').trim();
 
   if (!dataBase64) return res.status(400).json({ ok: false, error: 'Missing file data' });
-  if (dataBase64.length > 20 * 1024 * 1024) return res.status(413).json({ ok: false, error: 'File too large' });
 
-  const extSafe = fileName.replace(/[^a-zA-Z0-9._-]/g, '_');
-  const storedName = makeToken().slice(0, 16) + '_' + extSafe;
+  const storedName = makeToken().slice(0, 16) + '_' + fileName;
   const filePath = path.join(FILES_DIR, storedName);
-
   const buffer = Buffer.from(dataBase64, 'base64');
   fs.writeFileSync(filePath, buffer);
 
   let type = 'file';
-  if (mimeType.startsWith('image/')) type = 'image';
-  else if (mimeType.startsWith('audio/')) type = 'audio';
-  else if (mimeType.startsWith('video/')) type = 'video';
+  if (mimeType.indexOf('image/') === 0) type = 'image';
+  else if (mimeType.indexOf('video/') === 0) type = 'video';
+  else if (mimeType.indexOf('audio/') === 0) type = 'audio';
 
   const id = appendMessage({
     fromToken: auth.token,
     fromName: auth.session.name,
-    type,
+    type: type,
     text: '',
-    caption,
-    fileName,
+    caption: caption,
+    fileName: fileName,
     fileUrl: '/files/' + storedName,
-    mimeType,
+    mimeType: mimeType,
     size: buffer.length,
     ts: now(),
     deleted: false,
     deletedAt: 0,
-    storedName,
+    storedName: storedName,
     seenBy: [auth.token]
   });
 
@@ -249,33 +224,33 @@ app.post('/api/send-media', (req, res) => {
   auth.sessions[auth.token] = auth.session;
   writeJson(SESSIONS_FILE, auth.sessions);
 
-  return res.json({ ok: true, id: String(id), fileUrl: '/files/' + storedName, type });
+  return res.json({ ok: true, id: String(id), fileUrl: '/files/' + storedName, type: type });
 });
 
-app.post('/api/delete', (req, res) => {
+app.post('/api/delete', function (req, res) {
   const auth = requireSession(req, res);
   if (!auth) return;
 
   const id = parseInt(String(req.body && req.body.id || '0'), 10) || 0;
   const messages = readJson(MESSAGES_FILE, []);
-  const msg = messages.find(m => Number(m.id) === id);
+  const msg = messages.find(function (m) { return Number(m.id) === id; });
 
   if (!msg) return res.status(404).json({ ok: false, error: 'Message not found' });
   if (msg.fromToken !== auth.token) return res.status(403).json({ ok: false, error: 'Not your message' });
-  if (msg.deleted) return res.json({ ok: true });
 
   msg.deleted = true;
   msg.deletedAt = now();
 
   if (msg.storedName) {
-    deleteFileIfExists(path.join(FILES_DIR, msg.storedName));
+    const fp = path.join(FILES_DIR, msg.storedName);
+    if (fs.existsSync(fp)) fs.unlinkSync(fp);
   }
 
   writeJson(MESSAGES_FILE, messages);
   return res.json({ ok: true });
 });
 
-app.get('/api/state', (req, res) => {
+app.get('/api/state', function (req, res) {
   const token = String(req.query.token || '').trim();
   const after = parseInt(String(req.query.after || '0'), 10) || 0;
 
@@ -286,29 +261,43 @@ app.get('/api/state', (req, res) => {
   viewer.lastHeartbeat = now();
   sessions[token] = viewer;
 
-  const live = sessionsLive(sessions);
-  const typingNames = Object.keys(live).filter(k => {
+  const live = liveSessions(sessions);
+  const typingNames = Object.keys(live).filter(function (k) {
     const s = live[k];
     return k !== token && s.typing && (now() - (s.typingAt || 0) <= 5000);
-  }).map(k => live[k].name);
+  }).map(function (k) {
+    return live[k].name;
+  });
 
   const allMessages = readJson(MESSAGES_FILE, []);
   const messages = [];
   const deletedIds = [];
 
-  allMessages.forEach((m) => {
+  allMessages.forEach(function (m) {
     if (m.deleted) {
       deletedIds.push(String(m.id));
       return;
     }
+
     if (m.id > after) {
       if (m.fromToken !== token) {
         if (!Array.isArray(m.seenBy)) m.seenBy = [];
-        if (m.seenBy.indexOf(token) === -1) {
-          m.seenBy.push(token);
-        }
+        if (m.seenBy.indexOf(token) === -1) m.seenBy.push(token);
       }
-      messages.push(messageBase(m));
+      messages.push({
+        id: String(m.id),
+        fromToken: m.fromToken,
+        fromName: m.fromName,
+        type: m.type,
+        text: m.text,
+        caption: m.caption,
+        fileName: m.fileName,
+        fileUrl: m.fileUrl,
+        mimeType: m.mimeType,
+        size: m.size,
+        ts: m.ts,
+        seenCount: Array.isArray(m.seenBy) ? m.seenBy.length : 0
+      });
     }
   });
 
@@ -318,34 +307,16 @@ app.get('/api/state', (req, res) => {
   return res.json({
     ok: true,
     onlineCount: Object.keys(live).length,
-    onlineNames: Object.keys(live).map(k => live[k].name),
-    typingNames,
-    messages,
-    deletedIds
+    onlineNames: Object.keys(live).map(function (k) { return live[k].name; }),
+    typingNames: typingNames,
+    messages: messages,
+    deletedIds: deletedIds
   });
 });
 
-app.get('/api/users', (req, res) => {
-  const q = String(req.query.q || '').trim().toLowerCase();
-  const sessions = readJson(SESSIONS_FILE, {});
-  const live = sessionsLive(sessions);
-  const list = Object.keys(live).map(k => ({
-    token: k,
-    name: live[k].name,
-    typing: !!live[k].typing
-  })).filter(u => !q || u.name.toLowerCase().includes(q));
-
-  return res.json({ ok: true, users: list });
-});
-
-app.use('/files', express.static(FILES_DIR, {
-  setHeaders: (res, filePath) => {
-    if (filePath.endsWith('.mp4')) res.setHeader('Content-Type', 'video/mp4');
-  }
-}));
+app.use('/files', express.static(FILES_DIR));
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+app.listen(PORT, function () {
   console.log('Chat server running on port ' + PORT);
 });
-                                
