@@ -1,203 +1,616 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Music Upload App</title>
-  <style>
-    * { box-sizing: border-box; }
-    body { margin: 0; font-family: Arial, sans-serif; background: #f4f6f8; color: #222; }
-    .container { max-width: 900px; margin: 40px auto; padding: 0 16px; }
-    h1 { margin-bottom: 20px; }
-    .card { background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,.08); margin-bottom: 20px; }
-    form { display: grid; gap: 12px; }
-    input[type="text"], input[type="file"] { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; }
-    button { padding: 12px 16px; border: none; border-radius: 8px; cursor: pointer; background: #2563eb; color: #fff; font-weight: 600; }
-    button:hover { background: #1d4ed8; }
-    .message { margin-top: 12px; font-size: 14px; }
-    .song-item { border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px; margin-bottom: 12px; background: #fafafa; }
-    .song-title { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
-    .song-meta { font-size: 13px; color: #666; margin-bottom: 10px; }
-    .song-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
-    .song-actions button { padding: 8px 12px; }
-    .song-actions .danger { background: #dc2626; }
-    .song-actions .danger:hover { background: #b91c1c; }
-    .song-actions .secondary { background: #6b7280; }
-    .song-actions .secondary:hover { background: #4b5563; }
-    audio { width: 100%; margin-top: 10px; }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Music Upload App</title>
+
+<style>
+*{box-sizing:border-box}
+
+body{
+margin:0;
+font-family:Arial,sans-serif;
+background:#f4f6f8;
+color:#222;
+}
+
+.container{
+max-width:900px;
+margin:40px auto;
+padding:0 16px;
+}
+
+h1{
+margin-bottom:20px;
+}
+
+.card{
+background:#fff;
+padding:20px;
+border-radius:12px;
+box-shadow:0 2px 10px rgba(0,0,0,.08);
+margin-bottom:20px;
+}
+
+form{
+display:grid;
+gap:12px;
+}
+
+input[type="text"],
+input[type="file"]{
+width:100%;
+padding:12px;
+border:1px solid #ccc;
+border-radius:8px;
+}
+
+button{
+padding:12px 16px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+background:#2563eb;
+color:white;
+font-weight:600;
+}
+
+button:hover{
+background:#1d4ed8;
+}
+
+.message{
+margin-top:12px;
+font-size:14px;
+}
+
+.song-item{
+border:1px solid #e5e7eb;
+border-radius:10px;
+padding:14px;
+margin-bottom:12px;
+background:#fafafa;
+}
+
+.song-title{
+font-size:18px;
+font-weight:700;
+margin-bottom:8px;
+}
+
+.song-meta{
+font-size:13px;
+color:#666;
+margin-bottom:10px;
+}
+
+.song-actions{
+display:flex;
+gap:8px;
+flex-wrap:wrap;
+margin-top:10px;
+}
+
+.song-actions button{
+padding:8px 12px;
+}
+
+.song-actions .danger{
+background:#dc2626;
+}
+
+.song-actions .danger:hover{
+background:#b91c1c;
+}
+
+.song-actions .secondary{
+background:#6b7280;
+}
+
+.song-actions .secondary:hover{
+background:#4b5563;
+}
+
+audio{
+width:100%;
+margin-top:10px;
+}
+
+/* Upload progress */
+
+.progress-container{
+display:none;
+margin-top:15px;
+}
+
+.progress-bar{
+width:100%;
+height:20px;
+background:#ddd;
+border-radius:999px;
+overflow:hidden;
+}
+
+.progress-fill{
+height:100%;
+width:0%;
+background:#2563eb;
+transition:width .2s;
+}
+
+.progress-text{
+margin-top:8px;
+font-size:14px;
+font-weight:bold;
+}
+</style>
 </head>
+
 <body>
-  <div class="container">
-    <h1>Music Upload App</h1>
 
-    <div class="card">
-      <h2>Upload Song</h2>
-      <form id="uploadForm">
-        <input type="text" id="title" name="title" placeholder="Song title (optional)" />
-        <input type="file" id="music" name="music" accept="audio/*" required />
-        <button type="submit">Upload</button>
-      </form>
-      <div id="message" class="message"></div>
-    </div>
+<div class="container">
 
-    <div class="card">
-      <h2>Uploaded Songs</h2>
-      <div id="songsList" class="songs-list"></div>
-    </div>
-  </div>
+<h1>Music Upload App</h1>
 
-  <script>
-    const uploadForm = document.getElementById('uploadForm');
-    const songsList = document.getElementById('songsList');
-    const messageBox = document.getElementById('message');
+<div class="card">
 
-    function showMessage(text, isError = false) {
-      messageBox.textContent = text;
-      messageBox.style.color = isError ? 'red' : 'green';
-    }
+<h2>Upload Song</h2>
 
-    function formatSize(bytes) {
-      if (!bytes && bytes !== 0) return '-';
-      const mb = bytes / (1024 * 1024);
-      return mb.toFixed(2) + ' MB';
-    }
+<form id="uploadForm">
 
-    function escapeHtml(text) {
-      return String(text)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-    }
+<input
+type="text"
+id="title"
+name="title"
+placeholder="Song title (optional)"
+>
 
-    function escapeForJs(text) {
-      return String(text).replace(/\\/g, '\\\\').replace(/'/g, "\\'");
-    }
+<input
+type="file"
+id="music"
+name="music"
+accept="audio/*"
+required
+>
 
-    async function fetchSongs() {
-      try {
-        const res = await fetch('/api/songs');
-        const songs = await res.json();
-        renderSongs(songs);
-      } catch {
-        songsList.innerHTML = '<p>Failed to load songs.</p>';
-      }
-    }
+<button type="submit">
+Upload
+</button>
 
-    function renderSongs(songs) {
-      if (!songs.length) {
-        songsList.innerHTML = '<p>No songs uploaded yet.</p>';
-        return;
-      }
+</form>
 
-      songsList.innerHTML = songs.map(song => `
-        <div class="song-item">
-          <div class="song-title">${escapeHtml(song.title)}</div>
-          <div class="song-meta">
-            Original: ${escapeHtml(song.originalName)} |
-            Size: ${formatSize(song.size)} |
-            Uploaded: ${new Date(song.uploadedAt).toLocaleString()}
-          </div>
+<div class="progress-container" id="progressContainer">
 
-          <audio controls src="${song.fileUrl}"></audio>
+<div class="progress-bar">
+<div class="progress-fill" id="progressFill"></div>
+</div>
 
-          <div class="song-actions">
-            <button class="secondary" onclick="renameSong('${song.id}', '${escapeForJs(song.title)}')">Rename</button>
-            <button class="danger" onclick="deleteSong('${song.id}')">Delete</button>
-          </div>
-        </div>
-      `).join('');
-    }
+<div class="progress-text" id="progressText">
+0%
+</div>
 
-    uploadForm.addEventListener('submit', async function (e) {
-      e.preventDefault();
+</div>
 
-      const formData = new FormData();
-      const title = document.getElementById('title').value.trim();
-      const musicFile = document.getElementById('music').files[0];
+<div id="message" class="message"></div>
 
-      if (!musicFile) {
-        showMessage('Please select a music file.', true);
-        return;
-      }
+</div>
 
-      if (title) formData.append('title', title);
-      formData.append('music', musicFile);
+<div class="card">
 
-      try {
-        const res = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData
-        });
+<h2>Uploaded Songs</h2>
 
-        const data = await res.json();
+<div id="songsList"></div>
 
-        if (!res.ok) {
-          throw new Error(data.error || 'Upload failed');
-        }
+</div>
 
-        uploadForm.reset();
-        showMessage('Song uploaded successfully.');
-        await fetchSongs();
-      } catch (err) {
-        showMessage(err.message, true);
-      }
-    });
+</div>
 
-    async function renameSong(id, currentTitle) {
-      const newTitle = prompt('New title enter karo:', currentTitle);
-      if (newTitle === null) return;
 
-      const title = newTitle.trim();
-      if (!title) {
-        alert('Title empty nahi ho sakta.');
-        return;
-      }
+<script>
 
-      try {
-        const res = await fetch(`/api/songs/${id}/rename`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title })
-        });
+const uploadForm=document.getElementById("uploadForm");
+const songsList=document.getElementById("songsList");
+const messageBox=document.getElementById("message");
 
-        const data = await res.json();
+const progressContainer=
+document.getElementById("progressContainer");
 
-        if (!res.ok) {
-          throw new Error(data.error || 'Rename failed');
-        }
+const progressFill=
+document.getElementById("progressFill");
 
-        showMessage('Song renamed successfully.');
-        await fetchSongs();
-      } catch (err) {
-        showMessage(err.message, true);
-      }
-    }
+const progressText=
+document.getElementById("progressText");
 
-    async function deleteSong(id) {
-      if (!confirm('Song delete karni hai?')) return;
 
-      try {
-        const res = await fetch(`/api/songs/${id}`, {
-          method: 'DELETE'
-        });
+function showMessage(text,isError=false){
 
-        const data = await res.json();
+messageBox.textContent=text;
+messageBox.style.color=
+isError ? "red":"green";
 
-        if (!res.ok) {
-          throw new Error(data.error || 'Delete failed');
-        }
+}
 
-        showMessage('Song deleted successfully.');
-        await fetchSongs();
-      } catch (err) {
-        showMessage(err.message, true);
-      }
-    }
 
-    fetchSongs();
-  </script>
+function formatSize(bytes){
+
+if(!bytes&&bytes!==0) return "-";
+
+const mb=bytes/(1024*1024);
+
+return mb.toFixed(2)+" MB";
+
+}
+
+
+function escapeHtml(text){
+
+return String(text)
+.replace(/&/g,'&amp;')
+.replace(/</g,'&lt;')
+.replace(/>/g,'&gt;')
+.replace(/"/g,'&quot;')
+.replace(/'/g,'&#039;');
+
+}
+
+function escapeForJs(text){
+
+return String(text)
+.replace(/\\/g,'\\\\')
+.replace(/'/g,"\\'");
+
+}
+
+
+async function fetchSongs(){
+
+try{
+
+const res=await fetch('/api/songs');
+
+const songs=await res.json();
+
+renderSongs(songs);
+
+}catch{
+
+songsList.innerHTML=
+"<p>Failed to load songs.</p>";
+
+}
+
+}
+
+
+function renderSongs(songs){
+
+if(!songs.length){
+
+songsList.innerHTML=
+"<p>No songs uploaded yet.</p>";
+
+return;
+
+}
+
+songsList.innerHTML=songs.map(song=>`
+
+<div class="song-item">
+
+<div class="song-title">
+${escapeHtml(song.title)}
+</div>
+
+<div class="song-meta">
+
+Original:
+${escapeHtml(song.originalName)}
+
+|
+
+Size:
+${formatSize(song.size)}
+
+|
+
+Uploaded:
+${new Date(song.uploadedAt).toLocaleString()}
+
+</div>
+
+<audio controls src="${song.fileUrl}"></audio>
+
+<div class="song-actions">
+
+<button
+class="secondary"
+onclick="renameSong('${song.id}','${escapeForJs(song.title)}')"
+>
+Rename
+</button>
+
+<button
+class="danger"
+onclick="deleteSong('${song.id}')"
+>
+Delete
+</button>
+
+</div>
+
+</div>
+
+`).join('');
+
+}
+
+
+uploadForm.addEventListener(
+"submit",
+function(e){
+
+e.preventDefault();
+
+const title=
+document.getElementById("title")
+.value.trim();
+
+const musicFile=
+document.getElementById("music")
+.files[0];
+
+if(!musicFile){
+
+showMessage(
+"Please select music file",
+true
+);
+
+return;
+
+}
+
+const formData=
+new FormData();
+
+if(title){
+
+formData.append(
+"title",
+title
+);
+
+}
+
+formData.append(
+"music",
+musicFile
+);
+
+
+progressContainer.style.display=
+"block";
+
+progressFill.style.width=
+"0%";
+
+progressText.textContent=
+"0% Uploading...";
+
+
+const xhr=
+new XMLHttpRequest();
+
+xhr.open(
+"POST",
+"/api/upload"
+);
+
+
+xhr.upload.addEventListener(
+"progress",
+function(e){
+
+if(e.lengthComputable){
+
+const percent=
+Math.round(
+(e.loaded/e.total)*100
+);
+
+progressFill.style.width=
+percent+"%";
+
+progressText.textContent=
+percent+"% Uploading...";
+
+}
+
+}
+);
+
+
+xhr.onload=async function(){
+
+const data=
+JSON.parse(xhr.responseText);
+
+if(xhr.status>=200 &&
+xhr.status<300){
+
+progressText.textContent=
+"Upload Complete ✓";
+
+showMessage(
+"Song uploaded successfully"
+);
+
+uploadForm.reset();
+
+await fetchSongs();
+
+setTimeout(()=>{
+
+progressContainer.style.display=
+"none";
+
+},1500);
+
+}
+else{
+
+showMessage(
+data.error ||
+"Upload failed",
+true
+);
+
+}
+
+};
+
+
+xhr.onerror=function(){
+
+showMessage(
+"Upload failed",
+true
+);
+
+};
+
+xhr.send(formData);
+
+}
+);
+
+
+async function renameSong(
+id,
+currentTitle
+){
+
+const newTitle=
+prompt(
+"New title:",
+currentTitle
+);
+
+if(newTitle===null)
+return;
+
+const title=
+newTitle.trim();
+
+if(!title){
+
+alert(
+"Title empty nahi ho sakta"
+);
+
+return;
+
+}
+
+try{
+
+const res=
+await fetch(
+`/api/songs/${id}/rename`,
+{
+method:"POST",
+headers:{
+"Content-Type":
+"application/json"
+},
+body:JSON.stringify({
+title
+})
+}
+);
+
+const data=
+await res.json();
+
+if(!res.ok){
+
+throw new Error(
+data.error
+);
+
+}
+
+showMessage(
+"Renamed successfully"
+);
+
+fetchSongs();
+
+}catch(err){
+
+showMessage(
+err.message,
+true
+);
+
+}
+
+}
+
+
+
+async function deleteSong(id){
+
+if(
+!confirm(
+"Song delete karni hai?"
+)
+)
+return;
+
+
+try{
+
+const res=
+await fetch(
+`/api/songs/${id}`,
+{
+method:"DELETE"
+}
+);
+
+const data=
+await res.json();
+
+if(!res.ok){
+
+throw new Error(
+data.error
+);
+
+}
+
+showMessage(
+"Song deleted"
+);
+
+fetchSongs();
+
+}catch(err){
+
+showMessage(
+err.message,
+true
+);
+
+}
+
+}
+
+fetchSongs();
+
+</script>
+
 </body>
 </html>
