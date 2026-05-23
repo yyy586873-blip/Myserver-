@@ -1,61 +1,89 @@
 <!DOCTYPE html>
 <html>
-
 <head>
 <meta charset="utf-8">
-<title>Call History</title>
+<title>Chat Panel</title>
 
 <style>
-
-body{
-font-family:Arial;
-padding:20px;
-}
-
-.item{
-padding:10px;
-margin:10px;
-border:1px solid #ddd;
-}
-
+body{font-family:Arial;padding:20px}
+.msg{padding:10px;margin:10px;border:1px solid #ccc;cursor:pointer}
+#box{margin-top:20px}
 </style>
 
 </head>
 
 <body>
 
-<h1>Call History</h1>
+<h2>Messages (Click to reply as Person B)</h2>
 
-<div id="history"></div>
+<div id="list"></div>
+
+<h3>Reply Box (Person B)</h3>
+
+<input id="text" placeholder="type reply">
+<button onclick="send()">Send Reply</button>
 
 <script>
 
-fetch("/api/history")
+let selectedUser="PersonB";
+
+let selectedTo="";
+
+function load(){
+
+fetch("/api/messages")
 .then(r=>r.json())
 .then(data=>{
 
 let html="";
 
-data.forEach(x=>{
+data.forEach(m=>{
 
 html+=`
-<div class=item>
+<div class="msg" onclick="selectUser('${m.from}')">
 
-<b>From:</b> ${x.from}<br>
-<b>To:</b> ${x.to}<br>
-<b>Status:</b> ${x.status}<br>
-<b>Time:</b> ${x.time}
+<b>${m.from}</b>: ${m.text}<br>
+<small>${m.time}</small>
 
 </div>
 `;
 
 });
 
-document.getElementById(
-"history"
-).innerHTML=html;
+document.getElementById("list").innerHTML=html;
 
 });
+
+}
+
+function selectUser(user){
+selectedTo=user;
+alert("Replying to: "+user);
+}
+
+function send(){
+
+let text=document.getElementById("text").value;
+
+fetch("/api/send",{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+from:"PersonB",
+text:text
+})
+});
+
+document.getElementById("text").value="";
+
+setTimeout(load,500);
+
+}
+
+load();
+setInterval(load,2000);
 
 </script>
 
