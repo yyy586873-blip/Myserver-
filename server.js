@@ -1,78 +1,49 @@
-const express = require('express');
-const fs = require('fs');
-const path = require('path');
-const crypto = require('crypto');
+const express = require("express");
+const fs = require("fs");
+const path = require("path");
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const DATA_DIR = path.join(__dirname, 'data');
-const CALL_FILE = path.join(DATA_DIR, 'calls.json');
-
-if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR,{recursive:true});
-}
-
-if(!fs.existsSync(CALL_FILE)){
-    fs.writeFileSync(
-        CALL_FILE,
-        JSON.stringify([],null,2)
-    );
-}
+const DATA_FILE = path.join(__dirname, "chat.json");
 
 app.use(express.json());
 
-function loadCalls(){
-    return JSON.parse(
-        fs.readFileSync(CALL_FILE,"utf8")
-    );
+function load() {
+    if (!fs.existsSync(DATA_FILE)) return [];
+    return JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
 }
 
-function saveCalls(data){
-    fs.writeFileSync(
-        CALL_FILE,
-        JSON.stringify(data,null,2)
-    );
+function save(data) {
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
 }
 
-app.get("/",(req,res)=>{
-    res.sendFile(
-        path.join(__dirname,"index.html")
-    );
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "index.html"));
 });
 
-app.get("/api/history",(req,res)=>{
-    res.json(loadCalls());
+// get messages
+app.get("/api/messages", (req, res) => {
+    res.json(load());
 });
 
-app.post("/api/call",(req,res)=>{
+// send message (android or web both)
+app.post("/api/send", (req, res) => {
+    let msgs = load();
 
-    const from=req.body.from||"Unknown";
-    const to=req.body.to||"Unknown";
-
-    let calls=loadCalls();
-
-    const call={
-
-        id:crypto.randomUUID(),
-        from:from,
-        to:to,
-        status:"Incoming",
-        time:new Date().toLocaleString()
-
+    let msg = {
+        id: Date.now(),
+        from: req.body.from,
+        text: req.body.text,
+        time: new Date().toLocaleString()
     };
 
-    calls.unshift(call);
+    msgs.push(msg);
+    save(msgs);
 
-    saveCalls(calls);
-
-    res.json({
-        ok:true,
-        call
-    });
-
+    res.json({ ok: true, msg });
 });
 
-app.listen(PORT,"0.0.0.0",()=>{
-    console.log("Running "+PORT);
+app.listen(PORT, () => {
+    console.log("Server running " + PORT);
 });
