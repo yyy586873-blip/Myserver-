@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Panel</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #111827;
+      color: #f9fafb;
+    }
+    .wrap {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .card {
+      background: #1f2937;
+      border: 1px solid #374151;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    h1, h2 {
+      margin-top: 0;
+    }
+    label {
+      display: block;
+      margin: 10px 0 6px;
+      color: #d1d5db;
+    }
+    input[type="text"],
+    input[type="file"] {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 12px;
+      border-radius: 10px;
+      border: 1px solid #4b5563;
+      background: #0f172a;
+      color: #fff;
+    }
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+      margin-right: 8px;
+      margin-top: 8px;
+      background: #2563eb;
+      color: #fff;
+    }
+    button.gray {
+      background: #374151;
+    }
+    button.danger {
+      background: #dc2626;
+    }
+    .song {
+      border: 1px solid #374151;
+      background: #0f172a;
+      border-radius: 14px;
+      padding: 14px;
+      margin-top: 12px;
+    }
+    .song-title {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 6px;
+      word-break: break-word;
+    }
+    .meta {
+      font-size: 13px;
+      color: #9ca3af;
+    }
+    .status {
+      margin-top: 10px;
+      color: #93c5fd;
+      min-height: 20px;
+    }
+    .muted {
+      color: #9ca3af;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Music Admin Panel</h1>
+      <p class="muted">Sirf upload, rename aur delete. Play yahan nahi hoga.</p>
+
+      <form id="uploadForm">
+        <label for="title">Music title</label>
+        <input id="title" name="title" type="text" placeholder="Song title" />
+
+        <label for="music">Audio file</label>
+        <input id="music" name="music" type="file" accept="audio/*" required />
+
+        <button type="submit">Upload</button>
+      </form>
+
+      <div class="status" id="status"></div>
+    </div>
+
+    <div class="card">
+      <h2>Uploaded Music</h2>
+      <div id="list"></div>
+    </div>
+  </div>
+
+  <script>
+    var listEl = document.getElementById('list');
+    var statusEl = document.getElementById('status');
+    var uploadForm = document.getElementById('uploadForm');
+
+    function setStatus(msg) {
+      statusEl.textContent = msg || '';
+    }
+
+    function fmtDate(iso) {
+      try {
+        return new Date(iso).toLocaleString();
+      } catch (e) {
+        return iso;
+      }
+    }
+
+    function api(url, options) {
+      return fetch(url, options || {}).then(function (res) {
+        return res.json().then(function (data) {
+          if (!res.ok) {
+            throw new Error(data.error || 'Request failed');
+          }
+          return data;
+        });
+      });
+    }
+
+    function renderSongs(songs) {
+      listEl.innerHTML = '';
+
+      if (!songs.length) {
+        listEl.innerHTML = '<p class="muted">Abhi koi song upload nahi hua.</p>';
+        return;
+      }
+
+      songs.forEach(function (song) {
+        var box = document.createElement('div');
+        box.className = 'song';
+
+        var title = document.createElement('div');
+        title.className = 'song-title';
+        title.textContent = song.title;
+
+        var meta = document.createElement('div');
+        meta.className = 'meta';
+        meta.textContent = 'File: ' + song.originalName + ' | Uploaded: ' + fmtDate(song.uploadedAt);
+
+        var actions = document.createElement('div');
+
+        var renameBtn = document.createElement('button');
+        renameBtn.className = 'gray';
+        renameBtn.type = 'button';
+        renameBtn.textContent = 'Rename';
+        renameBtn.onclick = function () {
+          renameSong(song.id, song.title);
+        };
+
+        var deleteBtn = document.createElement('button');
+        deleteBtn.className = 'danger';
+        deleteBtn.type = 'button';
+        deleteBtn.textContent = 'Delete';
+        deleteBtn.onclick = function () {
+          deleteSong(song.id);
+        };
+
+        actions.appendChild(renameBtn);
+        actions.appendChild(deleteBtn);
+
+        box.appendChild(title);
+        box.appendChild(meta);
+        box.appendChild(actions);
+
+        listEl.appendChild(box);
+      });
+    }
+
+    function loadSongs() {
+      setStatus('Loading...');
+      api('/api/songs')
+        .then(function (songs) {
+          renderSongs(songs);
+          setStatus('Ready');
+        })
+        .catch(function (err) {
+          setStatus(err.message);
+        });
+    }
+
+    function deleteSong(id) {
+      if (!confirm('Delete karna hai?')) return;
+
+      setStatus('Deleting...');
+      api('/api/songs/' + id, { method: 'DELETE' })
+        .then(function () {
+          setStatus('Deleted');
+          loadSongs();
+        })
+        .catch(function (err) {
+          setStatus(err.message);
+        });
+    }
+
+    function renameSong(id, currentTitle) {
+      var newTitle = prompt('New title likho:', currentTitle);
+      if (newTitle === null) return;
+
+      setStatus('Renaming...');
+      api('/api/songs/' + id + '/rename', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: newTitle })
+      })
+        .then(function () {
+          setStatus('Renamed');
+          loadSongs();
+        })
+        .catch(function (err) {
+          setStatus(err.message);
+        });
+    }
+
+    uploadForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      var formData = new FormData(uploadForm);
+
+      setStatus('Uploading...');
+      fetch('/api/upload', {
+        method: 'POST',
+        body: formData
+      })
+        .then(function (res) {
+          return res.json().then(function (data) {
+            if (!res.ok) {
+              throw new Error(data.error || 'Upload failed');
+            }
+            return data;
+          });
+        })
+        .then(function () {
+          uploadForm.reset();
+          setStatus('Uploaded');
+          loadSongs();
+        })
+        .catch(function (err) {
+          setStatus(err.message);
+        });
+    });
+
+    loadSongs();
+  </script>
+</body>
+</html>
