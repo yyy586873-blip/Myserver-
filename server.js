@@ -11,8 +11,12 @@ app.disable('x-powered-by');
 
 const PORT = process.env.PORT || 10000;
 const ROOT = __dirname;
-const DATA_DIR = path.join(ROOT, 'data');
-const UPLOAD_DIR = path.join(ROOT, 'uploads');
+
+// IMPORTANT:
+// Set DATA_DIR on Render to the mounted persistent disk path.
+// Example: if your disk is mounted at /var/data, set DATA_DIR=/var/data
+const DATA_DIR = process.env.DATA_DIR || path.join(ROOT, 'data');
+const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(DATA_DIR, 'uploads');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
 const INDEX_FILE = path.join(ROOT, 'index.html');
 
@@ -42,8 +46,27 @@ function defaultDb() {
       totalUploads: 0,
       totalViews: 0
     },
+    sessions: {
+      admin: {},
+      app: {}
+    },
     videos: []
   };
+}
+
+function normalizeDb(db) {
+  const base = defaultDb();
+
+  if (!db || typeof db !== 'object') db = {};
+  if (!db.auth || typeof db.auth !== 'object') db.auth = base.auth;
+  if (!db.settings || typeof db.settings !== 'object') db.settings = base.settings;
+  if (!db.counters || typeof db.counters !== 'object') db.counters = base.counters;
+  if (!db.sessions || typeof db.sessions !== 'object') db.sessions = base.sessions;
+  if (!db.sessions.admin || typeof db.sessions.admin !== 'object') db.sessions.admin = {};
+  if (!db.sessions.app || typeof db.sessions.app !== 'object') db.sessions.app = {};
+  if (!Array.isArray(db.videos)) db.videos = [];
+
+  return db;
 }
 
 function readDb() {
@@ -54,12 +77,9 @@ function readDb() {
       writeDb(db);
       return db;
     }
+
     const raw = fs.readFileSync(DB_FILE, 'utf8');
-    const db = JSON.parse(raw);
-    if (!db.auth) db.auth = defaultDb().auth;
-    if (!db.settings) db.settings = defaultDb().settings;
-    if (!db.counters) db.counters = defaultDb().counters;
-    if (!Array.isArray(db.videos)) db.videos = [];
+    const db = normalizeDb(JSON.parse(raw));
     seedFromEnv(db);
     return db;
   } catch {
@@ -71,7 +91,14 @@ function readDb() {
 }
 
 function writeDb(db) {
-  fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2), 'utf8');
+  const safeDb = normalizeDb(db);
+  const tmpFile = DB_FILE + '.tmp';
+  fs.writeFileSync(tmpFile, JSON.stringify(safeDb, null, 2), 'utf8');
+  fs.renameSync(tmpFile, DB_FILE);
+}
+
+function save() {
+  writeDb(db);
 }
 
 function seedFromEnv(db) {
@@ -162,56 +189,121 @@ function findVideo(id) {
   return db.videos.find(v => v.id === id) || null;
 }
 
-function createAdminSession(req) {
-  const t = token();
-  adminSessions.set(t, {
+function sessionShape(req, extra) {
+  return {
     createdAt: now(),
     lastSeen: now(),
-    expiresAt: now() + ADMIN_SESSION_DAYS * 24 * 60 * 60 * 1000,
+    expiresAt: now() + (extra.kind === 'admin' ? ADMIN_SESSION_DAYS : APP_SESSION_DAYS) * 24 * 60 * 60 * 1000,
     ip: ipOf(req),
-    ua: uaOf(req)
-  });
+    ua: uaOf(req),
+    deviceId: extra.deviceId || '',
+    videoId: extra.videoId || ''
+  };
+}
+
+function persistSession(kind, t, data) {
+  db.sessions[kind][t] = data;
+  save();
+}
+
+function deleteSession(kind, t) {
+  if (kind === 'admin') {
+    adminSessions.delete(t);
+  } else {
+    appSessions.delete(t);
+  }
+
+  if (db.sessions && db.sessions[kind] && db.sessions[kind][t]) {
+    delete db.sessions[kind][t];
+    save();
+  }
+}
+
+function createAdminSession(req) {
+  const t = token();
+  const s = sessionShape(req, { kind: 'admin' });
+  adminSessions.set(t, Object.assign({ token: t }, s));
+  persistSession('admin', t, adminSessions.get(t));
   return t;
 }
 
 function createAppSession(req, deviceId) {
   const t = token();
-  appSessions.set(t, {
-    createdAt: now(),
-    lastSeen: now(),
-    expiresAt: now() + APP_SESSION_DAYS * 24 * 60 * 60 * 1000,
-    ip: ipOf(req),
-    ua: uaOf(req),
-    deviceId: deviceId || '',
-    videoId: ''
-  });
+  const s = sessionShape(req, { kind: 'app', deviceId: deviceId || '' });
+  appSessions.set(t, Object.assign({ token: t }, s));
+  persistSession('app', t, appSessions.get(t));
   return t;
+}
+
+function rehydrateSessions() {
+  const cutoff = now();
+  let dirty = false;
+
+  Object.keys(db.sessions.admin || {}).forEach(function (t) {
+    const s = db.sessions.admin[t];
+    if (!s || !s.expiresAt || s.expiresAt < cutoff) {
+      delete db.sessions.admin[t];
+      dirty = true;
+      return;
+    }
+    adminSessions.set(t, Object.assign({ token: t }, s));
+  });
+
+  Object.keys(db.sessions.app || {}).forEach(function (t) {
+    const s = db.sessions.app[t];
+    if (!s || !s.expiresAt || s.expiresAt < cutoff) {
+      delete db.sessions.app[t];
+      dirty = true;
+      return;
+    }
+    appSessions.set(t, Object.assign({ token: t }, s));
+  });
+
+  if (dirty) save();
 }
 
 function getAdminSession(req) {
   const t = cookieValue(req, 'admin_token') || req.headers['x-admin-token'] || '';
   if (!t) return null;
-  const s = adminSessions.get(t);
+
+  let s = adminSessions.get(t);
+  if (!s && db.sessions.admin[t]) {
+    s = Object.assign({ token: t }, db.sessions.admin[t]);
+    adminSessions.set(t, s);
+  }
+
   if (!s) return null;
+
   if (s.expiresAt < now()) {
-    adminSessions.delete(t);
+    deleteSession('admin', t);
     return null;
   }
+
   s.lastSeen = now();
-  return { token: t, ...s };
+  if (db.sessions.admin[t]) db.sessions.admin[t].lastSeen = s.lastSeen;
+  return s;
 }
 
 function getAppSession(req) {
   const t = cookieValue(req, 'app_token') || req.headers['x-app-token'] || '';
   if (!t) return null;
-  const s = appSessions.get(t);
+
+  let s = appSessions.get(t);
+  if (!s && db.sessions.app[t]) {
+    s = Object.assign({ token: t }, db.sessions.app[t]);
+    appSessions.set(t, s);
+  }
+
   if (!s) return null;
+
   if (s.expiresAt < now()) {
-    appSessions.delete(t);
+    deleteSession('app', t);
     return null;
   }
+
   s.lastSeen = now();
-  return { token: t, ...s };
+  if (db.sessions.app[t]) db.sessions.app[t].lastSeen = s.lastSeen;
+  return s;
 }
 
 function requireAdmin(req, res, next) {
@@ -232,12 +324,18 @@ function activeUsersList() {
   const cutoff = now() - ACTIVE_WINDOW_MS;
   let count = 0;
   const list = [];
+  let dirty = false;
 
-  for (const [t, s] of appSessions.entries()) {
-    if (s.expiresAt < now()) {
+  Object.keys(db.sessions.app || {}).forEach(function (t) {
+    const s = db.sessions.app[t];
+
+    if (!s || !s.expiresAt || s.expiresAt < now()) {
+      delete db.sessions.app[t];
       appSessions.delete(t);
-      continue;
+      dirty = true;
+      return;
     }
+
     if (s.lastSeen >= cutoff) {
       count += 1;
       list.push({
@@ -248,25 +346,32 @@ function activeUsersList() {
         lastSeen: s.lastSeen
       });
     }
-  }
+  });
 
-  list.sort((a, b) => b.lastSeen - a.lastSeen);
+  list.sort(function (a, b) {
+    return b.lastSeen - a.lastSeen;
+  });
+
+  if (dirty) save();
+
   return { count, list };
 }
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, UPLOAD_DIR),
-  filename: (req, file, cb) => {
+  destination: function (req, file, cb) {
+    cb(null, UPLOAD_DIR);
+  },
+  filename: function (req, file, cb) {
     const ext = path.extname(file.originalname || '').toLowerCase() || '.mp4';
     const id = Date.now() + '-' + crypto.randomBytes(8).toString('hex');
-    cb(null, `${id}${ext}`);
+    cb(null, id + ext);
   }
 });
 
 const upload = multer({
-  storage,
+  storage: storage,
   limits: { fileSize: MAX_UPLOAD_MB * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
+  fileFilter: function (req, file, cb) {
     if (!file.mimetype || !file.mimetype.startsWith('video/')) {
       return cb(new Error('Only video files are allowed'));
     }
@@ -274,27 +379,25 @@ const upload = multer({
   }
 });
 
-let db = readDb();
+let db = normalizeDb(readDb());
 const adminSessions = new Map();
 const appSessions = new Map();
 
-function save() {
-  writeDb(db);
-}
+rehydrateSessions();
 
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(UPLOAD_DIR, { maxAge: '7d' }));
 
-app.get('/health', (req, res) => {
+app.get('/health', function (req, res) {
   res.json({ ok: true });
 });
 
-app.get('/', (req, res) => {
+app.get('/', function (req, res) {
   res.sendFile(INDEX_FILE);
 });
 
-app.get('/api/bootstrap', (req, res) => {
+app.get('/api/bootstrap', function (req, res) {
   res.json({
     ok: true,
     hasAdminPassword: Boolean(db.auth.adminHash),
@@ -303,7 +406,7 @@ app.get('/api/bootstrap', (req, res) => {
   });
 });
 
-app.post('/api/admin/setup', (req, res) => {
+app.post('/api/admin/setup', function (req, res) {
   if (db.auth.adminHash) {
     return res.status(409).json({ ok: false, error: 'already_initialized' });
   }
@@ -339,7 +442,7 @@ app.post('/api/admin/setup', (req, res) => {
   res.json({ ok: true });
 });
 
-app.post('/api/admin/login', (req, res) => {
+app.post('/api/admin/login', function (req, res) {
   if (!db.auth.adminHash) {
     return res.status(400).json({ ok: false, error: 'not_initialized' });
   }
@@ -363,13 +466,13 @@ app.post('/api/admin/login', (req, res) => {
   res.json({ ok: true });
 });
 
-app.post('/api/admin/logout', requireAdmin, (req, res) => {
-  adminSessions.delete(req.adminSession.token);
+app.post('/api/admin/logout', requireAdmin, function (req, res) {
+  deleteSession('admin', req.adminSession.token);
   res.clearCookie('admin_token');
   res.json({ ok: true });
 });
 
-app.get('/api/admin/me', requireAdmin, (req, res) => {
+app.get('/api/admin/me', requireAdmin, function (req, res) {
   const active = activeUsersList();
   res.json({
     ok: true,
@@ -385,7 +488,7 @@ app.get('/api/admin/me', requireAdmin, (req, res) => {
   });
 });
 
-app.get('/api/admin/stats', requireAdmin, (req, res) => {
+app.get('/api/admin/stats', requireAdmin, function (req, res) {
   const active = activeUsersList();
   res.json({
     ok: true,
@@ -393,11 +496,13 @@ app.get('/api/admin/stats', requireAdmin, (req, res) => {
     totalVideos: db.videos.length,
     activeUsers: active.count,
     activeSessions: active.list,
-    videos: db.videos.map(publicVideo).sort((a, b) => b.uploadedAt - a.uploadedAt)
+    videos: db.videos.map(publicVideo).sort(function (a, b) {
+      return b.uploadedAt - a.uploadedAt;
+    })
   });
 });
 
-app.post('/api/admin/upload', requireAdmin, upload.single('video'), (req, res) => {
+app.post('/api/admin/upload', requireAdmin, upload.single('video'), function (req, res) {
   if (!req.file) {
     return res.status(400).json({ ok: false, error: 'no_file' });
   }
@@ -406,8 +511,8 @@ app.post('/api/admin/upload', requireAdmin, upload.single('video'), (req, res) =
   const id = crypto.randomUUID ? crypto.randomUUID() : token();
 
   const video = {
-    id,
-    title,
+    id: id,
+    title: title,
     filename: req.file.filename,
     originalName: req.file.originalname || '',
     mimeType: req.file.mimetype || '',
@@ -423,9 +528,12 @@ app.post('/api/admin/upload', requireAdmin, upload.single('video'), (req, res) =
   res.json({ ok: true, video: publicVideo(video) });
 });
 
-app.delete('/api/admin/videos/:id', requireAdmin, (req, res) => {
+app.delete('/api/admin/videos/:id', requireAdmin, function (req, res) {
   const id = String(req.params.id || '');
-  const idx = db.videos.findIndex(v => v.id === id);
+  const idx = db.videos.findIndex(function (v) {
+    return v.id === id;
+  });
+
   if (idx === -1) {
     return res.status(404).json({ ok: false, error: 'not_found' });
   }
@@ -442,7 +550,7 @@ app.delete('/api/admin/videos/:id', requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
-app.post('/api/admin/passwords', requireAdmin, (req, res) => {
+app.post('/api/admin/passwords', requireAdmin, function (req, res) {
   const adminPassword = String(req.body.adminPassword || '').trim();
   const appPassword = String(req.body.appPassword || '').trim();
 
@@ -469,7 +577,7 @@ app.post('/api/admin/passwords', requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
-app.post('/api/public/login', (req, res) => {
+app.post('/api/public/login', function (req, res) {
   if (!db.auth.appHash) {
     return res.status(400).json({ ok: false, error: 'app_password_not_set' });
   }
@@ -494,17 +602,19 @@ app.post('/api/public/login', (req, res) => {
 
   res.json({
     ok: true,
-    videos: db.videos.map(publicVideo).sort((a, b) => b.uploadedAt - a.uploadedAt)
+    videos: db.videos.map(publicVideo).sort(function (a, b) {
+      return b.uploadedAt - a.uploadedAt;
+    })
   });
 });
 
-app.post('/api/public/logout', requireApp, (req, res) => {
-  appSessions.delete(req.appSession.token);
+app.post('/api/public/logout', requireApp, function (req, res) {
+  deleteSession('app', req.appSession.token);
   res.clearCookie('app_token');
   res.json({ ok: true });
 });
 
-app.get('/api/public/me', requireApp, (req, res) => {
+app.get('/api/public/me', requireApp, function (req, res) {
   const active = activeUsersList();
   res.json({
     ok: true,
@@ -513,24 +623,32 @@ app.get('/api/public/me', requireApp, (req, res) => {
   });
 });
 
-app.post('/api/public/heartbeat', requireApp, (req, res) => {
+app.post('/api/public/heartbeat', requireApp, function (req, res) {
   const s = appSessions.get(req.appSession.token);
   if (s) {
     s.lastSeen = now();
     if (req.body && req.body.deviceId) s.deviceId = String(req.body.deviceId);
     if (req.body && req.body.videoId) s.videoId = String(req.body.videoId);
+    if (db.sessions.app[s.token]) {
+      db.sessions.app[s.token].lastSeen = s.lastSeen;
+      db.sessions.app[s.token].deviceId = s.deviceId;
+      db.sessions.app[s.token].videoId = s.videoId;
+      save();
+    }
   }
   res.json({ ok: true });
 });
 
-app.get('/api/public/videos', requireApp, (req, res) => {
+app.get('/api/public/videos', requireApp, function (req, res) {
   res.json({
     ok: true,
-    videos: db.videos.map(publicVideo).sort((a, b) => b.uploadedAt - a.uploadedAt)
+    videos: db.videos.map(publicVideo).sort(function (a, b) {
+      return b.uploadedAt - a.uploadedAt;
+    })
   });
 });
 
-app.post('/api/public/video-view', requireApp, (req, res) => {
+app.post('/api/public/video-view', requireApp, function (req, res) {
   const videoId = String(req.body.videoId || '');
   const video = findVideo(videoId);
 
@@ -546,12 +664,17 @@ app.post('/api/public/video-view', requireApp, (req, res) => {
   if (s) {
     s.lastSeen = now();
     s.videoId = videoId;
+    if (db.sessions.app[s.token]) {
+      db.sessions.app[s.token].lastSeen = s.lastSeen;
+      db.sessions.app[s.token].videoId = videoId;
+      save();
+    }
   }
 
   res.json({ ok: true, views: video.views });
 });
 
-app.use((err, req, res, next) => {
+app.use(function (err, req, res, next) {
   if (!err) return next();
   const msg = String(err.message || 'error').toLowerCase();
 
@@ -565,6 +688,6 @@ app.use((err, req, res, next) => {
   res.status(500).json({ ok: false, error: 'server_error' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on ${PORT}`);
+app.listen(PORT, function () {
+  console.log('Server running on ' + PORT);
 });
