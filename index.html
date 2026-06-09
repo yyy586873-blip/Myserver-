@@ -1,91 +1,630 @@
+<!-- index.html -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-<meta charset="utf-8">
-<title>Chat Panel</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b1020" />
+  <title>Admin Panel</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --card:#111831;
+      --card2:#0f1730;
+      --text:#eef2ff;
+      --muted:#9aa7c7;
+      --line:rgba(255,255,255,.08);
+      --accent:#6ea8ff;
+      --accent2:#7cde9f;
+      --danger:#ff6b6b;
+      --shadow:0 12px 40px rgba(0,0,0,.26);
+      --r:22px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(110,168,255,.15), transparent 24%),
+        radial-gradient(circle at top right, rgba(124,222,159,.11), transparent 26%),
+        var(--bg);
+      color:var(--text);
+      min-height:100vh;
+    }
+    .wrap{max-width:1180px;margin:0 auto;padding:16px}
+    .hidden{display:none !important}
 
-<style>
-body{font-family:Arial;padding:20px}
-.msg{padding:10px;margin:10px;border:1px solid #ccc;cursor:pointer}
-#box{margin-top:20px}
-</style>
+    .gate{
+      min-height:100vh;
+      display:grid;
+      place-items:center;
+      padding:18px;
+    }
+    .gateCard{
+      width:min(520px,100%);
+      padding:22px;
+    }
 
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,.045), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius:var(--r);
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(10px);
+    }
+
+    .topbar{
+      display:flex;
+      gap:14px;
+      align-items:center;
+      justify-content:space-between;
+      padding:16px 18px;
+      margin-bottom:14px;
+    }
+    .brand{display:flex;gap:12px;align-items:center;min-width:0}
+    .logo{
+      width:46px;height:46px;border-radius:16px;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      color:#08101d;
+      display:grid;place-items:center;
+      font-weight:900;font-size:20px;
+      flex:0 0 auto;
+    }
+    .title{min-width:0}
+    .title h1{margin:0;font-size:18px;line-height:1.2}
+    .title p{margin:4px 0 0;font-size:13px;color:var(--muted)}
+    .pill{
+      padding:10px 14px;
+      border-radius:999px;
+      background:rgba(255,255,255,.03);
+      border:1px solid var(--line);
+      color:var(--muted);
+      font-size:13px;
+      white-space:nowrap;
+    }
+    .btn{
+      border:none;
+      border-radius:16px;
+      padding:12px 14px;
+      font-weight:700;
+      color:#fff;
+      background:linear-gradient(135deg,var(--accent),#4f7fff);
+      cursor:pointer;
+      width:100%;
+    }
+    .btn.secondary{background:#18234b}
+    .btn.danger{background:linear-gradient(135deg,#ff6b6b,#ff4c4c)}
+    .btn:active{transform:translateY(1px)}
+    .input,.file{
+      width:100%;
+      border:none;
+      outline:none;
+      border-radius:16px;
+      padding:13px 14px;
+      background:#0b132b;
+      border:1px solid var(--line);
+      color:var(--text);
+      font-size:14px;
+    }
+    .input::placeholder{color:#7f8db3}
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(4,minmax(0,1fr));
+      gap:12px;
+      margin-bottom:14px;
+    }
+    .stat{padding:16px}
+    .stat .label{color:var(--muted);font-size:13px}
+    .stat .value{font-size:30px;font-weight:800;margin-top:8px}
+    .stat .sub{margin-top:6px;color:var(--muted);font-size:12px}
+
+    .row{
+      display:grid;
+      grid-template-columns:1.05fr .95fr;
+      gap:12px;
+      margin-bottom:12px;
+    }
+    .panel{padding:16px}
+    .panel h2{margin:0 0 10px;font-size:18px}
+    .panel .desc{margin:0 0 14px;color:var(--muted);font-size:13px;line-height:1.5}
+
+    .form{display:grid;gap:10px}
+    .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+    .uploadBox{
+      padding:14px;
+      border-radius:18px;
+      border:1px dashed rgba(255,255,255,.14);
+      background:rgba(255,255,255,.02);
+    }
+    .progressWrap{
+      margin-top:10px;
+      height:12px;
+      border-radius:999px;
+      overflow:hidden;
+      background:#091022;
+      border:1px solid var(--line);
+    }
+    .progressBar{
+      height:100%;
+      width:0%;
+      background:linear-gradient(90deg,var(--accent),var(--accent2));
+      transition:width .18s ease;
+    }
+
+    .status{
+      min-height:18px;
+      font-size:13px;
+      color:var(--muted);
+      margin-top:2px;
+    }
+
+    .activeList{
+      display:grid;
+      gap:10px;
+      margin-top:12px;
+    }
+    .activeItem{
+      padding:12px 14px;
+      border-radius:16px;
+      background:#0b132b;
+      border:1px solid var(--line);
+    }
+    .activeItem .a{font-size:13px}
+    .activeItem .b{font-size:12px;color:var(--muted);margin-top:5px;line-height:1.4}
+
+    .videos{
+      display:grid;
+      grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:12px;
+    }
+    .videoCard{padding:14px}
+    .videoHead{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:flex-start;
+      margin-bottom:10px;
+    }
+    .videoHead h3{margin:0;font-size:15px;line-height:1.3}
+    .meta{margin-top:4px;color:var(--muted);font-size:12px;line-height:1.4}
+    .tag{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:6px 10px;
+      border-radius:999px;
+      background:rgba(124,222,159,.13);
+      color:#baf5cb;
+      font-size:12px;
+      flex:0 0 auto;
+    }
+    video{
+      width:100%;
+      display:block;
+      border-radius:18px;
+      background:#000;
+      border:1px solid var(--line);
+      aspect-ratio:16/9;
+    }
+    .actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+    .actions .btn{width:auto;flex:1;min-width:120px;padding:10px 12px}
+
+    .topActions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .topActions .btn{width:auto;padding:10px 14px}
+
+    .section{margin-top:14px}
+
+    @media (max-width: 960px){
+      .grid,.row,.videos,.two{grid-template-columns:1fr}
+    }
+    @media (max-width: 540px){
+      .wrap{padding:12px}
+      .topbar{padding:14px}
+      .panel{padding:14px}
+      .stat .value{font-size:26px}
+      .topbar{flex-direction:column;align-items:stretch}
+      .topActions{width:100%}
+      .topActions .btn{flex:1}
+      .brand{width:100%}
+    }
+  </style>
 </head>
-
 <body>
+  <div class="gate" id="gate">
+    <div class="card gateCard">
+      <div class="brand" style="margin-bottom:14px">
+        <div class="logo">A</div>
+        <div class="title">
+          <h1 id="gateTitle">Loading...</h1>
+          <p id="gateSub">Please wait</p>
+        </div>
+      </div>
 
-<h2>Messages (Click to reply as Person B)</h2>
+      <form id="setupForm" class="form hidden">
+        <input id="setupAdminPass" class="input" type="password" placeholder="Create admin password" />
+        <input id="setupAppPass" class="input" type="password" placeholder="Create app password" />
+        <button class="btn" type="submit">Create Panel</button>
+        <div class="status" id="setupStatus"></div>
+      </form>
 
-<div id="list"></div>
+      <form id="loginForm" class="form hidden">
+        <input id="loginPass" class="input" type="password" placeholder="Admin password" />
+        <button class="btn" type="submit">Login</button>
+        <div class="status" id="loginStatus"></div>
+      </form>
+    </div>
+  </div>
 
-<h3>Reply Box (Person B)</h3>
+  <div class="wrap hidden" id="app">
+    <div class="card topbar">
+      <div class="brand">
+        <div class="logo">A</div>
+        <div class="title">
+          <h1 id="siteName">Admin Panel</h1>
+          <p>Video uploads, passwords, live users, and stats</p>
+        </div>
+      </div>
+      <div class="topActions">
+        <div class="pill" id="livePill">Active: 0</div>
+        <button class="btn secondary" id="refreshBtn">Refresh</button>
+        <button class="btn danger" id="logoutBtn">Logout</button>
+      </div>
+    </div>
 
-<input id="text" placeholder="type reply">
-<button onclick="send()">Send Reply</button>
+    <div class="grid">
+      <div class="card stat">
+        <div class="label">Total Videos</div>
+        <div class="value" id="totalVideos">0</div>
+        <div class="sub">All uploaded videos</div>
+      </div>
+      <div class="card stat">
+        <div class="label">Total Uploads</div>
+        <div class="value" id="totalUploads">0</div>
+        <div class="sub">Upload actions done</div>
+      </div>
+      <div class="card stat">
+        <div class="label">Total Views</div>
+        <div class="value" id="totalViews">0</div>
+        <div class="sub">Play / view events</div>
+      </div>
+      <div class="card stat">
+        <div class="label">App Logins</div>
+        <div class="value" id="appLogins">0</div>
+        <div class="sub">Successful app logins</div>
+      </div>
+    </div>
 
-<script>
+    <div class="row">
+      <div class="card panel">
+        <h2>Upload Video</h2>
+        <p class="desc">Admin yahan se video upload karega. Upload hone ke baad app me wahi video show hoga.</p>
+        <form id="uploadForm" class="form">
+          <input class="input" id="videoTitle" placeholder="Video title" />
+          <input class="file" id="videoFile" type="file" accept="video/*" />
+          <button class="btn" type="submit">Upload</button>
+          <div class="progressWrap"><div class="progressBar" id="progressBar"></div></div>
+          <div class="status" id="uploadStatus"></div>
+        </form>
+      </div>
 
-let selectedUser="PersonB";
+      <div class="card panel">
+        <h2>Passwords</h2>
+        <p class="desc">Yahan se admin password aur app open password dono set/change kar sakte ho.</p>
+        <form id="passwordForm" class="form">
+          <input class="input" id="newAdminPass" type="password" placeholder="New admin password" />
+          <input class="input" id="newAppPass" type="password" placeholder="New app password" />
+          <button class="btn secondary" type="submit">Save Passwords</button>
+          <div class="status" id="passStatus"></div>
+        </form>
 
-let selectedTo="";
+        <div class="section">
+          <h2 style="margin-bottom:8px">Currently Active</h2>
+          <div class="pill" id="activeCountPill">0 users online</div>
+          <div class="activeList" id="activeList"></div>
+        </div>
+      </div>
+    </div>
 
-function load(){
+    <div class="section card panel">
+      <h2>Uploaded Videos</h2>
+      <p class="desc">Preview, views aur delete control.</p>
+      <div class="videos" id="videos"></div>
+    </div>
+  </div>
 
-fetch("/api/messages")
-.then(r=>r.json())
-.then(data=>{
+  <script>
+    const gate = document.getElementById('gate');
+    const app = document.getElementById('app');
+    const gateTitle = document.getElementById('gateTitle');
+    const gateSub = document.getElementById('gateSub');
 
-let html="";
+    const setupForm = document.getElementById('setupForm');
+    const loginForm = document.getElementById('loginForm');
+    const setupStatus = document.getElementById('setupStatus');
+    const loginStatus = document.getElementById('loginStatus');
+    const uploadStatus = document.getElementById('uploadStatus');
+    const passStatus = document.getElementById('passStatus');
 
-data.forEach(m=>{
+    const totalVideos = document.getElementById('totalVideos');
+    const totalUploads = document.getElementById('totalUploads');
+    const totalViews = document.getElementById('totalViews');
+    const appLogins = document.getElementById('appLogins');
+    const livePill = document.getElementById('livePill');
+    const activeCountPill = document.getElementById('activeCountPill');
+    const activeList = document.getElementById('activeList');
+    const videosBox = document.getElementById('videos');
+    const siteName = document.getElementById('siteName');
+    const progressBar = document.getElementById('progressBar');
 
-html+=`
-<div class="msg" onclick="selectUser('${m.from}')">
+    function esc(s) {
+      return String(s || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
 
-<b>${m.from}</b>: ${m.text}<br>
-<small>${m.time}</small>
+    function fmtBytes(bytes) {
+      const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+      if (!bytes && bytes !== 0) return '0 B';
+      const i = Math.floor(Math.log(bytes) / Math.log(1024));
+      return (bytes / Math.pow(1024, i)).toFixed(i ? 1 : 0) + ' ' + sizes[i];
+    }
 
-</div>
-`;
+    function fmtDate(ts) {
+      return new Date(ts).toLocaleString();
+    }
 
-});
+    async function api(url, opts = {}) {
+      const res = await fetch(url, {
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
+        ...opts
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const err = new Error(data.error || 'request_failed');
+        err.data = data;
+        throw err;
+      }
+      return data;
+    }
 
-document.getElementById("list").innerHTML=html;
+    function showGate() {
+      gate.classList.remove('hidden');
+      app.classList.add('hidden');
+    }
 
-});
+    function showApp() {
+      gate.classList.add('hidden');
+      app.classList.remove('hidden');
+    }
 
-}
+    async function loadBootstrap() {
+      const data = await api('/api/bootstrap', { method: 'GET', headers: {} });
+      siteName.textContent = data.siteName || 'Admin Panel';
 
-function selectUser(user){
-selectedTo=user;
-alert("Replying to: "+user);
-}
+      if (data.hasAdminPassword) {
+        gateTitle.textContent = 'Admin Login';
+        gateSub.textContent = 'Admin password enter karo';
+        setupForm.classList.add('hidden');
+        loginForm.classList.remove('hidden');
+      } else {
+        gateTitle.textContent = 'Create Panel';
+        gateSub.textContent = 'Pehle admin aur app password set karo';
+        loginForm.classList.add('hidden');
+        setupForm.classList.remove('hidden');
+      }
+    }
 
-function send(){
+    async function refreshDashboard() {
+      const data = await api('/api/admin/stats', { method: 'GET', headers: {} });
+      const counters = data.counters || {};
+      totalVideos.textContent = data.totalVideos || 0;
+      totalUploads.textContent = counters.totalUploads || 0;
+      totalViews.textContent = counters.totalViews || 0;
+      appLogins.textContent = counters.appLogins || 0;
+      livePill.textContent = 'Active: ' + (data.activeUsers || 0);
+      activeCountPill.textContent = (data.activeUsers || 0) + ' users online';
 
-let text=document.getElementById("text").value;
+      const activeSessions = data.activeSessions || [];
+      activeList.innerHTML = activeSessions.length
+        ? activeSessions.map(s => `
+            <div class="activeItem">
+              <div class="a">Session ${esc(s.tokenPrefix || '')}</div>
+              <div class="b">${esc(s.deviceId || 'no device id')} • ${esc(s.ip || 'unknown')} • ${fmtDate(s.lastSeen)}</div>
+            </div>
+          `).join('')
+        : '<div class="activeItem"><div class="a">No active users right now</div></div>';
 
-fetch("/api/send",{
-method:"POST",
-headers:{
-"Content-Type":"application/json"
-},
-body:JSON.stringify({
-from:"PersonB",
-text:text
-})
-});
+      const videos = data.videos || [];
+      videosBox.innerHTML = videos.length
+        ? videos.map(v => `
+            <div class="card videoCard">
+              <div class="videoHead">
+                <div>
+                  <h3>${esc(v.title || 'Untitled')}</h3>
+                  <div class="meta">${esc(fmtDate(v.uploadedAt))} • ${esc(fmtBytes(v.size || 0))} • ${esc(v.views || 0)} views</div>
+                </div>
+                <div class="tag">ID: ${esc(String(v.id).slice(0, 8))}</div>
+              </div>
+              <video controls preload="metadata" src="${v.url}"></video>
+              <div class="actions">
+                <button class="btn secondary" type="button" onclick="copyUrl('${esc(v.url)}')">Copy URL</button>
+                <button class="btn danger" type="button" onclick="removeVideo('${esc(v.id)}')">Delete</button>
+              </div>
+            </div>
+          `).join('')
+        : '<div class="activeItem"><div class="a">No videos uploaded yet</div></div>';
+    }
 
-document.getElementById("text").value="";
+    window.copyUrl = async function (url) {
+      try {
+        await navigator.clipboard.writeText(location.origin + url);
+      } catch {
+        prompt('Copy URL', location.origin + url);
+      }
+    };
 
-setTimeout(load,500);
+    window.removeVideo = async function (id) {
+      if (!confirm('Delete this video?')) return;
+      await api('/api/admin/videos/' + encodeURIComponent(id), {
+        method: 'DELETE',
+        headers: {}
+      });
+      await refreshDashboard();
+    };
 
-}
+    setupForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      setupStatus.textContent = 'Creating...';
+      const adminPassword = document.getElementById('setupAdminPass').value.trim();
+      const appPassword = document.getElementById('setupAppPass').value.trim();
 
-load();
-setInterval(load,2000);
+      try {
+        await api('/api/admin/setup', {
+          method: 'POST',
+          body: JSON.stringify({ adminPassword, appPassword })
+        });
+        setupStatus.textContent = 'Created.';
+        await refreshDashboard();
+        showApp();
+      } catch (err) {
+        setupStatus.textContent = 'Error: ' + (err.data?.error || err.message);
+      }
+    });
 
-</script>
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      loginStatus.textContent = 'Logging in...';
+      const password = document.getElementById('loginPass').value.trim();
 
+      try {
+        await api('/api/admin/login', {
+          method: 'POST',
+          body: JSON.stringify({ password })
+        });
+        loginStatus.textContent = 'Success.';
+        await refreshDashboard();
+        showApp();
+      } catch (err) {
+        loginStatus.textContent = 'Error: ' + (err.data?.error || err.message);
+      }
+    });
+
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      try {
+        await api('/api/admin/logout', { method: 'POST', body: '{}' });
+      } catch {}
+      showGate();
+      await loadBootstrap();
+    });
+
+    document.getElementById('refreshBtn').addEventListener('click', async () => {
+      try {
+        await refreshDashboard();
+      } catch {}
+    });
+
+    document.getElementById('passwordForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      passStatus.textContent = 'Saving...';
+      try {
+        const adminPassword = document.getElementById('newAdminPass').value.trim();
+        const appPassword = document.getElementById('newAppPass').value.trim();
+
+        await api('/api/admin/passwords', {
+          method: 'POST',
+          body: JSON.stringify({ adminPassword, appPassword })
+        });
+
+        document.getElementById('newAdminPass').value = '';
+        document.getElementById('newAppPass').value = '';
+        passStatus.textContent = 'Saved.';
+      } catch (err) {
+        passStatus.textContent = 'Error: ' + (err.data?.error || err.message);
+      }
+    });
+
+    document.getElementById('uploadForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const file = document.getElementById('videoFile').files[0];
+      const title = document.getElementById('videoTitle').value.trim() || (file ? file.name : 'video');
+
+      if (!file) {
+        uploadStatus.textContent = 'Pehle video select karo.';
+        return;
+      }
+
+      uploadStatus.textContent = 'Uploading...';
+      progressBar.style.width = '0%';
+
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('video', file);
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/api/admin/upload', true);
+      xhr.withCredentials = true;
+
+      xhr.upload.onprogress = function (evt) {
+        if (evt.lengthComputable) {
+          const pct = Math.round((evt.loaded / evt.total) * 100);
+          progressBar.style.width = pct + '%';
+          uploadStatus.textContent = 'Uploading... ' + pct + '%';
+        }
+      };
+
+      xhr.onload = async function () {
+        try {
+          const data = JSON.parse(xhr.responseText || '{}');
+          if (xhr.status >= 200 && xhr.status < 300 && data.ok) {
+            uploadStatus.textContent = 'Uploaded.';
+            document.getElementById('videoFile').value = '';
+            document.getElementById('videoTitle').value = '';
+            progressBar.style.width = '100%';
+            await refreshDashboard();
+            setTimeout(() => { progressBar.style.width = '0%'; }, 800);
+          } else {
+            uploadStatus.textContent = 'Error: ' + (data.error || 'upload_failed');
+          }
+        } catch {
+          uploadStatus.textContent = 'Upload failed.';
+        }
+      };
+
+      xhr.onerror = function () {
+        uploadStatus.textContent = 'Upload failed.';
+      };
+
+      xhr.send(formData);
+    });
+
+    async function checkSession() {
+      try {
+        await api('/api/admin/me', { method: 'GET', headers: {} });
+        showApp();
+        await refreshDashboard();
+      } catch {
+        showGate();
+        await loadBootstrap();
+      }
+    }
+
+    checkSession();
+
+    setInterval(async () => {
+      if (!app.classList.contains('hidden')) {
+        try { await refreshDashboard(); } catch {}
+      }
+    }, 10000);
+  </script>
 </body>
 </html>
