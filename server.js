@@ -3,21 +3,15 @@ const express = require('express');
 const app = express();
 app.use(express.json());
 
-const users = new Map();      // userId -> { id, name }
-const snoozed = new Map();    // userId -> callId
-let activeCall = null;        // { callId, callerId, callerName, calleeId, status }
+const users = new Map();   // userId -> { id, name, lastSeen }
+const messages = [];       // { id, userId, name, text, time }
 
-function makeCallId() {
+function clean(s) {
+  return String(s || '').trim();
+}
+
+function makeId() {
   return String(Date.now()) + '_' + Math.random().toString(36).slice(2, 8);
-}
-
-function clean(v) {
-  return String(v || '').trim();
-}
-
-function getUserName(userId) {
-  const u = users.get(userId);
-  return u ? u.name : 'User';
 }
 
 function getUsersList() {
@@ -26,61 +20,10 @@ function getUsersList() {
   });
 }
 
-function clearSnoozes() {
-  snoozed.clear();
-}
-
-function stateFor(userId) {
-  if (!activeCall) {
-    return { status: 'idle' };
+function trimMessages() {
+  while (messages.length > 100) {
+    messages.shift();
   }
-
-  if (activeCall.status === 'ringing') {
-    if (userId === activeCall.callerId) {
-      return {
-        status: 'outgoing',
-        callId: activeCall.callId,
-        callerName: activeCall.callerName
-      };
-    }
-
-    if (snoozed.get(userId) === activeCall.callId) {
-      return { status: 'idle' };
-    }
-
-    return {
-      status: 'incoming',
-      callId: activeCall.callId,
-      fromId: activeCall.callerId,
-      fromName: activeCall.callerName
-    };
-  }
-
-  if (activeCall.status === 'connected') {
-    if (userId === activeCall.callerId) {
-      return {
-        status: 'connected',
-        callId: activeCall.callId,
-        role: 'caller',
-        peerId: activeCall.calleeId,
-        peerName: getUserName(activeCall.calleeId)
-      };
-    }
-
-    if (userId === activeCall.calleeId) {
-      return {
-        status: 'connected',
-        callId: activeCall.callId,
-        role: 'callee',
-        peerId: activeCall.callerId,
-        peerName: activeCall.callerName
-      };
-    }
-
-    return { status: 'idle' };
-  }
-
-  return { status: 'idle' };
 }
 
 app.get('/', function (req, res) {
@@ -88,7 +31,7 @@ app.get('/', function (req, res) {
     ok: true,
     name: 'myserver',
     usersOnline: users.size,
-    activeCall: !!activeCall
+    messages: messages.length
   });
 });
 
@@ -102,136 +45,70 @@ app.post('/register', function (req, res) {
 
   users.set(userId, {
     id: userId,
-    name: name
+    name: name,
+    lastSeen: Date.now()
   });
 
   res.json({
     ok: true,
     me: { id: userId, name: name },
     users: getUsersList(),
-    state: stateFor(userId)
+    messages: messages
   });
 });
 
-app.post('/requestCall', function (req, res) {
+app.post('/sendMessage', function (req, res) {
   const userId = clean(req.body.userId);
+  const text = clean(req.body.text);
 
   if (!userId || !users.has(userId)) {
     return res.status(400).json({ ok: false, error: 'not registered' });
   }
 
-  if (activeCall) {
-    return res.status(409).json({ ok: false, error: 'busy' });
+  if (!text) {
+    return res.status(400).json({ ok: false, error: 'empty message' });
   }
 
-  clearSnoozes();
-
-  activeCall = {
-    callId: makeCallId(),
-    callerId: userId,
-    callerName: getUserName(userId),
-    calleeId: null,
-    status: 'ringing'
+  const user = users.get(userId);
+  const msg = {
+    id: makeId(),
+    userId: userId,
+    name: user.name,
+    text: text.slice(0, 500),
+    time: Date.now()
   };
 
-  res.json({
-    ok: true,
-    callId: activeCall.callId,
-    state: stateFor(userId)
-  });
-});
-
-app.post('/acceptCall', function (req, res) {
-  const userId = clean(req.body.userId);
-  const callId = clean(req.body.callId);
-
-  if (!activeCall) {
-    return res.status(404).json({ ok: false, error: 'no active call' });
-  }
-
-  if (activeCall.callId !== callId) {
-    return res.status(400).json({ ok: false, error: 'call mismatch' });
-  }
-
-  if (activeCall.status !== 'ringing') {
-    return res.status(409).json({ ok: false, error: 'not ringing' });
-  }
-
-  if (userId === activeCall.callerId) {
-    return res.status(400).json({ ok: false, error: 'caller cannot accept own call' });
-  }
-
-  if (!users.has(userId)) {
-    return res.status(400).json({ ok: false, error: 'not registered' });
-  }
-
-  activeCall.calleeId = userId;
-  activeCall.status = 'connected';
-  snoozed.delete(userId);
+  messages.push(msg);
+  trimMessages();
 
   res.json({
     ok: true,
-    callId: activeCall.callId,
-    state: stateFor(userId)
+    message: msg
   });
-});
-
-app.post('/snoozeIncoming', function (req, res) {
-  const userId = clean(req.body.userId);
-  const callId = clean(req.body.callId);
-
-  if (!activeCall) {
-    return res.json({ ok: true });
-  }
-
-  if (activeCall.callId === callId && activeCall.status === 'ringing' && userId !== activeCall.callerId) {
-    snoozed.set(userId, callId);
-  }
-
-  res.json({ ok: true });
-});
-
-app.post('/endCall', function (req, res) {
-  const userId = clean(req.body.userId);
-  const callId = clean(req.body.callId);
-
-  if (!activeCall) {
-    return res.json({ ok: true, ended: false });
-  }
-
-  const isParticipant =
-    userId === activeCall.callerId || userId === activeCall.calleeId;
-
-  if (!isParticipant) {
-    return res.status(403).json({ ok: false, error: 'not a participant' });
-  }
-
-  if (activeCall.callId !== callId) {
-    return res.status(400).json({ ok: false, error: 'call mismatch' });
-  }
-
-  activeCall = null;
-  clearSnoozes();
-
-  res.json({ ok: true, ended: true });
 });
 
 app.get('/poll', function (req, res) {
   const userId = clean(req.query.userId);
 
-  if (!userId || !users.has(userId)) {
-    return res.json({
-      ok: true,
-      users: getUsersList(),
-      state: { status: 'idle' }
-    });
+  if (userId && users.has(userId)) {
+    const u = users.get(userId);
+    u.lastSeen = Date.now();
+    users.set(userId, u);
   }
 
   res.json({
     ok: true,
     users: getUsersList(),
-    state: stateFor(userId)
+    messages: messages
   });
+});
+
+app.post('/unregister', function (req, res) {
+  const userId = clean(req.body.userId);
+  if (userId) {
+    users.delete(userId);
+  }
+  res.json({ ok: true });
 });
 
 const PORT = process.env.PORT || 3000;
