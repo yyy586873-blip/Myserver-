@@ -13,225 +13,175 @@ html {
 body {
   margin: 0;
   font-family: Arial, Helvetica, sans-serif;
+
   background:
-    radial-gradient(circle at 10% 0%, rgba(255, 210, 0, 0.10), transparent 28%),
-    radial-gradient(circle at 90% 10%, rgba(0, 135, 255, 0.12), transparent 30%),
+    radial-gradient(
+      circle at 10% 0%,
+      rgba(255, 205, 0, 0.10),
+      transparent 30%
+    ),
+    radial-gradient(
+      circle at 90% 10%,
+      rgba(0, 135, 255, 0.12),
+      transparent 30%
+    ),
     #070b12;
+
   color: #ffffff;
 }
 
-a {
-  color: inherit;
-}
+/* ================= HEADER ================= */
 
 .header {
   position: sticky;
   top: 0;
   z-index: 100;
 
-  padding: 18px 20px;
-
   background:
     linear-gradient(
       135deg,
-      rgba(255, 194, 0, 0.95),
-      rgba(0, 116, 255, 0.96)
+      #ffca00,
+      #007eff
     );
 
   box-shadow:
-    0 8px 30px rgba(0, 0, 0, 0.35);
+    0 8px 30px rgba(0,0,0,0.35);
 
   border-bottom:
-    1px solid rgba(255,255,255,0.15);
+    1px solid rgba(255,255,255,0.18);
 }
 
 .header-inner {
-  max-width: 1150px;
+  max-width: 900px;
   margin: auto;
 
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  padding: 20px;
 
-  gap: 15px;
-}
-
-.logo-wrap {
-  min-width: 0;
+  text-align: center;
 }
 
 .logo {
-  font-size: 26px;
+  font-size: 28px;
   font-weight: 900;
   letter-spacing: 0.5px;
 }
 
 .subtitle {
-  margin-top: 5px;
+  margin-top: 6px;
+
+  color:
+    rgba(255,255,255,0.88);
+
   font-size: 13px;
-  color: rgba(255,255,255,0.86);
 }
 
-.header-badge {
-  padding: 9px 13px;
-  border-radius: 999px;
-
-  background: rgba(0,0,0,0.22);
-  border: 1px solid rgba(255,255,255,0.22);
-
-  font-size: 12px;
-  font-weight: 800;
-
-  white-space: nowrap;
-}
+/* ================= MAIN ================= */
 
 .container {
-  max-width: 1150px;
+  width: 100%;
+  max-width: 900px;
+
   margin: auto;
-  padding: 20px;
+
+  padding: 20px 15px 40px;
 }
 
-.hero {
-  margin-bottom: 18px;
+/* ================= HERO ================= */
 
+.hero {
   padding: 22px;
 
-  border-radius: 20px;
+  margin-bottom: 18px;
+
+  border-radius: 19px;
 
   background:
     linear-gradient(
-      135deg,
-      rgba(255, 194, 0, 0.11),
-      rgba(0, 132, 255, 0.11)
+      145deg,
+      rgba(255,202,0,0.09),
+      rgba(0,126,255,0.10)
     );
 
   border:
     1px solid rgba(255,255,255,0.08);
 
   box-shadow:
-    0 10px 35px rgba(0,0,0,0.22);
+    0 10px 35px rgba(0,0,0,0.23);
+
+  text-align: center;
 }
 
 .hero-title {
-  font-size: 25px;
+  font-size: 23px;
   font-weight: 900;
+
   margin-bottom: 8px;
 }
 
 .hero-text {
-  color: #b9c0cc;
-  line-height: 1.6;
+  color: #aeb7c4;
+
   font-size: 14px;
+
+  line-height: 1.65;
 }
 
-.link-grid {
-  display: grid;
-  grid-template-columns:
-    repeat(auto-fit, minmax(230px, 1fr));
-  gap: 12px;
-
-  margin: 18px 0;
-}
-
-.link-card {
-  text-decoration: none;
-
-  padding: 15px;
-
-  border-radius: 15px;
-
-  background: #101722;
-
-  border:
-    1px solid rgba(255,255,255,0.07);
-
-  transition:
-    transform 0.16s ease,
-    border-color 0.16s ease,
-    background 0.16s ease;
-}
-
-.link-card:hover {
-  transform: translateY(-2px);
-
-  border-color:
-    rgba(255, 207, 0, 0.55);
-
-  background: #131d2b;
-}
-
-.link-title {
-  font-size: 14px;
-  font-weight: 900;
-
-  margin-bottom: 5px;
-}
-
-.link-sub {
-  color: #9fa9b8;
-  font-size: 12px;
-  line-height: 1.45;
-}
-
-.link-icon {
-  font-size: 25px;
-  margin-bottom: 9px;
-}
+/* ================= TOOLBAR ================= */
 
 .toolbar {
   display: flex;
+
   gap: 10px;
-  flex-wrap: wrap;
 
   margin-bottom: 15px;
 }
 
 .search {
   flex: 1;
-  min-width: 220px;
 
-  padding: 13px 15px;
+  min-width: 0;
+
+  padding: 13px 14px;
 
   border-radius: 12px;
 
   border:
     1px solid rgba(255,255,255,0.08);
 
-  outline: none;
-
-  color: #ffffff;
-
   background: #101722;
+
+  color: white;
+
+  outline: none;
 
   font-size: 14px;
 }
 
 .search:focus {
-  border-color: #ffca00;
+  border-color: #ffce00;
 }
 
 button {
   border: none;
+
   border-radius: 11px;
 
-  padding: 12px 16px;
+  padding: 12px 17px;
 
   background:
     linear-gradient(
       135deg,
-      #ffc400,
-      #0089ff
+      #ffd000,
+      #008cff
     );
 
-  color: #06101b;
+  color: #06101a;
 
   font-size: 13px;
+
   font-weight: 900;
 
   cursor: pointer;
-
-  box-shadow:
-    0 6px 18px rgba(0, 140, 255, 0.16);
 }
 
 button:hover {
@@ -239,26 +189,33 @@ button:hover {
 }
 
 .status {
-  margin-bottom: 15px;
+  margin-bottom: 13px;
 
-  color: #9da8b6;
+  color: #909baa;
 
   font-size: 13px;
 }
 
-.file-grid {
-  display: grid;
+/* ================= VERTICAL FILE LIST ================= */
 
-  grid-template-columns:
-    repeat(auto-fill, minmax(290px, 1fr));
+.file-list {
+  display: flex;
 
-  gap: 15px;
+  flex-direction: column;
+
+  gap: 14px;
 }
 
 .file-card {
+  width: 100%;
+
   position: relative;
 
   overflow: hidden;
+
+  padding: 18px;
+
+  border-radius: 17px;
 
   background:
     linear-gradient(
@@ -270,16 +227,12 @@ button:hover {
   border:
     1px solid rgba(255,255,255,0.07);
 
-  border-radius: 17px;
-
-  padding: 17px;
-
   box-shadow:
-    0 9px 25px rgba(0,0,0,0.25);
+    0 9px 26px rgba(0,0,0,0.25);
 
   transition:
-    transform 0.16s ease,
-    border-color 0.16s ease;
+    transform 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .file-card::before {
@@ -287,8 +240,8 @@ button:hover {
 
   position: absolute;
 
-  left: 0;
   top: 0;
+  left: 0;
 
   width: 100%;
   height: 3px;
@@ -302,92 +255,131 @@ button:hover {
 }
 
 .file-card:hover {
-  transform: translateY(-3px);
+  transform: translateY(-2px);
 
   border-color:
-    rgba(0, 156, 255, 0.35);
+    rgba(0,145,255,0.4);
+}
+
+.file-top {
+  display: flex;
+
+  align-items: center;
+
+  gap: 13px;
 }
 
 .file-icon {
-  font-size: 34px;
+  width: 52px;
+  height: 52px;
 
-  margin-top: 5px;
-  margin-bottom: 9px;
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 13px;
+
+  font-size: 27px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255,207,0,0.12),
+      rgba(0,136,255,0.12)
+    );
+
+  border:
+    1px solid rgba(255,255,255,0.07);
+}
+
+.file-title-box {
+  min-width: 0;
+  flex: 1;
 }
 
 .file-name {
   font-size: 17px;
+
   font-weight: 900;
 
+  line-height: 1.4;
+
   word-break: break-word;
-
-  line-height: 1.35;
-}
-
-.file-info {
-  margin-top: 8px;
-
-  font-size: 12px;
-
-  color: #98a3b1;
-
-  line-height: 1.7;
 }
 
 .file-type {
   display: inline-block;
 
-  margin-top: 10px;
+  margin-top: 6px;
 
-  padding: 5px 8px;
+  padding: 4px 8px;
 
   border-radius: 999px;
 
-  background:
-    rgba(255, 204, 0, 0.10);
+  color: #ffd21a;
 
-  color: #ffd31a;
+  background:
+    rgba(255,204,0,0.09);
 
   border:
-    1px solid rgba(255,204,0,0.16);
+    1px solid rgba(255,204,0,0.15);
 
   font-size: 10px;
 
   font-weight: 900;
 }
 
+.file-info {
+  margin-top: 15px;
+
+  padding-top: 12px;
+
+  border-top:
+    1px solid rgba(255,255,255,0.06);
+
+  color: #98a3b1;
+
+  font-size: 12px;
+
+  line-height: 1.75;
+}
+
 .actions {
   display: flex;
 
-  gap: 8px;
+  gap: 9px;
 
   margin-top: 15px;
 }
 
-.action-btn {
+.action {
   flex: 1;
 
   text-align: center;
 
   text-decoration: none;
 
-  border-radius: 10px;
+  padding: 11px;
 
-  padding: 10px;
+  border-radius: 10px;
 
   font-size: 12px;
 
   font-weight: 900;
-
-  cursor: pointer;
 }
 
-.open-btn {
-  background: #1d2633;
-  color: #ffffff;
+.open {
+  color: white;
+
+  background: #202a38;
 }
 
-.download-btn {
+.get-download {
+  border: none;
+
   background:
     linear-gradient(
       135deg,
@@ -395,57 +387,163 @@ button:hover {
       #008cff
     );
 
-  color: #07111c;
+  color: #06101a;
+
+  cursor: pointer;
 }
+
+/* ================= EMPTY / LOADING ================= */
 
 .empty,
 .loading {
-  padding: 42px 20px;
+  padding: 45px 20px;
 
   text-align: center;
 
-  color: #798391;
+  color: #788391;
+
+  border-radius: 15px;
+
+  background: #0e151e;
+
+  border:
+    1px solid rgba(255,255,255,0.05);
 }
+
+/* ================= FOOTER / OWNER INFO ================= */
 
 .footer {
-  margin-top: 35px;
-  padding: 20px 0 10px;
+  margin-top: 40px;
+
+  padding: 25px 0 10px;
+
+  border-top:
+    1px solid rgba(255,255,255,0.07);
 
   text-align: center;
-
-  color: #697382;
-
-  font-size: 12px;
 }
 
-/* Download modal */
+.footer-title {
+  font-size: 20px;
+
+  font-weight: 900;
+
+  margin-bottom: 7px;
+}
+
+.footer-sub {
+  color: #8994a2;
+
+  font-size: 12px;
+
+  line-height: 1.6;
+
+  margin-bottom: 20px;
+}
+
+.owner-box {
+  width: 100%;
+
+  padding: 18px;
+
+  border-radius: 16px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #101821,
+      #0b1119
+    );
+
+  border:
+    1px solid rgba(255,255,255,0.07);
+}
+
+.owner-line {
+  margin-bottom: 13px;
+
+  color: #b2bcc8;
+
+  font-size: 13px;
+
+  line-height: 1.6;
+}
+
+.owner-line strong {
+  color: white;
+}
+
+.footer-links {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 9px;
+
+  margin-top: 15px;
+}
+
+.footer-link {
+  display: block;
+
+  text-decoration: none;
+
+  padding: 12px;
+
+  border-radius: 10px;
+
+  background: #161f2c;
+
+  color: white;
+
+  font-size: 12px;
+
+  font-weight: 800;
+
+  transition:
+    background 0.15s;
+}
+
+.footer-link:hover {
+  background: #202d3d;
+}
+
+.footer-note {
+  margin-top: 20px;
+
+  color: #66717f;
+
+  font-size: 11px;
+
+  line-height: 1.6;
+}
+
+/* ================= DOWNLOAD MODAL ================= */
 
 .modal {
   position: fixed;
 
-  left: 0;
-  top: 0;
+  inset: 0;
 
-  width: 100%;
-  height: 100%;
+  z-index: 1000;
 
   display: none;
 
   align-items: center;
+
   justify-content: center;
 
-  padding: 20px;
+  padding: 18px;
 
   background:
-    rgba(0,0,0,0.72);
+    rgba(0,0,0,0.74);
 
   backdrop-filter: blur(7px);
-
-  z-index: 1000;
 }
 
 .modal-box {
   width: 100%;
+
   max-width: 420px;
 
   padding: 22px;
@@ -463,41 +561,44 @@ button:hover {
     1px solid rgba(255,255,255,0.09);
 
   box-shadow:
-    0 20px 60px rgba(0,0,0,0.5);
+    0 25px 70px rgba(0,0,0,0.55);
 }
 
 .modal-title {
   font-size: 19px;
+
   font-weight: 900;
 
-  margin-bottom: 9px;
+  margin-bottom: 10px;
 }
 
 .modal-text {
-  color: #9da8b6;
-
-  line-height: 1.6;
+  color: #9ba6b5;
 
   font-size: 13px;
+
+  line-height: 1.6;
 
   margin-bottom: 18px;
 }
 
 .progress-track {
   width: 100%;
-  height: 8px;
 
-  border-radius: 999px;
+  height: 8px;
 
   overflow: hidden;
 
-  background: #1d2733;
+  border-radius: 999px;
 
-  margin-bottom: 11px;
+  background: #202b38;
+
+  margin-bottom: 10px;
 }
 
 .progress-bar {
   width: 0%;
+
   height: 100%;
 
   background:
@@ -508,22 +609,23 @@ button:hover {
     );
 
   transition:
-    width 0.4s ease;
+    width 0.35s ease;
 }
 
 .countdown {
-  margin-bottom: 15px;
-
-  color: #ffd11a;
+  color: #ffd21a;
 
   font-size: 12px;
 
   font-weight: 900;
+
+  margin-bottom: 16px;
 }
 
 .modal-actions {
   display: flex;
-  gap: 8px;
+
+  gap: 9px;
 }
 
 .modal-actions button {
@@ -534,116 +636,54 @@ button:hover {
   display: none !important;
 }
 
-</style></head><body><header class="header">
-  <div class="header-inner"><div class="logo-wrap">
-  <div class="logo">
-    Lethal Devil File Store
-  </div>
+@media (max-width: 520px) {
 
-  <div class="subtitle">
-    Files • Updates • Resources
-  </div>
+  .container {
+    padding: 15px 11px 35px;
+  }
+
+  .logo {
+    font-size: 23px;
+  }
+
+  .toolbar {
+    flex-direction: column;
+  }
+
+  .toolbar button {
+    width: 100%;
+  }
+
+  .file-card {
+    padding: 15px;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .action {
+    width: 100%;
+  }
+}
+
+</style></head><body><!-- ================= HEADER ================= --><header class="header">  <div class="header-inner"><div class="logo">
+  Lethal Devil File Store
 </div>
 
-<div class="header-badge">
-  ONLINE
+<div class="subtitle">
+  Files • Resources • Updates
 </div>
 
-  </div>
-</header><main class="container">  <section class="hero"><div class="hero-title">
+  </div></header><!-- ================= MAIN ================= --><main class="container">  <section class="hero"><div class="hero-title">
   Welcome to Lethal Devil
 </div>
 
 <div class="hero-text">
-  Browse available files, check their details,
-  open supported files directly or use the
-  protected two-step download process.
+  Browse the available files below.
+  Open supported files directly or prepare
+  the download through the download panel.
 </div>
-
-  </section>  <section class="link-grid"><a
-  class="link-card"
-  href="https://t.me/LETHALXNETWORK"
-  target="_blank"
-  rel="noopener"
->
-  <div class="link-icon">📢</div>
-
-  <div class="link-title">
-    Backup Channel
-  </div>
-
-  <div class="link-sub">
-    @lethalznetwork
-  </div>
-</a>
-
-<a
-  class="link-card"
-  href="https://t.me/LETHALXNETWORK"
-  target="_blank"
-  rel="noopener"
->
-  <div class="link-icon">💬</div>
-
-  <div class="link-title">
-    Join Telegram
-  </div>
-
-  <div class="link-sub">
-    Get updates and new files
-  </div>
-</a>
-
-<a
-  class="link-card"
-  href="https://www.instagram.com/t1__bot"
-  target="_blank"
-  rel="noopener"
->
-  <div class="link-icon">📸</div>
-
-  <div class="link-title">
-    Your Problems 🤔 My Solutions 😎
-  </div>
-
-  <div class="link-sub">
-    Ask Your Question
-  </div>
-</a>
-
-<a
-  class="link-card"
-  href="https://t.me/T1botYouTube"
-  target="_blank"
-  rel="noopener"
->
-  <div class="link-icon">▶️</div>
-
-  <div class="link-title">
-    T1 Bot YouTube
-  </div>
-
-  <div class="link-sub">
-    Tutorials and updates
-  </div>
-</a>
-
-<a
-  class="link-card"
-  href="https://t.me/lethaldevil_bot"
-  target="_blank"
-  rel="noopener"
->
-  <div class="link-icon">🤖</div>
-
-  <div class="link-title">
-    Owner DM
-  </div>
-
-  <div class="link-sub">
-    @Lethaldevil_bot
-  </div>
-</a>
 
   </section>  <div class="toolbar"><input
   id="search"
@@ -662,14 +702,82 @@ button:hover {
     class="status"
   >
     Loading files...
-  </div>  <div
+  </div>  <section
     id="files"
-    class="file-grid"
-  ></div>  <footer class="footer">
-    Providing non rc file free 🤫
-    <br>
-    Lethal Devil File Store
-  </footer></main><!-- Download modal --><div
+    class="file-list"
+  ></section>  <!-- ================= OWNER INFO ================= -->  <footer class="footer"><div class="footer-title">
+  Lethal Devil
+</div>
+
+<div class="footer-sub">
+  Providing non rc file free 🤫
+</div>
+
+<div class="owner-box">
+
+  <div class="owner-line">
+    <strong>Owner</strong><br>
+    @Lethaldevil_bot
+  </div>
+
+  <div class="owner-line">
+    <strong>Backup Channel</strong><br>
+    @lethalznetwork
+  </div>
+
+  <div class="owner-line">
+    <strong>Support</strong><br>
+    Your Problems 🤔 My Solutions 😎
+  </div>
+
+  <div class="footer-links">
+
+    <a
+      class="footer-link"
+      href="https://t.me/LETHALXNETWORK"
+      target="_blank"
+      rel="noopener"
+    >
+      📢 Join Backup Telegram Channel
+    </a>
+
+    <a
+      class="footer-link"
+      href="https://t.me/lethaldevil_bot"
+      target="_blank"
+      rel="noopener"
+    >
+      🤖 Contact Owner — @Lethaldevil_bot
+    </a>
+
+    <a
+      class="footer-link"
+      href="https://www.instagram.com/t1__bot"
+      target="_blank"
+      rel="noopener"
+    >
+      📸 Ask Your Question — Instagram
+    </a>
+
+    <a
+      class="footer-link"
+      href="https://t.me/T1botYouTube"
+      target="_blank"
+      rel="noopener"
+    >
+      ▶️ T1bot YouTube
+    </a>
+
+  </div>
+
+</div>
+
+<div class="footer-note">
+  All available files are listed from the server's
+  files directory.
+</div>
+
+  </footer></main><!-- ================= DOWNLOAD MODAL ================= --><div
   id="downloadModal"
   class="modal"
 >  <div class="modal-box"><div
@@ -683,7 +791,7 @@ button:hover {
   id="modalText"
   class="modal-text"
 >
-  Please wait while the download link is prepared.
+  Please wait while your download link is prepared.
 </div>
 
 <div class="progress-track">
@@ -725,8 +833,12 @@ button:hover {
   </div></div><script>
 
 var allFiles = [];
+
 var selectedDownloadUrl = "";
+
 var downloadTimer = null;
+
+/* ================= FILE HELPERS ================= */
 
 function formatSize(bytes) {
 
@@ -756,10 +868,8 @@ function formatSize(bytes) {
 
 function formatDate(timestamp) {
 
-  var d =
-    new Date(timestamp);
-
-  return d.toLocaleString();
+  return new Date(timestamp)
+    .toLocaleString();
 }
 
 function getIcon(fileName) {
@@ -808,16 +918,7 @@ function getIcon(fileName) {
     return "📕";
   }
 
-  if (
-    name.endsWith(".txt") ||
-    name.endsWith(".json") ||
-    name.endsWith(".html") ||
-    name.endsWith(".js")
-  ) {
-    return "📄";
-  }
-
-  return "📁";
+  return "📄";
 }
 
 function getExtension(fileName) {
@@ -844,6 +945,8 @@ function escapeHtml(text) {
     .replace(/'/g, "&#039;");
 }
 
+/* ================= RENDER FILES ================= */
+
 function renderFiles(list) {
 
   var container =
@@ -864,7 +967,7 @@ function renderFiles(list) {
   list.forEach(function(file) {
 
     var card =
-      document.createElement("div");
+      document.createElement("article");
 
     card.className =
       "file-card";
@@ -876,55 +979,68 @@ function renderFiles(list) {
       "/files/" +
       encodeURIComponent(file.name);
 
-    var downloadUrl =
-      "/download/" +
+    var downloadName =
       encodeURIComponent(file.name);
 
     card.innerHTML =
 
-      '<div class="file-icon">' +
-      getIcon(file.name) +
-      '</div>' +
+      '<div class="file-top">' +
 
-      '<div class="file-name">' +
-      safeName +
+        '<div class="file-icon">' +
+          getIcon(file.name) +
+        '</div>' +
+
+        '<div class="file-title-box">' +
+
+          '<div class="file-name">' +
+            safeName +
+          '</div>' +
+
+          '<div class="file-type">' +
+            getExtension(file.name) +
+          '</div>' +
+
+        '</div>' +
+
       '</div>' +
 
       '<div class="file-info">' +
-      'Size: ' +
-      formatSize(file.size) +
-      '<br>' +
-      'Added: ' +
-      formatDate(file.modified) +
-      '</div>' +
 
-      '<div class="file-type">' +
-      getExtension(file.name) +
+        'Size: ' +
+        formatSize(file.size) +
+
+        '<br>' +
+
+        'Added: ' +
+        formatDate(file.modified) +
+
       '</div>' +
 
       '<div class="actions">' +
 
-      '<a ' +
-      'class="action-btn open-btn" ' +
-      'href="' + openUrl + '"' +
-      ' target="_blank" ' +
-      'rel="noopener">' +
-      'Open' +
-      '</a>' +
+        '<a ' +
+          'class="action open" ' +
+          'href="' + openUrl + '"' +
+          'target="_blank"' +
+          'rel="noopener">' +
+          'Open File' +
+        '</a>' +
 
-      '<button ' +
-      'class="action-btn download-btn" ' +
-      'onclick="prepareDownload(\'' +
-      encodeURIComponent(file.name) +
-      '\')">' +
-      'Get Download' +
-      '</button>' +
+        '<button ' +
+          'class="action get-download" ' +
+          'onclick="prepareDownload(\'' +
+          downloadName +
+          '\')">' +
+          'Get Download' +
+        '</button>' +
 
       '</div>';
 
     container.appendChild(card);
   });
 }
+
+/* ================= LOAD FILES ================= */
 
 function loadFiles() {
 
@@ -943,6 +1059,7 @@ function loadFiles() {
     '</div>';
 
   fetch("/file-list")
+
     .then(function(response) {
 
       if (!response.ok) {
@@ -953,6 +1070,7 @@ function loadFiles() {
 
       return response.json();
     })
+
     .then(function(data) {
 
       if (
@@ -973,6 +1091,7 @@ function loadFiles() {
         allFiles.length +
         " file(s) available";
     })
+
     .catch(function(error) {
 
       container.innerHTML =
@@ -984,6 +1103,8 @@ function loadFiles() {
         "Error: " + error.message;
     });
 }
+
+/* ================= SEARCH ================= */
 
 function filterFiles() {
 
@@ -1004,6 +1125,8 @@ function filterFiles() {
 
   renderFiles(filtered);
 }
+
+/* ================= DOWNLOAD STEP ================= */
 
 function prepareDownload(encodedName) {
 
@@ -1044,8 +1167,8 @@ function prepareDownload(encodedName) {
     "Preparing Download";
 
   text.innerText =
-    "Your file is ready. " +
-    "Please complete this short preparation step before continuing.";
+    "Complete this short preparation step. " +
+    "After that the download button will become available.";
 
   countdown.innerText =
     "Preparing...";
@@ -1061,6 +1184,7 @@ function prepareDownload(encodedName) {
     "flex";
 
   var progress = 0;
+
   var seconds = 4;
 
   if (downloadTimer) {
@@ -1082,17 +1206,18 @@ function prepareDownload(encodedName) {
       if (seconds > 0) {
 
         countdown.innerText =
-          "Download link ready in " +
+          "Download available in " +
           seconds +
           "s";
 
         seconds--;
+
       } else {
 
         clearInterval(downloadTimer);
 
         countdown.innerText =
-          "Ready to download";
+          "Download ready";
 
         continueButton.classList.remove(
           "hidden"
@@ -1138,6 +1263,7 @@ function closeDownloadModal() {
 
   if (downloadTimer) {
     clearInterval(downloadTimer);
+
     downloadTimer = null;
   }
 
@@ -1151,6 +1277,8 @@ document
     "input",
     filterFiles
   );
+
+/* ================= START ================= */
 
 loadFiles();
 
