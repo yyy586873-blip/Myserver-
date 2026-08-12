@@ -1,994 +1,448 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>File Store</title><style>
-* {
-  box-sizing: border-box;
-}
-
-html,
-body {
-  margin: 0;
-  min-height: 100%;
-}
-
-body {
-  font-family: Arial, Helvetica, sans-serif;
-
-  color: #ffffff;
-
-  background:
-    radial-gradient(
-      circle at 15% 10%,
-      rgba(95, 75, 255, 0.18),
-      transparent 35%
-    ),
-    radial-gradient(
-      circle at 85% 15%,
-      rgba(0, 190, 255, 0.15),
-      transparent 35%
-    ),
-    linear-gradient(
-      135deg,
-      #090817,
-      #0a0c1d 45%,
-      #080b17
-    );
-
-  padding: 18px;
-}
-
-/* ================= SEARCH ================= */
-
-.search-area {
-  max-width: 900px;
-
-  margin: 0 auto 18px;
-
-  display: flex;
-
-  gap: 9px;
-}
-
-.search {
-  flex: 1;
-
-  min-width: 0;
-
-  padding: 13px 15px;
-
-  border-radius: 13px;
-
-  border:
-    1px solid rgba(145,130,255,0.20);
-
-  outline: none;
-
-  color: #ffffff;
-
-  background:
-    rgba(18, 20, 42, 0.78);
-
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.04),
-    0 8px 25px rgba(0,0,0,0.18);
-
-  font-size: 14px;
-}
-
-.search:focus {
-  border-color:
-    rgba(98, 180, 255, 0.65);
-}
-
-.refresh {
-  border: 0;
-
-  padding: 0 16px;
-
-  border-radius: 13px;
-
-  color: #ffffff;
-
-  background:
-    linear-gradient(
-      135deg,
-      #6554ff,
-      #008fff
-    );
-
-  font-weight: 800;
-
-  cursor: pointer;
-}
-
-/* ================= FILE GRID ================= */
-
-.file-grid {
-  max-width: 900px;
-
-  margin: auto;
-
-  display: grid;
-
-  grid-template-columns:
-    repeat(2, minmax(0, 1fr));
-
-  gap: 14px;
-}
-
-/* ================= FILE CARD ================= */
-
-.file-card {
-  position: relative;
-
-  min-height: 180px;
-
-  padding: 17px;
-
-  overflow: hidden;
-
-  display: flex;
-
-  flex-direction: column;
-
-  justify-content: space-between;
-
-  border-radius: 18px;
-
-  background:
-    linear-gradient(
-      145deg,
-      rgba(30, 27, 66, 0.92),
-      rgba(11, 23, 49, 0.91)
-    );
-
-  border:
-    1px solid rgba(139, 126, 255, 0.18);
-
-  box-shadow:
-    0 10px 30px rgba(0,0,0,0.28),
-    inset 0 1px 0 rgba(255,255,255,0.05);
-
-  isolation: isolate;
-
-  transition:
-    transform .18s ease,
-    border-color .18s ease;
-}
-
-.file-card:hover {
-  transform: translateY(-3px);
-
-  border-color:
-    rgba(91, 177, 255, 0.55);
-}
-
-/* ================= SHINE ================= */
-
-.file-card::before {
-  content: "";
-
-  position: absolute;
-
-  top: -80%;
-
-  left: -75%;
-
-  width: 45%;
-  height: 240%;
-
-  transform:
-    rotate(25deg);
-
-  background:
-    linear-gradient(
-      90deg,
-      transparent,
-      rgba(255,255,255,0.05),
-      rgba(255,255,255,0.24),
-      rgba(255,255,255,0.05),
-      transparent
-    );
-
-  animation:
-    shine 4.5s infinite;
-
-  pointer-events: none;
-
-  z-index: -1;
-}
-
-@keyframes shine {
-
-  0% {
-    left: -80%;
-  }
-
-  45% {
-    left: 150%;
-  }
-
-  100% {
-    left: 150%;
-  }
-}
-
-/* ================= ICON ================= */
-
-.file-icon {
-  width: 58px;
-  height: 58px;
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 16px;
-
-  font-size: 30px;
-
-  background:
-    linear-gradient(
-      135deg,
-      rgba(107,88,255,0.23),
-      rgba(0,163,255,0.20)
-    );
-
-  border:
-    1px solid rgba(155,145,255,0.22);
-
-  box-shadow:
-    0 8px 20px rgba(70,70,255,0.12);
-}
-
-/* ================= NAME ================= */
-
-.file-name {
-  margin-top: 17px;
-
-  font-size: 15px;
-
-  font-weight: 800;
-
-  line-height: 1.45;
-
-  word-break: break-word;
-
-  color: #f4f3ff;
-}
-
-/* ================= DOWNLOAD ================= */
-
-.download {
-  position: relative;
-
-  width: 100%;
-
-  margin-top: 17px;
-
-  padding: 11px;
-
-  border: 0;
-
-  border-radius: 11px;
-
-  overflow: hidden;
-
-  cursor: pointer;
-
-  color: #ffffff;
-
-  background:
-    linear-gradient(
-      135deg,
-      #694dff,
-      #158fff
-    );
-
-  font-size: 12px;
-
-  font-weight: 900;
-
-  box-shadow:
-    0 7px 20px rgba(37,109,255,0.20);
-}
-
-.download::after {
-  content: "";
-
-  position: absolute;
-
-  top: 0;
-
-  left: -100%;
-
-  width: 60%;
-
-  height: 100%;
-
-  background:
-    linear-gradient(
-      90deg,
-      transparent,
-      rgba(255,255,255,0.32),
-      transparent
-    );
-
-  animation:
-    buttonShine 3.4s infinite;
-}
-
-@keyframes buttonShine {
-
-  0% {
-    left: -100%;
-  }
-
-  45% {
-    left: 150%;
-  }
-
-  100% {
-    left: 150%;
-  }
-}
-
-.download:active {
-  transform: scale(0.98);
-}
-
-/* ================= LOADING ================= */
-
-.loading,
-.empty {
-  grid-column: 1 / -1;
-
-  padding: 45px 20px;
-
-  text-align: center;
-
-  border-radius: 17px;
-
-  color: #8588a8;
-
-  background:
-    rgba(19,20,42,0.7);
-
-  border:
-    1px solid rgba(128,114,255,0.13);
-}
-
-.status {
-  max-width: 900px;
-
-  margin: 0 auto 12px;
-
-  color: #858baa;
-
-  font-size: 12px;
-}
-
-/* ================= DOWNLOAD MODAL ================= */
-
-.modal {
-  position: fixed;
-
-  inset: 0;
-
-  z-index: 1000;
-
-  display: none;
-
-  align-items: center;
-  justify-content: center;
-
-  padding: 20px;
-
-  background:
-    rgba(3,4,15,0.78);
-
-  backdrop-filter:
-    blur(9px);
-}
-
-.modal-box {
-  width: 100%;
-
-  max-width: 330px;
-
-  padding: 25px;
-
-  text-align: center;
-
-  border-radius: 22px;
-
-  background:
-    linear-gradient(
-      145deg,
-      rgba(29,25,67,0.97),
-      rgba(8,20,43,0.97)
-    );
-
-  border:
-    1px solid rgba(128,113,255,0.28);
-
-  box-shadow:
-    0 25px 80px rgba(0,0,0,0.55);
-}
-
-.count-number {
-  width: 88px;
-  height: 88px;
-
-  margin: 0 auto 18px;
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 50%;
-
-  font-size: 38px;
-
-  font-weight: 900;
-
-  background:
-    radial-gradient(
-      circle,
-      rgba(81,101,255,0.35),
-      rgba(8,15,35,0.9)
-    );
-
-  border:
-    2px solid rgba(101,147,255,0.55);
-
-  box-shadow:
-    0 0 30px rgba(70,114,255,0.28);
-
-  animation:
-    countPulse .75s ease;
-}
-
-@keyframes countPulse {
-
-  0% {
-    transform: scale(.45);
-    opacity: 0;
-  }
-
-  65% {
-    transform: scale(1.08);
-    opacity: 1;
-  }
-
-  100% {
-    transform: scale(1);
-  }
-}
-
-.modal-title {
-  font-size: 16px;
-
-  font-weight: 900;
-
-  color: #f2f2ff;
-
-  margin-bottom: 7px;
-}
-
-.modal-text {
-  color: #9298b6;
-
-  font-size: 12px;
-
-  line-height: 1.6;
-}
-
-.ready-button {
-  width: 100%;
-
-  padding: 12px;
-
-  margin-top: 17px;
-
-  border: 0;
-
-  border-radius: 11px;
-
-  color: white;
-
-  background:
-    linear-gradient(
-      135deg,
-      #6a50ff,
-      #008dff
-    );
-
-  font-weight: 900;
-
-  cursor: pointer;
-}
-
-.hidden {
-  display: none !important;
-}
-
-/* ================= MOBILE ================= */
-
-@media (max-width: 600px) {
-
-  body {
-    padding: 12px;
-  }
-
-  .file-grid {
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
-
-    gap: 10px;
-  }
-
-  .file-card {
-    min-height: 165px;
-
-    padding: 13px;
-
-    border-radius: 15px;
-  }
-
-  .file-icon {
-    width: 48px;
-    height: 48px;
-
-    font-size: 25px;
-
-    border-radius: 13px;
-  }
-
-  .file-name {
-    font-size: 13px;
-
-    margin-top: 13px;
-  }
-
-  .download {
-    margin-top: 13px;
-
-    padding: 10px 7px;
-
-    font-size: 11px;
-  }
-
-  .refresh {
-    padding: 0 12px;
-  }
-}
-</style></head><body><div class="search-area"><input
-id="search"
-class="search"
-type="text"
-placeholder="Search files..."
-autocomplete="off"
-
-«»
-
-<button
-class="refresh"
-onclick="loadFiles()"
-
-«»
-
-Refresh
-
-  </button></div><div
-  id="status"
-  class="status"
->
-  Loading...
-</div><div
-  id="files"
-  class="file-grid"
-></div><!-- DOWNLOAD COUNTDOWN --><div
-  id="downloadModal"
-  class="modal"
->  <div class="modal-box"><div
-  id="countNumber"
-  class="count-number"
->
-  3
-</div>
-
-<div class="modal-title">
-  Preparing Download
-</div>
-
-<div
-  id="modalText"
-  class="modal-text"
->
-  Please wait...
-</div>
-
-<button
-  id="readyButton"
-  class="ready-button hidden"
-  onclick="startDownload()"
->
-  Download
-</button>
-
-  </div></div><script>
-
-var allFiles = [];
-
-var selectedDownloadUrl = "";
-
-var countTimer = null;
-
-/* ================= FILE ICON ================= */
-
-function getIcon(name) {
-
-  var n =
-    name.toLowerCase();
-
-  if (
-    n.endsWith(".mp4") ||
-    n.endsWith(".mkv") ||
-    n.endsWith(".avi") ||
-    n.endsWith(".mov") ||
-    n.endsWith(".webm")
-  ) {
-    return "🎬";
-  }
-
-  if (
-    n.endsWith(".mp3") ||
-    n.endsWith(".wav") ||
-    n.endsWith(".ogg") ||
-    n.endsWith(".m4a")
-  ) {
-    return "🎵";
-  }
-
-  if (
-    n.endsWith(".jpg") ||
-    n.endsWith(".jpeg") ||
-    n.endsWith(".png") ||
-    n.endsWith(".gif") ||
-    n.endsWith(".webp")
-  ) {
-    return "🖼️";
-  }
-
-  if (
-    n.endsWith(".zip") ||
-    n.endsWith(".rar") ||
-    n.endsWith(".7z")
-  ) {
-    return "📦";
-  }
-
-  if (n.endsWith(".pdf")) {
-    return "📕";
-  }
-
-  return "📄";
-}
-
-/* ================= ESCAPE ================= */
-
-function escapeHtml(text) {
-
-  return String(text)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-/* ================= RENDER ================= */
-
-function renderFiles(list) {
-
-  var container =
-    document.getElementById("files");
-
-  container.innerHTML = "";
-
-  if (!list.length) {
-
-    container.innerHTML =
-      '<div class="empty">' +
-      'No files found.' +
-      '</div>';
-
-    return;
-  }
-
-  list.forEach(function(file) {
-
-    var card =
-      document.createElement("div");
-
-    card.className =
-      "file-card";
-
-    var encoded =
-      encodeURIComponent(file.name);
-
-    card.innerHTML =
-
-      '<div>' +
-
-        '<div class="file-icon">' +
-          getIcon(file.name) +
-        '</div>' +
-
-        '<div class="file-name">' +
-          escapeHtml(file.name) +
-        '</div>' +
-
-      '</div>' +
-
-      '<button ' +
-        'class="download" ' +
-        'onclick="prepareDownload(\'' +
-        encoded +
-        '\')">' +
-        'DOWNLOAD' +
-      '</button>';
-
-    container.appendChild(card);
-
-  });
-}
-
-/* ================= LOAD ================= */
-
-function loadFiles() {
-
-  var status =
-    document.getElementById("status");
-
-  var container =
-    document.getElementById("files");
-
-  status.innerText =
-    "Loading files...";
-
-  container.innerHTML =
-    '<div class="loading">' +
-    'Loading...' +
-    '</div>';
-
-  fetch("/file-list")
-
-    .then(function(response) {
-
-      if (!response.ok) {
-        throw new Error(
-          "HTTP " + response.status
-        );
-      }
-
-      return response.json();
-
-    })
-
-    .then(function(data) {
-
-      if (
-        !data.ok ||
-        !Array.isArray(data.files)
-      ) {
-
-        throw new Error(
-          "Invalid server response"
-        );
-      }
-
-      allFiles =
-        data.files.slice();
-
-      renderFiles(allFiles);
-
-      status.innerText =
-        allFiles.length +
-        " file(s)";
-
-    })
-
-    .catch(function(error) {
-
-      container.innerHTML =
-        '<div class="empty">' +
-        'Unable to load files.' +
-        '</div>';
-
-      status.innerText =
-        "Error: " +
-        error.message;
-    });
-}
-
-/* ================= SEARCH ================= */
-
-document
-  .getElementById("search")
-  .addEventListener(
-    "input",
-    function() {
-
-      var query =
-        this.value
-          .trim()
-          .toLowerCase();
-
-      var filtered =
-        allFiles.filter(
-          function(file) {
-
-            return file.name
-              .toLowerCase()
-              .indexOf(query) !== -1;
-
-          }
-        );
-
-      renderFiles(filtered);
-
-    }
-  );
-
-/* ================= DOWNLOAD COUNTDOWN ================= */
-
-function prepareDownload(encodedName) {
-
-  selectedDownloadUrl =
-    "/download/" + encodedName;
-
-  var modal =
-    document.getElementById(
-      "downloadModal"
-    );
-
-  var number =
-    document.getElementById(
-      "countNumber"
-    );
-
-  var text =
-    document.getElementById(
-      "modalText"
-    );
-
-  var ready =
-    document.getElementById(
-      "readyButton"
-    );
-
-  ready.classList.add("hidden");
-
-  modal.style.display =
-    "flex";
-
-  var count = 3;
-
-  number.innerText =
-    count;
-
-  number.style.animation =
-    "none";
-
-  void number.offsetWidth;
-
-  number.style.animation =
-    "countPulse .75s ease";
-
-  text.innerText =
-    "Preparing your download...";
-
-  if (countTimer) {
-    clearInterval(countTimer);
-  }
-
-  countTimer =
-    setInterval(
-      function() {
-
-        count--;
-
-        if (count > 0) {
-
-          number.innerText =
-            count;
-
-          number.style.animation =
-            "none";
-
-          void number.offsetWidth;
-
-          number.style.animation =
-            "countPulse .75s ease";
-
-        } else {
-
-          clearInterval(countTimer);
-
-          number.innerText =
-            "✓";
-
-          text.innerText =
-            "Your download is ready.";
-
-          ready.classList.remove(
-            "hidden"
-          );
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Store</title>
+    <style>
+        /* Styles for the search bar */
+        .search-area {
+            max-width: 900px;
+            margin: 0 auto 18px;
+            display: flex;
+            gap: 9px;
         }
-
-      },
-      1000
-    );
-}
-
-/* ================= DOWNLOAD ================= */
-
-function startDownload() {
-
-  if (!selectedDownloadUrl) {
-    return;
-  }
-
-  var link =
-    document.createElement("a");
-
-  link.href =
-    selectedDownloadUrl;
-
-  link.download = "";
-
-  document.body.appendChild(
-    link
-  );
-
-  link.click();
-
-  document.body.removeChild(
-    link
-  );
-
-  closeModal();
-}
-
-function closeModal() {
-
-  document.getElementById(
-    "downloadModal"
-  ).style.display =
-    "none";
-
-  if (countTimer) {
-
-    clearInterval(
-      countTimer
-    );
-
-    countTimer = null;
-  }
-
-  selectedDownloadUrl =
-    "";
-}
-
-/* ================= START ================= */
-
-loadFiles();
-
-</script></body>
+        .search {
+            flex: 1;
+            min-width: 0;
+            padding: 13px 15px;
+            border-radius: 13px;
+            border: 1px solid rgba(145,130,255,0.20);
+            outline: none;
+            color: #ffffff;
+            background: rgba(18, 20, 42, 0.78);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 8px 25px rgba(0,0,0,0.18);
+            font-size: 14px;
+        }
+        .search:focus {
+            border-color: rgba(98, 180, 255, 0.65);
+        }
+        .refresh {
+            border: 0;
+            padding: 0 16px;
+            border-radius: 13px;
+            color: #ffffff;
+            background: linear-gradient(135deg, #6554ff, #008fff);
+            font-weight: 800;
+            cursor: pointer;
+        }
+        
+        /* Styles for the file grid */
+        .file-grid {
+            max-width: 900px;
+            margin: auto;
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 14px;
+        }
+        
+        /* Styles for the file card */
+        .file-card {
+            position: relative;
+            min-height: 180px;
+            padding: 17px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border-radius: 18px;
+            background: linear-gradient(145deg, rgba(30, 27, 66, 0.92), rgba(11, 23, 49, 0.91));
+            border: 1px solid rgba(139, 126, 255, 0.18);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.05);
+            isolation: isolate;
+            transition: transform .18s ease, border-color .18s ease;
+        }
+        .file-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(91, 177, 255, 0.55);
+        }
+        
+        /* Styles for the shine effect */
+        .file-card::before {
+            content: "";
+            position: absolute;
+            top: -80%;
+            left: -75%;
+            width: 45%;
+            height: 240%;
+            transform: rotate(25deg);
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), rgba(255,255,255,0.24), rgba(255,255,255,0.05), transparent);
+            animation: shine 4.5s infinite;
+            pointer-events: none;
+            z-index: -1;
+        }
+        @keyframes shine {
+            0% {
+                left: -80%;
+            }
+            45% {
+                left: 150%;
+            }
+            100% {
+                left: 150%;
+            }
+        }
+        
+        /* Styles for the icon */
+        .file-icon {
+            width: 58px;
+            height: 58px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 16px;
+            font-size: 30px;
+            background: linear-gradient(135deg, rgba(107,88,255,0.23), rgba(0,163,255,0.20));
+            border: 1px solid rgba(155,145,255,0.22);
+            box-shadow: 0 8px 20px rgba(70,70,255,0.12);
+        }
+        
+        /* Styles for the file name */
+        .file-name {
+            margin-top: 17px;
+            font-size: 15px;
+            font-weight: 800;
+            line-height: 1.45;
+            word-break: break-word;
+            color: #f4f3ff;
+        }
+        
+        /* Styles for the download button */
+        .download {
+            position: relative;
+            width: 100%;
+            margin-top: 17px;
+            padding: 11px;
+            border: 0;
+            border-radius: 11px;
+            overflow: hidden;
+            cursor: pointer;
+            color: #ffffff;
+            background: linear-gradient(135deg, #694dff, #158fff);
+            font-size: 12px;
+            font-weight: 900;
+            box-shadow: 0 7px 20px rgba(37,109,255,0.20);
+        }
+        .download::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 60%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.32), transparent);
+            animation: buttonShine 3.4s infinite;
+        }
+        @keyframes buttonShine {
+            0% {
+                left: -100%;
+            }
+            45% {
+                left: 150%;
+            }
+            100% {
+                left: 150%;
+            }
+        }
+        .download:active {
+            transform: scale(0.98);
+        }
+        
+        /* Styles for the loading message */
+        .loading, .empty {
+            grid-column: 1 / -1;
+            padding: 45px 20px;
+            text-align: center;
+            border-radius: 17px;
+            color: #8588a8;
+            background: rgba(19,20,42,0.7);
+            border: 1px solid rgba(128,114,255,0.13);
+        }
+        .status {
+            max-width: 900px;
+            margin: 0 auto 12px;
+            color: #858baa;
+            font-size: 12px;
+        }
+        
+        /* Styles for the download modal */
+        .modal {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(3,4,15,0.78);
+            backdrop-filter: blur(9px);
+        }
+        .modal-box {
+            width: 100%;
+            max-width: 330px;
+            padding: 25px;
+            text-align: center;
+            border-radius: 22px;
+            background: linear-gradient(145deg, rgba(29,25,67,0.97), rgba(8,20,43,0.97));
+            border: 1px solid rgba(128,113,255,0.28);
+            box-shadow: 0 25px 80px rgba(0,0,0,0.55);
+        }
+        .count-number {
+            width: 88px;
+            height: 88px;
+            margin: 0 auto 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 38px;
+            font-weight: 900;
+            background: radial-gradient(circle, rgba(81,101,255,0.35), rgba(8,15,35,0.9));
+            border: 2px solid rgba(101,147,255,0.55);
+            box-shadow: 0 0 30px rgba(70,114,255,0.28);
+            animation: countPulse .75s ease;
+        }
+        @keyframes countPulse {
+            0% {
+                transform: scale(.45);
+                opacity: 0;
+            }
+            65% {
+                transform: scale(1.08);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+        .modal-title {
+            font-size: 16px;
+            font-weight: 900;
+            color: #f2f2ff;
+            margin-bottom: 7px;
+        }
+        .modal-text {
+            color: #9298b6;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+        .ready-button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 17px;
+            border: 0;
+            border-radius: 11px;
+            color: white;
+            background: linear-gradient(135deg, #6a50ff, #008dff);
+            font-weight: 900;
+            cursor: pointer;
+        }
+        .hidden {
+            display: none !important;
+        }
+        
+        /* Mobile styles */
+        @media (max-width: 600px) {
+            body {
+                padding: 12px;
+            }
+            .file-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 10px;
+            }
+            .file-card {
+                min-height: 165px;
+                padding: 13px;
+                border-radius: 15px;
+            }
+            .file-icon {
+                width: 48px;
+                height: 48px;
+                font-size: 25px;
+                border-radius: 13px;
+            }
+            .file-name {
+                font-size: 13px;
+                margin-top: 13px;
+            }
+            .download {
+                margin-top: 13px;
+                padding: 10px 7px;
+                font-size: 11px;
+            }
+            .refresh {
+                padding: 0 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="search-area">
+        <input id="search" class="search" type="text" placeholder="Search files..." autocomplete="off">
+        <button class="refresh" onclick="loadFiles()">Refresh</button>
+    </div>
+    <div id="status" class="status">Loading...</div>
+    <div id="files" class="file-grid"></div>
+    <!-- DOWNLOAD COUNTDOWN -->
+    <div id="downloadModal" class="modal">
+        <div class="modal-box">
+            <div id="countNumber" class="count-number">3</div>
+            <div class="modal-title">Preparing Download</div>
+            <div id="modalText" class="modal-text">Please wait...</div>
+            <button id="readyButton" class="ready-button hidden" onclick="startDownload()">Download</button>
+        </div>
+    </div>
+    <script>
+        var allFiles = [];
+        var selectedDownloadUrl = "";
+        var countTimer = null;
+        
+        function getIcon(name) {
+            var n = name.toLowerCase();
+            if (n.endsWith(".mp4") || n.endsWith(".mkv") || n.endsWith(".avi") || n.endsWith(".mov") || n.endsWith(".webm")) {
+                return "🎬";
+            } else if (n.endsWith(".mp3") || n.endsWith(".wav") || n.endsWith(".ogg") || n.endsWith(".m4a")) {
+                return "🎵";
+            } else if (n.endsWith(".jpg") || n.endsWith(".jpeg") || n.endsWith(".png") || n.endsWith(".gif") || n.endsWith(".webp")) {
+                return "🖼️";
+            } else if (n.endsWith(".zip") || n.endsWith(".rar") || n.endsWith(".7z")) {
+                return "📦";
+            } else if (n.endsWith(".pdf")) {
+                return "📕";
+            } else {
+                return "📄";
+            }
+        }
+        
+        function escapeHtml(text) {
+            return String(text)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+        
+        function renderFiles(list) {
+            var container = document.getElementById("files");
+            container.innerHTML = "";
+            if (!list.length) {
+                container.innerHTML = '<div class="empty">No files found.</div>';
+                return;
+            }
+            list.forEach(function(file) {
+                var card = document.createElement("div");
+                card.className = "file-card";
+                var encoded = encodeURIComponent(file.name);
+                card.innerHTML = '<div><div class="file-icon">' + getIcon(file.name) + '</div><div class="file-name">' + escapeHtml(file.name) + '</div></div><button class="download" onclick="prepareDownload(\'' + encoded + '\')">DOWNLOAD</button>';
+                container.appendChild(card);
+            });
+        }
+        
+        function loadFiles() {
+            var status = document.getElementById("status");
+            var container = document.getElementById("files");
+            status.innerText = "Loading files...";
+            container.innerHTML = '<div class="loading">Loading...</div>';
+            fetch("/file-list")
+                .then(function(response) {
+                    if (!response.ok) {
+                        throw new Error("HTTP " + response.status);
+                    }
+                    return response.json();
+                })
+                .then(function(data) {
+                    if (!data.ok || !Array.isArray(data.files)) {
+                        throw new Error("Invalid server response");
+                    }
+                    allFiles = data.files.slice();
+                    renderFiles(allFiles);
+                    status.innerText = allFiles.length + " file(s)";
+                })
+                .catch(function(error) {
+                    container.innerHTML = '<div class="empty">Unable to load files.</div>';
+                    status.innerText = "Error: " + error.message;
+                });
+        }
+        
+        document.getElementById("search").addEventListener("input", function() {
+            var query = this.value.trim().toLowerCase();
+            var filtered = allFiles.filter(function(file) {
+                return file.name.toLowerCase().indexOf(query) !== -1;
+            });
+            renderFiles(filtered);
+        });
+        
+        function prepareDownload(encodedName) {
+            selectedDownloadUrl = "/download/" + encodedName;
+            var modal = document.getElementById("downloadModal");
+            var number = document.getElementById("countNumber");
+            var text = document.getElementById("modalText");
+            var ready = document.getElementById("readyButton");
+            ready.classList.add("hidden");
+            modal.style.display = "flex";
+            var count = 3;
+            number.innerText = count;
+            number.style.animation = "none";
+            void number.offsetWidth;
+            number.style.animation = "countPulse .75s ease";
+            text.innerText = "Preparing your download...";
+            if (countTimer) {
+                clearInterval(countTimer);
+            }
+            countTimer = setInterval(countdown, 1000);
+        }
+        
+        function countdown() {
+            count--;
+            if (count > 0) {
+                number.innerText = count;
+                number.style.animation = "none";
+                void number.offsetWidth;
+                number.style.animation = "countPulse .75s ease";
+            } else {
+                clearInterval(countTimer);
+                number.innerText = "✓";
+                text.innerText = "Your download is ready.";
+                ready.classList.remove("hidden");
+            }
+        }
+        
+        function startDownload() {
+            if (!selectedDownloadUrl) {
+                return;
+            }
+            var link = document.createElement("a");
+            link.href = selectedDownloadUrl;
+            link.download = "";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            closeModal();
+        }
+        
+        function closeModal() {
+            document.getElementById("downloadModal").style.display = "none";
+            if (countTimer) {
+                clearInterval(countTimer);
+                countTimer = null;
+            }
+            selectedDownloadUrl = "";
+        }
+        
+        loadFiles();
+    </script>
+</body>
 </html>
+
+
