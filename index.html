@@ -1,139 +1,53 @@
 <!DOCTYPE html><html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Lethal Devil File Store</title><style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>File Store</title><style>
 * {
   box-sizing: border-box;
 }
 
-html {
-  scroll-behavior: smooth;
+html,
+body {
+  margin: 0;
+  min-height: 100%;
 }
 
 body {
-  margin: 0;
   font-family: Arial, Helvetica, sans-serif;
 
-  background:
-    radial-gradient(
-      circle at 10% 0%,
-      rgba(255, 205, 0, 0.10),
-      transparent 30%
-    ),
-    radial-gradient(
-      circle at 90% 10%,
-      rgba(0, 135, 255, 0.12),
-      transparent 30%
-    ),
-    #070b12;
-
   color: #ffffff;
-}
-
-/* ================= HEADER ================= */
-
-.header {
-  position: sticky;
-  top: 0;
-  z-index: 100;
 
   background:
+    radial-gradient(
+      circle at 15% 10%,
+      rgba(95, 75, 255, 0.18),
+      transparent 35%
+    ),
+    radial-gradient(
+      circle at 85% 15%,
+      rgba(0, 190, 255, 0.15),
+      transparent 35%
+    ),
     linear-gradient(
       135deg,
-      #ffca00,
-      #007eff
+      #090817,
+      #0a0c1d 45%,
+      #080b17
     );
 
-  box-shadow:
-    0 8px 30px rgba(0,0,0,0.35);
-
-  border-bottom:
-    1px solid rgba(255,255,255,0.18);
+  padding: 18px;
 }
 
-.header-inner {
-  max-width: 900px;
-  margin: auto;
+/* ================= SEARCH ================= */
 
-  padding: 20px;
-
-  text-align: center;
-}
-
-.logo {
-  font-size: 28px;
-  font-weight: 900;
-  letter-spacing: 0.5px;
-}
-
-.subtitle {
-  margin-top: 6px;
-
-  color:
-    rgba(255,255,255,0.88);
-
-  font-size: 13px;
-}
-
-/* ================= MAIN ================= */
-
-.container {
-  width: 100%;
+.search-area {
   max-width: 900px;
 
-  margin: auto;
+  margin: 0 auto 18px;
 
-  padding: 20px 15px 40px;
-}
-
-/* ================= HERO ================= */
-
-.hero {
-  padding: 22px;
-
-  margin-bottom: 18px;
-
-  border-radius: 19px;
-
-  background:
-    linear-gradient(
-      145deg,
-      rgba(255,202,0,0.09),
-      rgba(0,126,255,0.10)
-    );
-
-  border:
-    1px solid rgba(255,255,255,0.08);
-
-  box-shadow:
-    0 10px 35px rgba(0,0,0,0.23);
-
-  text-align: center;
-}
-
-.hero-title {
-  font-size: 23px;
-  font-weight: 900;
-
-  margin-bottom: 8px;
-}
-
-.hero-text {
-  color: #aeb7c4;
-
-  font-size: 14px;
-
-  line-height: 1.65;
-}
-
-/* ================= TOOLBAR ================= */
-
-.toolbar {
   display: flex;
 
-  gap: 10px;
-
-  margin-bottom: 15px;
+  gap: 9px;
 }
 
 .search {
@@ -141,381 +55,319 @@ body {
 
   min-width: 0;
 
-  padding: 13px 14px;
+  padding: 13px 15px;
 
-  border-radius: 12px;
+  border-radius: 13px;
 
   border:
-    1px solid rgba(255,255,255,0.08);
-
-  background: #101722;
-
-  color: white;
+    1px solid rgba(145,130,255,0.20);
 
   outline: none;
+
+  color: #ffffff;
+
+  background:
+    rgba(18, 20, 42, 0.78);
+
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.04),
+    0 8px 25px rgba(0,0,0,0.18);
 
   font-size: 14px;
 }
 
 .search:focus {
-  border-color: #ffce00;
+  border-color:
+    rgba(98, 180, 255, 0.65);
 }
 
-button {
-  border: none;
+.refresh {
+  border: 0;
 
-  border-radius: 11px;
+  padding: 0 16px;
 
-  padding: 12px 17px;
+  border-radius: 13px;
+
+  color: #ffffff;
 
   background:
     linear-gradient(
       135deg,
-      #ffd000,
-      #008cff
+      #6554ff,
+      #008fff
     );
 
-  color: #06101a;
-
-  font-size: 13px;
-
-  font-weight: 900;
+  font-weight: 800;
 
   cursor: pointer;
 }
 
-button:hover {
-  filter: brightness(1.08);
-}
+/* ================= FILE GRID ================= */
 
-.status {
-  margin-bottom: 13px;
+.file-grid {
+  max-width: 900px;
 
-  color: #909baa;
+  margin: auto;
 
-  font-size: 13px;
-}
+  display: grid;
 
-/* ================= VERTICAL FILE LIST ================= */
-
-.file-list {
-  display: flex;
-
-  flex-direction: column;
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
 
   gap: 14px;
 }
 
-.file-card {
-  width: 100%;
+/* ================= FILE CARD ================= */
 
+.file-card {
   position: relative;
+
+  min-height: 180px;
+
+  padding: 17px;
 
   overflow: hidden;
 
-  padding: 18px;
+  display: flex;
 
-  border-radius: 17px;
+  flex-direction: column;
+
+  justify-content: space-between;
+
+  border-radius: 18px;
 
   background:
     linear-gradient(
       145deg,
-      #111925,
-      #0d131c
+      rgba(30, 27, 66, 0.92),
+      rgba(11, 23, 49, 0.91)
     );
 
   border:
-    1px solid rgba(255,255,255,0.07);
+    1px solid rgba(139, 126, 255, 0.18);
 
   box-shadow:
-    0 9px 26px rgba(0,0,0,0.25);
+    0 10px 30px rgba(0,0,0,0.28),
+    inset 0 1px 0 rgba(255,255,255,0.05);
+
+  isolation: isolate;
 
   transition:
-    transform 0.15s ease,
-    border-color 0.15s ease;
+    transform .18s ease,
+    border-color .18s ease;
 }
+
+.file-card:hover {
+  transform: translateY(-3px);
+
+  border-color:
+    rgba(91, 177, 255, 0.55);
+}
+
+/* ================= SHINE ================= */
 
 .file-card::before {
   content: "";
 
   position: absolute;
 
-  top: 0;
-  left: 0;
+  top: -80%;
 
-  width: 100%;
-  height: 3px;
+  left: -75%;
+
+  width: 45%;
+  height: 240%;
+
+  transform:
+    rotate(25deg);
 
   background:
     linear-gradient(
       90deg,
-      #ffd000,
-      #008cff
+      transparent,
+      rgba(255,255,255,0.05),
+      rgba(255,255,255,0.24),
+      rgba(255,255,255,0.05),
+      transparent
     );
+
+  animation:
+    shine 4.5s infinite;
+
+  pointer-events: none;
+
+  z-index: -1;
 }
 
-.file-card:hover {
-  transform: translateY(-2px);
+@keyframes shine {
 
-  border-color:
-    rgba(0,145,255,0.4);
+  0% {
+    left: -80%;
+  }
+
+  45% {
+    left: 150%;
+  }
+
+  100% {
+    left: 150%;
+  }
 }
 
-.file-top {
-  display: flex;
-
-  align-items: center;
-
-  gap: 13px;
-}
+/* ================= ICON ================= */
 
 .file-icon {
-  width: 52px;
-  height: 52px;
-
-  flex-shrink: 0;
+  width: 58px;
+  height: 58px;
 
   display: flex;
 
   align-items: center;
   justify-content: center;
 
-  border-radius: 13px;
+  border-radius: 16px;
 
-  font-size: 27px;
+  font-size: 30px;
 
   background:
     linear-gradient(
       135deg,
-      rgba(255,207,0,0.12),
-      rgba(0,136,255,0.12)
+      rgba(107,88,255,0.23),
+      rgba(0,163,255,0.20)
     );
 
   border:
-    1px solid rgba(255,255,255,0.07);
+    1px solid rgba(155,145,255,0.22);
+
+  box-shadow:
+    0 8px 20px rgba(70,70,255,0.12);
 }
 
-.file-title-box {
-  min-width: 0;
-  flex: 1;
-}
+/* ================= NAME ================= */
 
 .file-name {
-  font-size: 17px;
+  margin-top: 17px;
 
-  font-weight: 900;
+  font-size: 15px;
 
-  line-height: 1.4;
+  font-weight: 800;
+
+  line-height: 1.45;
 
   word-break: break-word;
+
+  color: #f4f3ff;
 }
 
-.file-type {
-  display: inline-block;
+/* ================= DOWNLOAD ================= */
 
-  margin-top: 6px;
+.download {
+  position: relative;
 
-  padding: 4px 8px;
+  width: 100%;
 
-  border-radius: 999px;
-
-  color: #ffd21a;
-
-  background:
-    rgba(255,204,0,0.09);
-
-  border:
-    1px solid rgba(255,204,0,0.15);
-
-  font-size: 10px;
-
-  font-weight: 900;
-}
-
-.file-info {
-  margin-top: 15px;
-
-  padding-top: 12px;
-
-  border-top:
-    1px solid rgba(255,255,255,0.06);
-
-  color: #98a3b1;
-
-  font-size: 12px;
-
-  line-height: 1.75;
-}
-
-.actions {
-  display: flex;
-
-  gap: 9px;
-
-  margin-top: 15px;
-}
-
-.action {
-  flex: 1;
-
-  text-align: center;
-
-  text-decoration: none;
+  margin-top: 17px;
 
   padding: 11px;
 
-  border-radius: 10px;
+  border: 0;
 
-  font-size: 12px;
+  border-radius: 11px;
 
-  font-weight: 900;
-}
+  overflow: hidden;
 
-.open {
-  color: white;
+  cursor: pointer;
 
-  background: #202a38;
-}
-
-.get-download {
-  border: none;
+  color: #ffffff;
 
   background:
     linear-gradient(
       135deg,
-      #ffd000,
-      #008cff
+      #694dff,
+      #158fff
     );
 
-  color: #06101a;
+  font-size: 12px;
 
-  cursor: pointer;
+  font-weight: 900;
+
+  box-shadow:
+    0 7px 20px rgba(37,109,255,0.20);
 }
 
-/* ================= EMPTY / LOADING ================= */
+.download::after {
+  content: "";
 
-.empty,
-.loading {
+  position: absolute;
+
+  top: 0;
+
+  left: -100%;
+
+  width: 60%;
+
+  height: 100%;
+
+  background:
+    linear-gradient(
+      90deg,
+      transparent,
+      rgba(255,255,255,0.32),
+      transparent
+    );
+
+  animation:
+    buttonShine 3.4s infinite;
+}
+
+@keyframes buttonShine {
+
+  0% {
+    left: -100%;
+  }
+
+  45% {
+    left: 150%;
+  }
+
+  100% {
+    left: 150%;
+  }
+}
+
+.download:active {
+  transform: scale(0.98);
+}
+
+/* ================= LOADING ================= */
+
+.loading,
+.empty {
+  grid-column: 1 / -1;
+
   padding: 45px 20px;
 
   text-align: center;
 
-  color: #788391;
+  border-radius: 17px;
 
-  border-radius: 15px;
-
-  background: #0e151e;
-
-  border:
-    1px solid rgba(255,255,255,0.05);
-}
-
-/* ================= FOOTER / OWNER INFO ================= */
-
-.footer {
-  margin-top: 40px;
-
-  padding: 25px 0 10px;
-
-  border-top:
-    1px solid rgba(255,255,255,0.07);
-
-  text-align: center;
-}
-
-.footer-title {
-  font-size: 20px;
-
-  font-weight: 900;
-
-  margin-bottom: 7px;
-}
-
-.footer-sub {
-  color: #8994a2;
-
-  font-size: 12px;
-
-  line-height: 1.6;
-
-  margin-bottom: 20px;
-}
-
-.owner-box {
-  width: 100%;
-
-  padding: 18px;
-
-  border-radius: 16px;
+  color: #8588a8;
 
   background:
-    linear-gradient(
-      145deg,
-      #101821,
-      #0b1119
-    );
+    rgba(19,20,42,0.7);
 
   border:
-    1px solid rgba(255,255,255,0.07);
+    1px solid rgba(128,114,255,0.13);
 }
 
-.owner-line {
-  margin-bottom: 13px;
+.status {
+  max-width: 900px;
 
-  color: #b2bcc8;
+  margin: 0 auto 12px;
 
-  font-size: 13px;
-
-  line-height: 1.6;
-}
-
-.owner-line strong {
-  color: white;
-}
-
-.footer-links {
-  display: flex;
-
-  flex-direction: column;
-
-  gap: 9px;
-
-  margin-top: 15px;
-}
-
-.footer-link {
-  display: block;
-
-  text-decoration: none;
-
-  padding: 12px;
-
-  border-radius: 10px;
-
-  background: #161f2c;
-
-  color: white;
+  color: #858baa;
 
   font-size: 12px;
-
-  font-weight: 800;
-
-  transition:
-    background 0.15s;
-}
-
-.footer-link:hover {
-  background: #202d3d;
-}
-
-.footer-note {
-  margin-top: 20px;
-
-  color: #66717f;
-
-  font-size: 11px;
-
-  line-height: 1.6;
 }
 
 /* ================= DOWNLOAD MODAL ================= */
@@ -530,305 +382,243 @@ button:hover {
   display: none;
 
   align-items: center;
-
   justify-content: center;
 
-  padding: 18px;
+  padding: 20px;
 
   background:
-    rgba(0,0,0,0.74);
+    rgba(3,4,15,0.78);
 
-  backdrop-filter: blur(7px);
+  backdrop-filter:
+    blur(9px);
 }
 
 .modal-box {
   width: 100%;
 
-  max-width: 420px;
+  max-width: 330px;
 
-  padding: 22px;
+  padding: 25px;
 
-  border-radius: 18px;
+  text-align: center;
+
+  border-radius: 22px;
 
   background:
     linear-gradient(
       145deg,
-      #111a27,
-      #0c121b
+      rgba(29,25,67,0.97),
+      rgba(8,20,43,0.97)
     );
 
   border:
-    1px solid rgba(255,255,255,0.09);
+    1px solid rgba(128,113,255,0.28);
 
   box-shadow:
-    0 25px 70px rgba(0,0,0,0.55);
+    0 25px 80px rgba(0,0,0,0.55);
+}
+
+.count-number {
+  width: 88px;
+  height: 88px;
+
+  margin: 0 auto 18px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  font-size: 38px;
+
+  font-weight: 900;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(81,101,255,0.35),
+      rgba(8,15,35,0.9)
+    );
+
+  border:
+    2px solid rgba(101,147,255,0.55);
+
+  box-shadow:
+    0 0 30px rgba(70,114,255,0.28);
+
+  animation:
+    countPulse .75s ease;
+}
+
+@keyframes countPulse {
+
+  0% {
+    transform: scale(.45);
+    opacity: 0;
+  }
+
+  65% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
 .modal-title {
-  font-size: 19px;
+  font-size: 16px;
 
   font-weight: 900;
 
-  margin-bottom: 10px;
+  color: #f2f2ff;
+
+  margin-bottom: 7px;
 }
 
 .modal-text {
-  color: #9ba6b5;
-
-  font-size: 13px;
-
-  line-height: 1.6;
-
-  margin-bottom: 18px;
-}
-
-.progress-track {
-  width: 100%;
-
-  height: 8px;
-
-  overflow: hidden;
-
-  border-radius: 999px;
-
-  background: #202b38;
-
-  margin-bottom: 10px;
-}
-
-.progress-bar {
-  width: 0%;
-
-  height: 100%;
-
-  background:
-    linear-gradient(
-      90deg,
-      #ffd000,
-      #008cff
-    );
-
-  transition:
-    width 0.35s ease;
-}
-
-.countdown {
-  color: #ffd21a;
+  color: #9298b6;
 
   font-size: 12px;
 
+  line-height: 1.6;
+}
+
+.ready-button {
+  width: 100%;
+
+  padding: 12px;
+
+  margin-top: 17px;
+
+  border: 0;
+
+  border-radius: 11px;
+
+  color: white;
+
+  background:
+    linear-gradient(
+      135deg,
+      #6a50ff,
+      #008dff
+    );
+
   font-weight: 900;
 
-  margin-bottom: 16px;
-}
-
-.modal-actions {
-  display: flex;
-
-  gap: 9px;
-}
-
-.modal-actions button {
-  flex: 1;
+  cursor: pointer;
 }
 
 .hidden {
   display: none !important;
 }
 
-@media (max-width: 520px) {
+/* ================= MOBILE ================= */
 
-  .container {
-    padding: 15px 11px 35px;
+@media (max-width: 600px) {
+
+  body {
+    padding: 12px;
   }
 
-  .logo {
-    font-size: 23px;
-  }
+  .file-grid {
+    grid-template-columns:
+      repeat(2, minmax(0, 1fr));
 
-  .toolbar {
-    flex-direction: column;
-  }
-
-  .toolbar button {
-    width: 100%;
+    gap: 10px;
   }
 
   .file-card {
-    padding: 15px;
+    min-height: 165px;
+
+    padding: 13px;
+
+    border-radius: 15px;
   }
 
-  .actions {
-    flex-direction: column;
+  .file-icon {
+    width: 48px;
+    height: 48px;
+
+    font-size: 25px;
+
+    border-radius: 13px;
   }
 
-  .action {
-    width: 100%;
+  .file-name {
+    font-size: 13px;
+
+    margin-top: 13px;
+  }
+
+  .download {
+    margin-top: 13px;
+
+    padding: 10px 7px;
+
+    font-size: 11px;
+  }
+
+  .refresh {
+    padding: 0 12px;
   }
 }
+</style></head><body><div class="search-area"><input
+id="search"
+class="search"
+type="text"
+placeholder="Search files..."
+autocomplete="off"
 
-</style></head><body><!-- ================= HEADER ================= --><header class="header">  <div class="header-inner"><div class="logo">
-  Lethal Devil File Store
-</div>
+«»
 
-<div class="subtitle">
-  Files • Resources • Updates
-</div>
+<button
+class="refresh"
+onclick="loadFiles()"
 
-  </div></header><!-- ================= MAIN ================= --><main class="container">  <section class="hero"><div class="hero-title">
-  Welcome to Lethal Devil
-</div>
+«»
 
-<div class="hero-text">
-  Browse the available files below.
-  Open supported files directly or prepare
-  the download through the download panel.
-</div>
+Refresh
 
-  </section>  <div class="toolbar"><input
-  id="search"
-  class="search"
-  type="text"
-  placeholder="Search files..."
-  autocomplete="off"
+  </button></div><div
+  id="status"
+  class="status"
 >
-
-<button onclick="loadFiles()">
-  Refresh
-</button>
-
-  </div>  <div
-    id="status"
-    class="status"
-  >
-    Loading files...
-  </div>  <section
-    id="files"
-    class="file-list"
-  ></section>  <!-- ================= OWNER INFO ================= -->  <footer class="footer"><div class="footer-title">
-  Lethal Devil
-</div>
-
-<div class="footer-sub">
-  Providing non rc file free 🤫
-</div>
-
-<div class="owner-box">
-
-  <div class="owner-line">
-    <strong>Owner</strong><br>
-    @Lethaldevil_bot
-  </div>
-
-  <div class="owner-line">
-    <strong>Backup Channel</strong><br>
-    @lethalznetwork
-  </div>
-
-  <div class="owner-line">
-    <strong>Support</strong><br>
-    Your Problems 🤔 My Solutions 😎
-  </div>
-
-  <div class="footer-links">
-
-    <a
-      class="footer-link"
-      href="https://t.me/LETHALXNETWORK"
-      target="_blank"
-      rel="noopener"
-    >
-      📢 Join Backup Telegram Channel
-    </a>
-
-    <a
-      class="footer-link"
-      href="https://t.me/lethaldevil_bot"
-      target="_blank"
-      rel="noopener"
-    >
-      🤖 Contact Owner — @Lethaldevil_bot
-    </a>
-
-    <a
-      class="footer-link"
-      href="https://www.instagram.com/t1__bot"
-      target="_blank"
-      rel="noopener"
-    >
-      📸 Ask Your Question — Instagram
-    </a>
-
-    <a
-      class="footer-link"
-      href="https://t.me/T1botYouTube"
-      target="_blank"
-      rel="noopener"
-    >
-      ▶️ T1bot YouTube
-    </a>
-
-  </div>
-
-</div>
-
-<div class="footer-note">
-  All available files are listed from the server's
-  files directory.
-</div>
-
-  </footer></main><!-- ================= DOWNLOAD MODAL ================= --><div
+  Loading...
+</div><div
+  id="files"
+  class="file-grid"
+></div><!-- DOWNLOAD COUNTDOWN --><div
   id="downloadModal"
   class="modal"
 >  <div class="modal-box"><div
-  id="modalTitle"
-  class="modal-title"
+  id="countNumber"
+  class="count-number"
 >
-  Prepare Download
+  3
+</div>
+
+<div class="modal-title">
+  Preparing Download
 </div>
 
 <div
   id="modalText"
   class="modal-text"
 >
-  Please wait while your download link is prepared.
+  Please wait...
 </div>
 
-<div class="progress-track">
-  <div
-    id="progressBar"
-    class="progress-bar"
-  ></div>
-</div>
-
-<div
-  id="countdown"
-  class="countdown"
+<button
+  id="readyButton"
+  class="ready-button hidden"
+  onclick="startDownload()"
 >
-  Preparing...
-</div>
-
-<div class="modal-actions">
-
-  <button
-    onclick="closeDownloadModal()"
-    style="
-      background:#252e3a;
-      color:white;
-    "
-  >
-    Cancel
-  </button>
-
-  <button
-    id="continueDownload"
-    class="hidden"
-    onclick="startRealDownload()"
-  >
-    Continue Download
-  </button>
-
-</div>
+  Download
+</button>
 
   </div></div><script>
 
@@ -836,104 +626,60 @@ var allFiles = [];
 
 var selectedDownloadUrl = "";
 
-var downloadTimer = null;
+var countTimer = null;
 
-/* ================= FILE HELPERS ================= */
+/* ================= FILE ICON ================= */
 
-function formatSize(bytes) {
+function getIcon(name) {
 
-  if (bytes < 1024) {
-    return bytes + " B";
-  }
-
-  if (bytes < 1024 * 1024) {
-    return (
-      (bytes / 1024).toFixed(2)
-      + " KB"
-    );
-  }
-
-  if (bytes < 1024 * 1024 * 1024) {
-    return (
-      (bytes / (1024 * 1024)).toFixed(2)
-      + " MB"
-    );
-  }
-
-  return (
-    (bytes / (1024 * 1024 * 1024)).toFixed(2)
-    + " GB"
-  );
-}
-
-function formatDate(timestamp) {
-
-  return new Date(timestamp)
-    .toLocaleString();
-}
-
-function getIcon(fileName) {
-
-  var name =
-    fileName.toLowerCase();
+  var n =
+    name.toLowerCase();
 
   if (
-    name.endsWith(".mp4") ||
-    name.endsWith(".mkv") ||
-    name.endsWith(".avi") ||
-    name.endsWith(".mov") ||
-    name.endsWith(".webm")
+    n.endsWith(".mp4") ||
+    n.endsWith(".mkv") ||
+    n.endsWith(".avi") ||
+    n.endsWith(".mov") ||
+    n.endsWith(".webm")
   ) {
     return "🎬";
   }
 
   if (
-    name.endsWith(".mp3") ||
-    name.endsWith(".wav") ||
-    name.endsWith(".ogg") ||
-    name.endsWith(".m4a")
+    n.endsWith(".mp3") ||
+    n.endsWith(".wav") ||
+    n.endsWith(".ogg") ||
+    n.endsWith(".m4a")
   ) {
     return "🎵";
   }
 
   if (
-    name.endsWith(".jpg") ||
-    name.endsWith(".jpeg") ||
-    name.endsWith(".png") ||
-    name.endsWith(".gif") ||
-    name.endsWith(".webp")
+    n.endsWith(".jpg") ||
+    n.endsWith(".jpeg") ||
+    n.endsWith(".png") ||
+    n.endsWith(".gif") ||
+    n.endsWith(".webp")
   ) {
     return "🖼️";
   }
 
   if (
-    name.endsWith(".zip") ||
-    name.endsWith(".rar") ||
-    name.endsWith(".7z")
+    n.endsWith(".zip") ||
+    n.endsWith(".rar") ||
+    n.endsWith(".7z")
   ) {
     return "📦";
   }
 
-  if (name.endsWith(".pdf")) {
+  if (n.endsWith(".pdf")) {
     return "📕";
   }
 
   return "📄";
 }
 
-function getExtension(fileName) {
-
-  var index =
-    fileName.lastIndexOf(".");
-
-  if (index === -1) {
-    return "FILE";
-  }
-
-  return fileName
-    .substring(index + 1)
-    .toUpperCase();
-}
+/* ================= ESCAPE ================= */
 
 function escapeHtml(text) {
 
@@ -945,7 +691,7 @@ function escapeHtml(text) {
     .replace(/'/g, "&#039;");
 }
 
-/* ================= RENDER FILES ================= */
+/* ================= RENDER ================= */
 
 function renderFiles(list) {
 
@@ -958,7 +704,7 @@ function renderFiles(list) {
 
     container.innerHTML =
       '<div class="empty">' +
-      'No matching files found.' +
+      'No files found.' +
       '</div>';
 
     return;
@@ -967,80 +713,42 @@ function renderFiles(list) {
   list.forEach(function(file) {
 
     var card =
-      document.createElement("article");
+      document.createElement("div");
 
     card.className =
       "file-card";
 
-    var safeName =
-      escapeHtml(file.name);
-
-    var openUrl =
-      "/files/" +
-      encodeURIComponent(file.name);
-
-    var downloadName =
+    var encoded =
       encodeURIComponent(file.name);
 
     card.innerHTML =
 
-      '<div class="file-top">' +
+      '<div>' +
 
         '<div class="file-icon">' +
           getIcon(file.name) +
         '</div>' +
 
-        '<div class="file-title-box">' +
-
-          '<div class="file-name">' +
-            safeName +
-          '</div>' +
-
-          '<div class="file-type">' +
-            getExtension(file.name) +
-          '</div>' +
-
+        '<div class="file-name">' +
+          escapeHtml(file.name) +
         '</div>' +
 
       '</div>' +
 
-      '<div class="file-info">' +
-
-        'Size: ' +
-        formatSize(file.size) +
-
-        '<br>' +
-
-        'Added: ' +
-        formatDate(file.modified) +
-
-      '</div>' +
-
-      '<div class="actions">' +
-
-        '<a ' +
-          'class="action open" ' +
-          'href="' + openUrl + '"' +
-          'target="_blank"' +
-          'rel="noopener">' +
-          'Open File' +
-        '</a>' +
-
-        '<button ' +
-          'class="action get-download" ' +
-          'onclick="prepareDownload(\'' +
-          downloadName +
-          '\')">' +
-          'Get Download' +
-        '</button>' +
-
-      '</div>';
+      '<button ' +
+        'class="download" ' +
+        'onclick="prepareDownload(\'' +
+        encoded +
+        '\')">' +
+        'DOWNLOAD' +
+      '</button>';
 
     container.appendChild(card);
+
   });
 }
 
-/* ================= LOAD FILES ================= */
+/* ================= LOAD ================= */
 
 function loadFiles() {
 
@@ -1055,7 +763,7 @@ function loadFiles() {
 
   container.innerHTML =
     '<div class="loading">' +
-    'Loading file list...' +
+    'Loading...' +
     '</div>';
 
   fetch("/file-list")
@@ -1069,6 +777,7 @@ function loadFiles() {
       }
 
       return response.json();
+
     })
 
     .then(function(data) {
@@ -1077,6 +786,7 @@ function loadFiles() {
         !data.ok ||
         !Array.isArray(data.files)
       ) {
+
         throw new Error(
           "Invalid server response"
         );
@@ -1089,7 +799,8 @@ function loadFiles() {
 
       status.innerText =
         allFiles.length +
-        " file(s) available";
+        " file(s)";
+
     })
 
     .catch(function(error) {
@@ -1100,33 +811,41 @@ function loadFiles() {
         '</div>';
 
       status.innerText =
-        "Error: " + error.message;
+        "Error: " +
+        error.message;
     });
 }
 
 /* ================= SEARCH ================= */
 
-function filterFiles() {
+document
+  .getElementById("search")
+  .addEventListener(
+    "input",
+    function() {
 
-  var query =
-    document
-      .getElementById("search")
-      .value
-      .trim()
-      .toLowerCase();
+      var query =
+        this.value
+          .trim()
+          .toLowerCase();
 
-  var filtered =
-    allFiles.filter(function(file) {
+      var filtered =
+        allFiles.filter(
+          function(file) {
 
-      return file.name
-        .toLowerCase()
-        .indexOf(query) !== -1;
-    });
+            return file.name
+              .toLowerCase()
+              .indexOf(query) !== -1;
 
-  renderFiles(filtered);
-}
+          }
+        );
 
-/* ================= DOWNLOAD STEP ================= */
+      renderFiles(filtered);
+
+    }
+  );
+
+/* ================= DOWNLOAD COUNTDOWN ================= */
 
 function prepareDownload(encodedName) {
 
@@ -1138,9 +857,9 @@ function prepareDownload(encodedName) {
       "downloadModal"
     );
 
-  var title =
+  var number =
     document.getElementById(
-      "modalTitle"
+      "countNumber"
     );
 
   var text =
@@ -1148,86 +867,79 @@ function prepareDownload(encodedName) {
       "modalText"
     );
 
-  var bar =
+  var ready =
     document.getElementById(
-      "progressBar"
+      "readyButton"
     );
 
-  var countdown =
-    document.getElementById(
-      "countdown"
-    );
-
-  var continueButton =
-    document.getElementById(
-      "continueDownload"
-    );
-
-  title.innerText =
-    "Preparing Download";
-
-  text.innerText =
-    "Complete this short preparation step. " +
-    "After that the download button will become available.";
-
-  countdown.innerText =
-    "Preparing...";
-
-  bar.style.width =
-    "0%";
-
-  continueButton.classList.add(
-    "hidden"
-  );
+  ready.classList.add("hidden");
 
   modal.style.display =
     "flex";
 
-  var progress = 0;
+  var count = 3;
 
-  var seconds = 4;
+  number.innerText =
+    count;
 
-  if (downloadTimer) {
-    clearInterval(downloadTimer);
+  number.style.animation =
+    "none";
+
+  void number.offsetWidth;
+
+  number.style.animation =
+    "countPulse .75s ease";
+
+  text.innerText =
+    "Preparing your download...";
+
+  if (countTimer) {
+    clearInterval(countTimer);
   }
 
-  downloadTimer =
-    setInterval(function() {
+  countTimer =
+    setInterval(
+      function() {
 
-      progress += 25;
+        count--;
 
-      if (progress > 100) {
-        progress = 100;
-      }
+        if (count > 0) {
 
-      bar.style.width =
-        progress + "%";
+          number.innerText =
+            count;
 
-      if (seconds > 0) {
+          number.style.animation =
+            "none";
 
-        countdown.innerText =
-          "Download available in " +
-          seconds +
-          "s";
+          void number.offsetWidth;
 
-        seconds--;
+          number.style.animation =
+            "countPulse .75s ease";
 
-      } else {
+        } else {
 
-        clearInterval(downloadTimer);
+          clearInterval(countTimer);
 
-        countdown.innerText =
-          "Download ready";
+          number.innerText =
+            "✓";
 
-        continueButton.classList.remove(
-          "hidden"
-        );
-      }
+          text.innerText =
+            "Your download is ready.";
 
-    }, 700);
+          ready.classList.remove(
+            "hidden"
+          );
+
+        }
+
+      },
+      1000
+    );
 }
 
-function startRealDownload() {
+/* ================= DOWNLOAD ================= */
+
+function startDownload() {
 
   if (!selectedDownloadUrl) {
     return;
@@ -1239,44 +951,40 @@ function startRealDownload() {
   link.href =
     selectedDownloadUrl;
 
-  link.style.display =
-    "none";
+  link.download = "";
 
-  document.body.appendChild(link);
+  document.body.appendChild(
+    link
+  );
 
   link.click();
 
-  document.body.removeChild(link);
+  document.body.removeChild(
+    link
+  );
 
-  closeDownloadModal();
+  closeModal();
 }
 
-function closeDownloadModal() {
+function closeModal() {
 
-  var modal =
-    document.getElementById(
-      "downloadModal"
-    );
-
-  modal.style.display =
+  document.getElementById(
+    "downloadModal"
+  ).style.display =
     "none";
 
-  if (downloadTimer) {
-    clearInterval(downloadTimer);
+  if (countTimer) {
 
-    downloadTimer = null;
+    clearInterval(
+      countTimer
+    );
+
+    countTimer = null;
   }
 
   selectedDownloadUrl =
     "";
 }
-
-document
-  .getElementById("search")
-  .addEventListener(
-    "input",
-    filterFiles
-  );
 
 /* ================= START ================= */
 
