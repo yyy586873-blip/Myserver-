@@ -1,146 +1,359 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
 <meta charset="UTF-8">
-
-<meta
-  name="viewport"
-  content="width=device-width, initial-scale=1.0"
->
-
-<title>Lethal Devil File Store</title>
-
-<style>
-
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Lethal Devil File Store</title><style>
 * {
   box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   margin: 0;
   font-family: Arial, Helvetica, sans-serif;
-  background: #0b0b0f;
+  background:
+    radial-gradient(circle at 10% 0%, rgba(255, 210, 0, 0.10), transparent 28%),
+    radial-gradient(circle at 90% 10%, rgba(0, 135, 255, 0.12), transparent 30%),
+    #070b12;
   color: #ffffff;
+}
+
+a {
+  color: inherit;
 }
 
 .header {
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 100;
 
   padding: 18px 20px;
 
   background:
     linear-gradient(
       135deg,
-      #180000,
-      #280000,
-      #090909
+      rgba(255, 194, 0, 0.95),
+      rgba(0, 116, 255, 0.96)
     );
 
+  box-shadow:
+    0 8px 30px rgba(0, 0, 0, 0.35);
+
   border-bottom:
-    1px solid rgba(255,255,255,0.08);
+    1px solid rgba(255,255,255,0.15);
+}
+
+.header-inner {
+  max-width: 1150px;
+  margin: auto;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 15px;
+}
+
+.logo-wrap {
+  min-width: 0;
 }
 
 .logo {
-  font-size: 25px;
-  font-weight: bold;
-  letter-spacing: 1px;
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
 }
 
 .subtitle {
   margin-top: 5px;
-  color: #a9a9a9;
   font-size: 13px;
+  color: rgba(255,255,255,0.86);
+}
+
+.header-badge {
+  padding: 9px 13px;
+  border-radius: 999px;
+
+  background: rgba(0,0,0,0.22);
+  border: 1px solid rgba(255,255,255,0.22);
+
+  font-size: 12px;
+  font-weight: 800;
+
+  white-space: nowrap;
 }
 
 .container {
-  max-width: 1100px;
+  max-width: 1150px;
   margin: auto;
   padding: 20px;
+}
+
+.hero {
+  margin-bottom: 18px;
+
+  padding: 22px;
+
+  border-radius: 20px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(255, 194, 0, 0.11),
+      rgba(0, 132, 255, 0.11)
+    );
+
+  border:
+    1px solid rgba(255,255,255,0.08);
+
+  box-shadow:
+    0 10px 35px rgba(0,0,0,0.22);
+}
+
+.hero-title {
+  font-size: 25px;
+  font-weight: 900;
+  margin-bottom: 8px;
+}
+
+.hero-text {
+  color: #b9c0cc;
+  line-height: 1.6;
+  font-size: 14px;
+}
+
+.link-grid {
+  display: grid;
+  grid-template-columns:
+    repeat(auto-fit, minmax(230px, 1fr));
+  gap: 12px;
+
+  margin: 18px 0;
+}
+
+.link-card {
+  text-decoration: none;
+
+  padding: 15px;
+
+  border-radius: 15px;
+
+  background: #101722;
+
+  border:
+    1px solid rgba(255,255,255,0.07);
+
+  transition:
+    transform 0.16s ease,
+    border-color 0.16s ease,
+    background 0.16s ease;
+}
+
+.link-card:hover {
+  transform: translateY(-2px);
+
+  border-color:
+    rgba(255, 207, 0, 0.55);
+
+  background: #131d2b;
+}
+
+.link-title {
+  font-size: 14px;
+  font-weight: 900;
+
+  margin-bottom: 5px;
+}
+
+.link-sub {
+  color: #9fa9b8;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.link-icon {
+  font-size: 25px;
+  margin-bottom: 9px;
 }
 
 .toolbar {
   display: flex;
   gap: 10px;
   flex-wrap: wrap;
-  margin-bottom: 20px;
+
+  margin-bottom: 15px;
+}
+
+.search {
+  flex: 1;
+  min-width: 220px;
+
+  padding: 13px 15px;
+
+  border-radius: 12px;
+
+  border:
+    1px solid rgba(255,255,255,0.08);
+
+  outline: none;
+
+  color: #ffffff;
+
+  background: #101722;
+
+  font-size: 14px;
+}
+
+.search:focus {
+  border-color: #ffca00;
 }
 
 button {
   border: none;
-  border-radius: 10px;
-  padding: 11px 16px;
+  border-radius: 11px;
 
-  background: #d40000;
-  color: white;
+  padding: 12px 16px;
 
-  font-size: 14px;
-  font-weight: bold;
+  background:
+    linear-gradient(
+      135deg,
+      #ffc400,
+      #0089ff
+    );
+
+  color: #06101b;
+
+  font-size: 13px;
+  font-weight: 900;
 
   cursor: pointer;
+
+  box-shadow:
+    0 6px 18px rgba(0, 140, 255, 0.16);
 }
 
 button:hover {
-  background: #f00000;
+  filter: brightness(1.08);
 }
 
 .status {
   margin-bottom: 15px;
-  color: #aaaaaa;
-  font-size: 14px;
+
+  color: #9da8b6;
+
+  font-size: 13px;
 }
 
 .file-grid {
   display: grid;
 
   grid-template-columns:
-    repeat(auto-fill, minmax(280px, 1fr));
+    repeat(auto-fill, minmax(290px, 1fr));
 
   gap: 15px;
 }
 
 .file-card {
-  background: #15151b;
+  position: relative;
+
+  overflow: hidden;
+
+  background:
+    linear-gradient(
+      145deg,
+      #111925,
+      #0d131c
+    );
 
   border:
     1px solid rgba(255,255,255,0.07);
 
-  border-radius: 14px;
+  border-radius: 17px;
 
-  padding: 16px;
+  padding: 17px;
+
+  box-shadow:
+    0 9px 25px rgba(0,0,0,0.25);
 
   transition:
-    transform 0.15s,
-    border-color 0.15s;
+    transform 0.16s ease,
+    border-color 0.16s ease;
+}
+
+.file-card::before {
+  content: "";
+
+  position: absolute;
+
+  left: 0;
+  top: 0;
+
+  width: 100%;
+  height: 3px;
+
+  background:
+    linear-gradient(
+      90deg,
+      #ffd000,
+      #008cff
+    );
 }
 
 .file-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-3px);
 
   border-color:
-    rgba(255,80,80,0.4);
+    rgba(0, 156, 255, 0.35);
 }
 
 .file-icon {
-  font-size: 35px;
-  margin-bottom: 10px;
+  font-size: 34px;
+
+  margin-top: 5px;
+  margin-bottom: 9px;
 }
 
 .file-name {
   font-size: 17px;
-  font-weight: bold;
+  font-weight: 900;
 
   word-break: break-word;
+
+  line-height: 1.35;
 }
 
 .file-info {
   margin-top: 8px;
 
-  font-size: 13px;
-  color: #9d9d9d;
+  font-size: 12px;
 
-  line-height: 1.6;
+  color: #98a3b1;
+
+  line-height: 1.7;
+}
+
+.file-type {
+  display: inline-block;
+
+  margin-top: 10px;
+
+  padding: 5px 8px;
+
+  border-radius: 999px;
+
+  background:
+    rgba(255, 204, 0, 0.10);
+
+  color: #ffd31a;
+
+  border:
+    1px solid rgba(255,204,0,0.16);
+
+  font-size: 10px;
+
+  font-weight: 900;
 }
 
 .actions {
@@ -148,99 +361,372 @@ button:hover {
 
   gap: 8px;
 
-  margin-top: 14px;
+  margin-top: 15px;
 }
 
-.download {
+.action-btn {
   flex: 1;
+
   text-align: center;
 
   text-decoration: none;
 
-  border-radius: 9px;
+  border-radius: 10px;
 
   padding: 10px;
 
-  background: #d40000;
-  color: white;
+  font-size: 12px;
 
-  font-size: 13px;
-  font-weight: bold;
+  font-weight: 900;
+
+  cursor: pointer;
 }
 
-.open {
-  flex: 1;
-  text-align: center;
-
-  text-decoration: none;
-
-  border-radius: 9px;
-
-  padding: 10px;
-
-  background: #28282f;
-  color: white;
-
-  font-size: 13px;
-  font-weight: bold;
+.open-btn {
+  background: #1d2633;
+  color: #ffffff;
 }
 
-.empty {
-  padding: 40px 20px;
+.download-btn {
+  background:
+    linear-gradient(
+      135deg,
+      #ffd000,
+      #008cff
+    );
 
-  text-align: center;
-
-  color: #777777;
+  color: #07111c;
 }
 
+.empty,
 .loading {
+  padding: 42px 20px;
+
   text-align: center;
-  padding: 30px;
-  color: #999999;
+
+  color: #798391;
 }
 
-</style>
-</head>
+.footer {
+  margin-top: 35px;
+  padding: 20px 0 10px;
 
-<body>
+  text-align: center;
 
-<header class="header">
+  color: #697382;
 
+  font-size: 12px;
+}
+
+/* Download modal */
+
+.modal {
+  position: fixed;
+
+  left: 0;
+  top: 0;
+
+  width: 100%;
+  height: 100%;
+
+  display: none;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  background:
+    rgba(0,0,0,0.72);
+
+  backdrop-filter: blur(7px);
+
+  z-index: 1000;
+}
+
+.modal-box {
+  width: 100%;
+  max-width: 420px;
+
+  padding: 22px;
+
+  border-radius: 18px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #111a27,
+      #0c121b
+    );
+
+  border:
+    1px solid rgba(255,255,255,0.09);
+
+  box-shadow:
+    0 20px 60px rgba(0,0,0,0.5);
+}
+
+.modal-title {
+  font-size: 19px;
+  font-weight: 900;
+
+  margin-bottom: 9px;
+}
+
+.modal-text {
+  color: #9da8b6;
+
+  line-height: 1.6;
+
+  font-size: 13px;
+
+  margin-bottom: 18px;
+}
+
+.progress-track {
+  width: 100%;
+  height: 8px;
+
+  border-radius: 999px;
+
+  overflow: hidden;
+
+  background: #1d2733;
+
+  margin-bottom: 11px;
+}
+
+.progress-bar {
+  width: 0%;
+  height: 100%;
+
+  background:
+    linear-gradient(
+      90deg,
+      #ffd000,
+      #008cff
+    );
+
+  transition:
+    width 0.4s ease;
+}
+
+.countdown {
+  margin-bottom: 15px;
+
+  color: #ffd11a;
+
+  font-size: 12px;
+
+  font-weight: 900;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.modal-actions button {
+  flex: 1;
+}
+
+.hidden {
+  display: none !important;
+}
+
+</style></head><body><header class="header">
+  <div class="header-inner"><div class="logo-wrap">
   <div class="logo">
     Lethal Devil File Store
   </div>
 
   <div class="subtitle">
-    Your files • Download anytime
+    Files • Updates • Resources
   </div>
+</div>
 
-</header>
-
-<main class="container">
-
-  <div class="toolbar">
-
-    <button onclick="loadFiles()">
-      Refresh Files
-    </button>
+<div class="header-badge">
+  ONLINE
+</div>
 
   </div>
+</header><main class="container">  <section class="hero"><div class="hero-title">
+  Welcome to Lethal Devil
+</div>
 
-  <div
+<div class="hero-text">
+  Browse available files, check their details,
+  open supported files directly or use the
+  protected two-step download process.
+</div>
+
+  </section>  <section class="link-grid"><a
+  class="link-card"
+  href="https://t.me/LETHALXNETWORK"
+  target="_blank"
+  rel="noopener"
+>
+  <div class="link-icon">📢</div>
+
+  <div class="link-title">
+    Backup Channel
+  </div>
+
+  <div class="link-sub">
+    @lethalznetwork
+  </div>
+</a>
+
+<a
+  class="link-card"
+  href="https://t.me/LETHALXNETWORK"
+  target="_blank"
+  rel="noopener"
+>
+  <div class="link-icon">💬</div>
+
+  <div class="link-title">
+    Join Telegram
+  </div>
+
+  <div class="link-sub">
+    Get updates and new files
+  </div>
+</a>
+
+<a
+  class="link-card"
+  href="https://www.instagram.com/t1__bot"
+  target="_blank"
+  rel="noopener"
+>
+  <div class="link-icon">📸</div>
+
+  <div class="link-title">
+    Your Problems 🤔 My Solutions 😎
+  </div>
+
+  <div class="link-sub">
+    Ask Your Question
+  </div>
+</a>
+
+<a
+  class="link-card"
+  href="https://t.me/T1botYouTube"
+  target="_blank"
+  rel="noopener"
+>
+  <div class="link-icon">▶️</div>
+
+  <div class="link-title">
+    T1 Bot YouTube
+  </div>
+
+  <div class="link-sub">
+    Tutorials and updates
+  </div>
+</a>
+
+<a
+  class="link-card"
+  href="https://t.me/lethaldevil_bot"
+  target="_blank"
+  rel="noopener"
+>
+  <div class="link-icon">🤖</div>
+
+  <div class="link-title">
+    Owner DM
+  </div>
+
+  <div class="link-sub">
+    @Lethaldevil_bot
+  </div>
+</a>
+
+  </section>  <div class="toolbar"><input
+  id="search"
+  class="search"
+  type="text"
+  placeholder="Search files..."
+  autocomplete="off"
+>
+
+<button onclick="loadFiles()">
+  Refresh
+</button>
+
+  </div>  <div
     id="status"
     class="status"
   >
     Loading files...
-  </div>
-
-  <div
+  </div>  <div
     id="files"
     class="file-grid"
+  ></div>  <footer class="footer">
+    Providing non rc file free 🤫
+    <br>
+    Lethal Devil File Store
+  </footer></main><!-- Download modal --><div
+  id="downloadModal"
+  class="modal"
+>  <div class="modal-box"><div
+  id="modalTitle"
+  class="modal-title"
+>
+  Prepare Download
+</div>
+
+<div
+  id="modalText"
+  class="modal-text"
+>
+  Please wait while the download link is prepared.
+</div>
+
+<div class="progress-track">
+  <div
+    id="progressBar"
+    class="progress-bar"
   ></div>
+</div>
 
-</main>
+<div
+  id="countdown"
+  class="countdown"
+>
+  Preparing...
+</div>
 
-<script>
+<div class="modal-actions">
+
+  <button
+    onclick="closeDownloadModal()"
+    style="
+      background:#252e3a;
+      color:white;
+    "
+  >
+    Cancel
+  </button>
+
+  <button
+    id="continueDownload"
+    class="hidden"
+    onclick="startRealDownload()"
+  >
+    Continue Download
+  </button>
+
+</div>
+
+  </div></div><script>
+
+var allFiles = [];
+var selectedDownloadUrl = "";
+var downloadTimer = null;
 
 function formatSize(bytes) {
 
@@ -270,7 +756,8 @@ function formatSize(bytes) {
 
 function formatDate(timestamp) {
 
-  var d = new Date(timestamp);
+  var d =
+    new Date(timestamp);
 
   return d.toLocaleString();
 }
@@ -317,9 +804,7 @@ function getIcon(fileName) {
     return "📦";
   }
 
-  if (
-    name.endsWith(".pdf")
-  ) {
+  if (name.endsWith(".pdf")) {
     return "📕";
   }
 
@@ -335,14 +820,110 @@ function getIcon(fileName) {
   return "📁";
 }
 
+function getExtension(fileName) {
+
+  var index =
+    fileName.lastIndexOf(".");
+
+  if (index === -1) {
+    return "FILE";
+  }
+
+  return fileName
+    .substring(index + 1)
+    .toUpperCase();
+}
+
 function escapeHtml(text) {
 
-  return text
+  return String(text)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
+}
+
+function renderFiles(list) {
+
+  var container =
+    document.getElementById("files");
+
+  container.innerHTML = "";
+
+  if (!list.length) {
+
+    container.innerHTML =
+      '<div class="empty">' +
+      'No matching files found.' +
+      '</div>';
+
+    return;
+  }
+
+  list.forEach(function(file) {
+
+    var card =
+      document.createElement("div");
+
+    card.className =
+      "file-card";
+
+    var safeName =
+      escapeHtml(file.name);
+
+    var openUrl =
+      "/files/" +
+      encodeURIComponent(file.name);
+
+    var downloadUrl =
+      "/download/" +
+      encodeURIComponent(file.name);
+
+    card.innerHTML =
+
+      '<div class="file-icon">' +
+      getIcon(file.name) +
+      '</div>' +
+
+      '<div class="file-name">' +
+      safeName +
+      '</div>' +
+
+      '<div class="file-info">' +
+      'Size: ' +
+      formatSize(file.size) +
+      '<br>' +
+      'Added: ' +
+      formatDate(file.modified) +
+      '</div>' +
+
+      '<div class="file-type">' +
+      getExtension(file.name) +
+      '</div>' +
+
+      '<div class="actions">' +
+
+      '<a ' +
+      'class="action-btn open-btn" ' +
+      'href="' + openUrl + '"' +
+      ' target="_blank" ' +
+      'rel="noopener">' +
+      'Open' +
+      '</a>' +
+
+      '<button ' +
+      'class="action-btn download-btn" ' +
+      'onclick="prepareDownload(\'' +
+      encodeURIComponent(file.name) +
+      '\')">' +
+      'Get Download' +
+      '</button>' +
+
+      '</div>';
+
+    container.appendChild(card);
+  });
 }
 
 function loadFiles() {
@@ -357,7 +938,9 @@ function loadFiles() {
     "Loading files...";
 
   container.innerHTML =
-    '<div class="loading">Please wait...</div>';
+    '<div class="loading">' +
+    'Loading file list...' +
+    '</div>';
 
   fetch("/file-list")
     .then(function(response) {
@@ -381,79 +964,13 @@ function loadFiles() {
         );
       }
 
-      container.innerHTML = "";
+      allFiles =
+        data.files.slice();
 
-      if (data.files.length === 0) {
-
-        container.innerHTML =
-          '<div class="empty">' +
-          'Files folder is empty.' +
-          '</div>';
-
-        status.innerText =
-          "0 files";
-
-        return;
-      }
-
-      data.files.forEach(function(file) {
-
-        var card =
-          document.createElement("div");
-
-        card.className =
-          "file-card";
-
-        var safeName =
-          escapeHtml(file.name);
-
-        var downloadUrl =
-          "/download/" +
-          encodeURIComponent(file.name);
-
-        var openUrl =
-          "/files/" +
-          encodeURIComponent(file.name);
-
-        card.innerHTML =
-
-          '<div class="file-icon">' +
-          getIcon(file.name) +
-          '</div>' +
-
-          '<div class="file-name">' +
-          safeName +
-          '</div>' +
-
-          '<div class="file-info">' +
-          'Size: ' +
-          formatSize(file.size) +
-          '<br>' +
-          'Added: ' +
-          formatDate(file.modified) +
-          '</div>' +
-
-          '<div class="actions">' +
-
-          '<a class="download" href="' +
-          downloadUrl +
-          '">' +
-          'Download' +
-          '</a>' +
-
-          '<a class="open" href="' +
-          openUrl +
-          '" target="_blank">' +
-          'Open' +
-          '</a>' +
-
-          '</div>';
-
-        container.appendChild(card);
-      });
+      renderFiles(allFiles);
 
       status.innerText =
-        data.files.length +
+        allFiles.length +
         " file(s) available";
     })
     .catch(function(error) {
@@ -468,9 +985,174 @@ function loadFiles() {
     });
 }
 
+function filterFiles() {
+
+  var query =
+    document
+      .getElementById("search")
+      .value
+      .trim()
+      .toLowerCase();
+
+  var filtered =
+    allFiles.filter(function(file) {
+
+      return file.name
+        .toLowerCase()
+        .indexOf(query) !== -1;
+    });
+
+  renderFiles(filtered);
+}
+
+function prepareDownload(encodedName) {
+
+  selectedDownloadUrl =
+    "/download/" + encodedName;
+
+  var modal =
+    document.getElementById(
+      "downloadModal"
+    );
+
+  var title =
+    document.getElementById(
+      "modalTitle"
+    );
+
+  var text =
+    document.getElementById(
+      "modalText"
+    );
+
+  var bar =
+    document.getElementById(
+      "progressBar"
+    );
+
+  var countdown =
+    document.getElementById(
+      "countdown"
+    );
+
+  var continueButton =
+    document.getElementById(
+      "continueDownload"
+    );
+
+  title.innerText =
+    "Preparing Download";
+
+  text.innerText =
+    "Your file is ready. " +
+    "Please complete this short preparation step before continuing.";
+
+  countdown.innerText =
+    "Preparing...";
+
+  bar.style.width =
+    "0%";
+
+  continueButton.classList.add(
+    "hidden"
+  );
+
+  modal.style.display =
+    "flex";
+
+  var progress = 0;
+  var seconds = 4;
+
+  if (downloadTimer) {
+    clearInterval(downloadTimer);
+  }
+
+  downloadTimer =
+    setInterval(function() {
+
+      progress += 25;
+
+      if (progress > 100) {
+        progress = 100;
+      }
+
+      bar.style.width =
+        progress + "%";
+
+      if (seconds > 0) {
+
+        countdown.innerText =
+          "Download link ready in " +
+          seconds +
+          "s";
+
+        seconds--;
+      } else {
+
+        clearInterval(downloadTimer);
+
+        countdown.innerText =
+          "Ready to download";
+
+        continueButton.classList.remove(
+          "hidden"
+        );
+      }
+
+    }, 700);
+}
+
+function startRealDownload() {
+
+  if (!selectedDownloadUrl) {
+    return;
+  }
+
+  var link =
+    document.createElement("a");
+
+  link.href =
+    selectedDownloadUrl;
+
+  link.style.display =
+    "none";
+
+  document.body.appendChild(link);
+
+  link.click();
+
+  document.body.removeChild(link);
+
+  closeDownloadModal();
+}
+
+function closeDownloadModal() {
+
+  var modal =
+    document.getElementById(
+      "downloadModal"
+    );
+
+  modal.style.display =
+    "none";
+
+  if (downloadTimer) {
+    clearInterval(downloadTimer);
+    downloadTimer = null;
+  }
+
+  selectedDownloadUrl =
+    "";
+}
+
+document
+  .getElementById("search")
+  .addEventListener(
+    "input",
+    filterFiles
+  );
+
 loadFiles();
 
-</script>
-
-</body>
+</script></body>
 </html>
