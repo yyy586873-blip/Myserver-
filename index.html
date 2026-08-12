@@ -1,65 +1,476 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>SSH Ocem Style Panel</title>
-  <style>
-    body { margin: 0; font-family: Arial, sans-serif; background: #111; color: #eee; }
-    .top {
-      display: grid;
-      grid-template-columns: 1.5fr 1fr 1fr auto;
-      gap: 8px;
-      padding: 12px;
-      background: #1b1b1b;
-      border-bottom: 1px solid #333;
-    }
-    input, button {
-      padding: 10px;
-      border: 1px solid #444;
-      background: #222;
-      color: #fff;
-      border-radius: 6px;
-      outline: none;
-    }
-    button { cursor: pointer; background: #2d6cdf; border: none; }
-    button:hover { opacity: 0.92; }
-    #status { padding: 8px 12px; font-size: 14px; color: #9fe870; }
-    #terminal {
-      white-space: pre-wrap;
-      padding: 12px;
-      height: calc(100vh - 170px);
-      overflow: auto;
-      background: #000;
-      color: #0f0;
-      font-family: monospace;
-      line-height: 1.4;
-    }
-    .bottom {
-      display: flex;
-      gap: 8px;
-      padding: 12px;
-      background: #1b1b1b;
-      border-top: 1px solid #333;
-    }
-    #cmd { flex: 1; }
-  </style>
+<meta charset="UTF-8">
+
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1.0"
+>
+
+<title>Lethal Devil File Store</title>
+
+<style>
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #0b0b0f;
+  color: #ffffff;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+
+  padding: 18px 20px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #180000,
+      #280000,
+      #090909
+    );
+
+  border-bottom:
+    1px solid rgba(255,255,255,0.08);
+}
+
+.logo {
+  font-size: 25px;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.subtitle {
+  margin-top: 5px;
+  color: #a9a9a9;
+  font-size: 13px;
+}
+
+.container {
+  max-width: 1100px;
+  margin: auto;
+  padding: 20px;
+}
+
+.toolbar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+button {
+  border: none;
+  border-radius: 10px;
+  padding: 11px 16px;
+
+  background: #d40000;
+  color: white;
+
+  font-size: 14px;
+  font-weight: bold;
+
+  cursor: pointer;
+}
+
+button:hover {
+  background: #f00000;
+}
+
+.status {
+  margin-bottom: 15px;
+  color: #aaaaaa;
+  font-size: 14px;
+}
+
+.file-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(auto-fill, minmax(280px, 1fr));
+
+  gap: 15px;
+}
+
+.file-card {
+  background: #15151b;
+
+  border:
+    1px solid rgba(255,255,255,0.07);
+
+  border-radius: 14px;
+
+  padding: 16px;
+
+  transition:
+    transform 0.15s,
+    border-color 0.15s;
+}
+
+.file-card:hover {
+  transform: translateY(-2px);
+
+  border-color:
+    rgba(255,80,80,0.4);
+}
+
+.file-icon {
+  font-size: 35px;
+  margin-bottom: 10px;
+}
+
+.file-name {
+  font-size: 17px;
+  font-weight: bold;
+
+  word-break: break-word;
+}
+
+.file-info {
+  margin-top: 8px;
+
+  font-size: 13px;
+  color: #9d9d9d;
+
+  line-height: 1.6;
+}
+
+.actions {
+  display: flex;
+
+  gap: 8px;
+
+  margin-top: 14px;
+}
+
+.download {
+  flex: 1;
+  text-align: center;
+
+  text-decoration: none;
+
+  border-radius: 9px;
+
+  padding: 10px;
+
+  background: #d40000;
+  color: white;
+
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.open {
+  flex: 1;
+  text-align: center;
+
+  text-decoration: none;
+
+  border-radius: 9px;
+
+  padding: 10px;
+
+  background: #28282f;
+  color: white;
+
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.empty {
+  padding: 40px 20px;
+
+  text-align: center;
+
+  color: #777777;
+}
+
+.loading {
+  text-align: center;
+  padding: 30px;
+  color: #999999;
+}
+
+</style>
 </head>
+
 <body>
-  <div class="top">
-    <input id="host" placeholder="Host" value="127.0.0.1">
-    <input id="port" placeholder="Port" value="22">
-    <button id="connect">Connect</button>
-    <button id="clear">Clear</button>
+
+<header class="header">
+
+  <div class="logo">
+    Lethal Devil File Store
   </div>
 
-  <div id="status">Disconnected</div>
-  <div id="terminal"></div>
-
-  <div class="bottom">
-    <input id="cmd" placeholder="Type command and press Enter">
+  <div class="subtitle">
+    Your files • Download anytime
   </div>
 
-  <script src="/client.js"></script>
+</header>
+
+<main class="container">
+
+  <div class="toolbar">
+
+    <button onclick="loadFiles()">
+      Refresh Files
+    </button>
+
+  </div>
+
+  <div
+    id="status"
+    class="status"
+  >
+    Loading files...
+  </div>
+
+  <div
+    id="files"
+    class="file-grid"
+  ></div>
+
+</main>
+
+<script>
+
+function formatSize(bytes) {
+
+  if (bytes < 1024) {
+    return bytes + " B";
+  }
+
+  if (bytes < 1024 * 1024) {
+    return (
+      (bytes / 1024).toFixed(2)
+      + " KB"
+    );
+  }
+
+  if (bytes < 1024 * 1024 * 1024) {
+    return (
+      (bytes / (1024 * 1024)).toFixed(2)
+      + " MB"
+    );
+  }
+
+  return (
+    (bytes / (1024 * 1024 * 1024)).toFixed(2)
+    + " GB"
+  );
+}
+
+function formatDate(timestamp) {
+
+  var d = new Date(timestamp);
+
+  return d.toLocaleString();
+}
+
+function getIcon(fileName) {
+
+  var name =
+    fileName.toLowerCase();
+
+  if (
+    name.endsWith(".mp4") ||
+    name.endsWith(".mkv") ||
+    name.endsWith(".avi") ||
+    name.endsWith(".mov") ||
+    name.endsWith(".webm")
+  ) {
+    return "🎬";
+  }
+
+  if (
+    name.endsWith(".mp3") ||
+    name.endsWith(".wav") ||
+    name.endsWith(".ogg") ||
+    name.endsWith(".m4a")
+  ) {
+    return "🎵";
+  }
+
+  if (
+    name.endsWith(".jpg") ||
+    name.endsWith(".jpeg") ||
+    name.endsWith(".png") ||
+    name.endsWith(".gif") ||
+    name.endsWith(".webp")
+  ) {
+    return "🖼️";
+  }
+
+  if (
+    name.endsWith(".zip") ||
+    name.endsWith(".rar") ||
+    name.endsWith(".7z")
+  ) {
+    return "📦";
+  }
+
+  if (
+    name.endsWith(".pdf")
+  ) {
+    return "📕";
+  }
+
+  if (
+    name.endsWith(".txt") ||
+    name.endsWith(".json") ||
+    name.endsWith(".html") ||
+    name.endsWith(".js")
+  ) {
+    return "📄";
+  }
+
+  return "📁";
+}
+
+function escapeHtml(text) {
+
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function loadFiles() {
+
+  var status =
+    document.getElementById("status");
+
+  var container =
+    document.getElementById("files");
+
+  status.innerText =
+    "Loading files...";
+
+  container.innerHTML =
+    '<div class="loading">Please wait...</div>';
+
+  fetch("/file-list")
+    .then(function(response) {
+
+      if (!response.ok) {
+        throw new Error(
+          "HTTP " + response.status
+        );
+      }
+
+      return response.json();
+    })
+    .then(function(data) {
+
+      if (
+        !data.ok ||
+        !Array.isArray(data.files)
+      ) {
+        throw new Error(
+          "Invalid server response"
+        );
+      }
+
+      container.innerHTML = "";
+
+      if (data.files.length === 0) {
+
+        container.innerHTML =
+          '<div class="empty">' +
+          'Files folder is empty.' +
+          '</div>';
+
+        status.innerText =
+          "0 files";
+
+        return;
+      }
+
+      data.files.forEach(function(file) {
+
+        var card =
+          document.createElement("div");
+
+        card.className =
+          "file-card";
+
+        var safeName =
+          escapeHtml(file.name);
+
+        var downloadUrl =
+          "/download/" +
+          encodeURIComponent(file.name);
+
+        var openUrl =
+          "/files/" +
+          encodeURIComponent(file.name);
+
+        card.innerHTML =
+
+          '<div class="file-icon">' +
+          getIcon(file.name) +
+          '</div>' +
+
+          '<div class="file-name">' +
+          safeName +
+          '</div>' +
+
+          '<div class="file-info">' +
+          'Size: ' +
+          formatSize(file.size) +
+          '<br>' +
+          'Added: ' +
+          formatDate(file.modified) +
+          '</div>' +
+
+          '<div class="actions">' +
+
+          '<a class="download" href="' +
+          downloadUrl +
+          '">' +
+          'Download' +
+          '</a>' +
+
+          '<a class="open" href="' +
+          openUrl +
+          '" target="_blank">' +
+          'Open' +
+          '</a>' +
+
+          '</div>';
+
+        container.appendChild(card);
+      });
+
+      status.innerText =
+        data.files.length +
+        " file(s) available";
+    })
+    .catch(function(error) {
+
+      container.innerHTML =
+        '<div class="empty">' +
+        'Unable to load files.' +
+        '</div>';
+
+      status.innerText =
+        "Error: " + error.message;
+    });
+}
+
+loadFiles();
+
+</script>
+
 </body>
 </html>
