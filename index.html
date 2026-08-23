@@ -1,994 +1,543 @@
-<!DOCTYPE html><html lang="en">
+<!doctype html>
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>File Store</title><style>
-* {
-  box-sizing: border-box;
-}
-
-html,
-body {
-  margin: 0;
-  min-height: 100%;
-}
-
-body {
-  font-family: Arial, Helvetica, sans-serif;
-
-  color: #ffffff;
-
-  background:
-    radial-gradient(
-      circle at 15% 10%,
-      rgba(95, 75, 255, 0.18),
-      transparent 35%
-    ),
-    radial-gradient(
-      circle at 85% 15%,
-      rgba(0, 190, 255, 0.15),
-      transparent 35%
-    ),
-    linear-gradient(
-      135deg,
-      #090817,
-      #0a0c1d 45%,
-      #080b17
-    );
-
-  padding: 18px;
-}
-
-/* ================= SEARCH ================= */
-
-.search-area {
-  max-width: 900px;
-
-  margin: 0 auto 18px;
-
-  display: flex;
-
-  gap: 9px;
-}
-
-.search {
-  flex: 1;
-
-  min-width: 0;
-
-  padding: 13px 15px;
-
-  border-radius: 13px;
-
-  border:
-    1px solid rgba(145,130,255,0.20);
-
-  outline: none;
-
-  color: #ffffff;
-
-  background:
-    rgba(18, 20, 42, 0.78);
-
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.04),
-    0 8px 25px rgba(0,0,0,0.18);
-
-  font-size: 14px;
-}
-
-.search:focus {
-  border-color:
-    rgba(98, 180, 255, 0.65);
-}
-
-.refresh {
-  border: 0;
-
-  padding: 0 16px;
-
-  border-radius: 13px;
-
-  color: #ffffff;
-
-  background:
-    linear-gradient(
-      135deg,
-      #6554ff,
-      #008fff
-    );
-
-  font-weight: 800;
-
-  cursor: pointer;
-}
-
-/* ================= FILE GRID ================= */
-
-.file-grid {
-  max-width: 900px;
-
-  margin: auto;
-
-  display: grid;
-
-  grid-template-columns:
-    repeat(2, minmax(0, 1fr));
-
-  gap: 14px;
-}
-
-/* ================= FILE CARD ================= */
-
-.file-card {
-  position: relative;
-
-  min-height: 180px;
-
-  padding: 17px;
-
-  overflow: hidden;
-
-  display: flex;
-
-  flex-direction: column;
-
-  justify-content: space-between;
-
-  border-radius: 18px;
-
-  background:
-    linear-gradient(
-      145deg,
-      rgba(30, 27, 66, 0.92),
-      rgba(11, 23, 49, 0.91)
-    );
-
-  border:
-    1px solid rgba(139, 126, 255, 0.18);
-
-  box-shadow:
-    0 10px 30px rgba(0,0,0,0.28),
-    inset 0 1px 0 rgba(255,255,255,0.05);
-
-  isolation: isolate;
-
-  transition:
-    transform .18s ease,
-    border-color .18s ease;
-}
-
-.file-card:hover {
-  transform: translateY(-3px);
-
-  border-color:
-    rgba(91, 177, 255, 0.55);
-}
-
-/* ================= SHINE ================= */
-
-.file-card::before {
-  content: "";
-
-  position: absolute;
-
-  top: -80%;
-
-  left: -75%;
-
-  width: 45%;
-  height: 240%;
-
-  transform:
-    rotate(25deg);
-
-  background:
-    linear-gradient(
-      90deg,
-      transparent,
-      rgba(255,255,255,0.05),
-      rgba(255,255,255,0.24),
-      rgba(255,255,255,0.05),
-      transparent
-    );
-
-  animation:
-    shine 4.5s infinite;
-
-  pointer-events: none;
-
-  z-index: -1;
-}
-
-@keyframes shine {
-
-  0% {
-    left: -80%;
-  }
-
-  45% {
-    left: 150%;
-  }
-
-  100% {
-    left: 150%;
-  }
-}
-
-/* ================= ICON ================= */
-
-.file-icon {
-  width: 58px;
-  height: 58px;
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 16px;
-
-  font-size: 30px;
-
-  background:
-    linear-gradient(
-      135deg,
-      rgba(107,88,255,0.23),
-      rgba(0,163,255,0.20)
-    );
-
-  border:
-    1px solid rgba(155,145,255,0.22);
-
-  box-shadow:
-    0 8px 20px rgba(70,70,255,0.12);
-}
-
-/* ================= NAME ================= */
-
-.file-name {
-  margin-top: 17px;
-
-  font-size: 15px;
-
-  font-weight: 800;
-
-  line-height: 1.45;
-
-  word-break: break-word;
-
-  color: #f4f3ff;
-}
-
-/* ================= DOWNLOAD ================= */
-
-.download {
-  position: relative;
-
-  width: 100%;
-
-  margin-top: 17px;
-
-  padding: 11px;
-
-  border: 0;
-
-  border-radius: 11px;
-
-  overflow: hidden;
-
-  cursor: pointer;
-
-  color: #ffffff;
-
-  background:
-    linear-gradient(
-      135deg,
-      #694dff,
-      #158fff
-    );
-
-  font-size: 12px;
-
-  font-weight: 900;
-
-  box-shadow:
-    0 7px 20px rgba(37,109,255,0.20);
-}
-
-.download::after {
-  content: "";
-
-  position: absolute;
-
-  top: 0;
-
-  left: -100%;
-
-  width: 60%;
-
-  height: 100%;
-
-  background:
-    linear-gradient(
-      90deg,
-      transparent,
-      rgba(255,255,255,0.32),
-      transparent
-    );
-
-  animation:
-    buttonShine 3.4s infinite;
-}
-
-@keyframes buttonShine {
-
-  0% {
-    left: -100%;
-  }
-
-  45% {
-    left: 150%;
-  }
-
-  100% {
-    left: 150%;
-  }
-}
-
-.download:active {
-  transform: scale(0.98);
-}
-
-/* ================= LOADING ================= */
-
-.loading,
-.empty {
-  grid-column: 1 / -1;
-
-  padding: 45px 20px;
-
-  text-align: center;
-
-  border-radius: 17px;
-
-  color: #8588a8;
-
-  background:
-    rgba(19,20,42,0.7);
-
-  border:
-    1px solid rgba(128,114,255,0.13);
-}
-
-.status {
-  max-width: 900px;
-
-  margin: 0 auto 12px;
-
-  color: #858baa;
-
-  font-size: 12px;
-}
-
-/* ================= DOWNLOAD MODAL ================= */
-
-.modal {
-  position: fixed;
-
-  inset: 0;
-
-  z-index: 1000;
-
-  display: none;
-
-  align-items: center;
-  justify-content: center;
-
-  padding: 20px;
-
-  background:
-    rgba(3,4,15,0.78);
-
-  backdrop-filter:
-    blur(9px);
-}
-
-.modal-box {
-  width: 100%;
-
-  max-width: 330px;
-
-  padding: 25px;
-
-  text-align: center;
-
-  border-radius: 22px;
-
-  background:
-    linear-gradient(
-      145deg,
-      rgba(29,25,67,0.97),
-      rgba(8,20,43,0.97)
-    );
-
-  border:
-    1px solid rgba(128,113,255,0.28);
-
-  box-shadow:
-    0 25px 80px rgba(0,0,0,0.55);
-}
-
-.count-number {
-  width: 88px;
-  height: 88px;
-
-  margin: 0 auto 18px;
-
-  display: flex;
-
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 50%;
-
-  font-size: 38px;
-
-  font-weight: 900;
-
-  background:
-    radial-gradient(
-      circle,
-      rgba(81,101,255,0.35),
-      rgba(8,15,35,0.9)
-    );
-
-  border:
-    2px solid rgba(101,147,255,0.55);
-
-  box-shadow:
-    0 0 30px rgba(70,114,255,0.28);
-
-  animation:
-    countPulse .75s ease;
-}
-
-@keyframes countPulse {
-
-  0% {
-    transform: scale(.45);
-    opacity: 0;
-  }
-
-  65% {
-    transform: scale(1.08);
-    opacity: 1;
-  }
-
-  100% {
-    transform: scale(1);
-  }
-}
-
-.modal-title {
-  font-size: 16px;
-
-  font-weight: 900;
-
-  color: #f2f2ff;
-
-  margin-bottom: 7px;
-}
-
-.modal-text {
-  color: #9298b6;
-
-  font-size: 12px;
-
-  line-height: 1.6;
-}
-
-.ready-button {
-  width: 100%;
-
-  padding: 12px;
-
-  margin-top: 17px;
-
-  border: 0;
-
-  border-radius: 11px;
-
-  color: white;
-
-  background:
-    linear-gradient(
-      135deg,
-      #6a50ff,
-      #008dff
-    );
-
-  font-weight: 900;
-
-  cursor: pointer;
-}
-
-.hidden {
-  display: none !important;
-}
-
-/* ================= MOBILE ================= */
-
-@media (max-width: 600px) {
-
-  body {
-    padding: 12px;
-  }
-
-  .file-grid {
-    grid-template-columns:
-      repeat(2, minmax(0, 1fr));
-
-    gap: 10px;
-  }
-
-  .file-card {
-    min-height: 165px;
-
-    padding: 13px;
-
-    border-radius: 15px;
-  }
-
-  .file-icon {
-    width: 48px;
-    height: 48px;
-
-    font-size: 25px;
-
-    border-radius: 13px;
-  }
-
-  .file-name {
-    font-size: 13px;
-
-    margin-top: 13px;
-  }
-
-  .download {
-    margin-top: 13px;
-
-    padding: 10px 7px;
-
-    font-size: 11px;
-  }
-
-  .refresh {
-    padding: 0 12px;
-  }
-}
-</style></head><body><div class="search-area"><input
-id="search"
-class="search"
-type="text"
-placeholder="Search files..."
-autocomplete="off"
-
-«»
-
-<button
-class="refresh"
-onclick="loadFiles()"
-
-«»
-
-Refresh
-
-  </button></div><div
-  id="status"
-  class="status"
->
-  Loading...
-</div><div
-  id="files"
-  class="file-grid"
-></div><!-- DOWNLOAD COUNTDOWN --><div
-  id="downloadModal"
-  class="modal"
->  <div class="modal-box"><div
-  id="countNumber"
-  class="count-number"
->
-  3
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>World Chat</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;font-family:Arial,sans-serif;background:#0d1117;color:#eef2f7}
+body{overflow:hidden}
+.app{height:100%;display:flex;flex-direction:column}
+.top{height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid #202833;background:#111821}
+.brand{display:flex;align-items:center;gap:11px}
+.logo{width:38px;height:38px;border-radius:12px;background:#202b39;display:flex;align-items:center;justify-content:center;font-size:20px}
+.title{font-size:18px;font-weight:700}
+.sub{font-size:11px;color:#8995a5;margin-top:2px}
+.state{font-size:11px;color:#80d991;background:#16241b;padding:7px 10px;border-radius:20px}
+.chat{flex:1;overflow:auto;padding:14px 12px 10px}
+.row{margin:8px 0;display:flex}
+.row.me{justify-content:flex-end}
+.bubble{max-width:82%;background:#17202b;border:1px solid #222f3d;border-radius:15px;padding:9px 11px}
+.me .bubble{background:#1b3043}
+.name{font-size:11px;color:#73b6ff;margin-bottom:4px}
+.text{white-space:pre-wrap;word-break:break-word;font-size:15px;line-height:1.35}
+.meta{font-size:9px;color:#778394;margin-top:5px;text-align:right}
+.file{display:flex;gap:10px;align-items:center;padding:9px;background:#111923;border-radius:11px}
+.fileIcon{font-size:23px}
+.fileName{font-size:13px;word-break:break-all}
+.fileSize{font-size:10px;color:#7d8a9a;margin-top:3px}
+.fileLink{color:#8fc7ff;text-decoration:none}
+.empty{height:100%;display:flex;align-items:center;justify-content:center;color:#667385;text-align:center;padding:30px}
+.bottom{padding:9px;border-top:1px solid #202833;background:#111821}
+.composer{display:flex;gap:8px;align-items:flex-end}
+.attach{width:44px;height:44px;border:0;border-radius:13px;background:#1c2733;color:#eef2f7;font-size:21px}
+.inputWrap{flex:1;background:#18212b;border-radius:13px;border:1px solid #253241;padding:4px 8px}
+textarea{width:100%;border:0;outline:0;background:transparent;color:#eef2f7;resize:none;height:34px;max-height:100px;font-family:inherit;font-size:15px;padding:6px}
+.send{width:44px;height:44px;border:0;border-radius:13px;background:#4b8dca;color:white;font-size:18px}
+.system{margin:9px auto;text-align:center;font-size:10px;color:#6e7b8b}
+.progress{height:4px;background:#263342;border-radius:8px;margin-top:8px;overflow:hidden}
+.progress>div{height:100%;width:0;background:#76afe1;transition:width .15s}
+input[type=file]{display:none}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-thumb{background:#263342;border-radius:8px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div class="brand">
+      <div class="logo">🌐</div>
+      <div>
+        <div class="title">World Chat</div>
+        <div class="sub" id="userLine">Connecting...</div>
+      </div>
+    </div>
+    <div class="state" id="state">OFFLINE</div>
+  </div>
+
+  <div class="chat" id="chat">
+    <div class="empty" id="empty">
+      <div>
+        <div style="font-size:30px;margin-bottom:10px">🌍</div>
+        <div>World Chat</div>
+        <div style="font-size:12px;margin-top:5px">Messages are stored locally for 24 hours.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom">
+    <div class="composer">
+      <button class="attach" id="attachBtn">＋</button>
+      <div class="inputWrap">
+        <textarea id="messageInput" placeholder="Message everyone..." rows="1"></textarea>
+      </div>
+      <button class="send" id="sendBtn">➤</button>
+    </div>
+    <input id="fileInput" type="file">
+  </div>
 </div>
 
-<div class="modal-title">
-  Preparing Download
-</div>
-
-<div
-  id="modalText"
-  class="modal-text"
->
-  Please wait...
-</div>
-
-<button
-  id="readyButton"
-  class="ready-button hidden"
-  onclick="startDownload()"
->
-  Download
-</button>
-
-  </div></div><script>
-
-var allFiles = [];
-
-var selectedDownloadUrl = "";
-
-var countTimer = null;
-
-/* ================= FILE ICON ================= */
-
-function getIcon(name) {
-
-  var n =
-    name.toLowerCase();
-
-  if (
-    n.endsWith(".mp4") ||
-    n.endsWith(".mkv") ||
-    n.endsWith(".avi") ||
-    n.endsWith(".mov") ||
-    n.endsWith(".webm")
-  ) {
-    return "🎬";
-  }
-
-  if (
-    n.endsWith(".mp3") ||
-    n.endsWith(".wav") ||
-    n.endsWith(".ogg") ||
-    n.endsWith(".m4a")
-  ) {
-    return "🎵";
-  }
-
-  if (
-    n.endsWith(".jpg") ||
-    n.endsWith(".jpeg") ||
-    n.endsWith(".png") ||
-    n.endsWith(".gif") ||
-    n.endsWith(".webp")
-  ) {
-    return "🖼️";
-  }
-
-  if (
-    n.endsWith(".zip") ||
-    n.endsWith(".rar") ||
-    n.endsWith(".7z")
-  ) {
-    return "📦";
-  }
-
-  if (n.endsWith(".pdf")) {
-    return "📕";
-  }
-
-  return "📄";
-}
-
-/* ================= ESCAPE ================= */
-
-function escapeHtml(text) {
-
-  return String(text)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-/* ================= RENDER ================= */
-
-function renderFiles(list) {
-
-  var container =
-    document.getElementById("files");
-
-  container.innerHTML = "";
-
-  if (!list.length) {
-
-    container.innerHTML =
-      '<div class="empty">' +
-      'No files found.' +
-      '</div>';
-
-    return;
-  }
-
-  list.forEach(function(file) {
-
-    var card =
-      document.createElement("div");
-
-    card.className =
-      "file-card";
-
-    var encoded =
-      encodeURIComponent(file.name);
-
-    card.innerHTML =
-
-      '<div>' +
-
-        '<div class="file-icon">' +
-          getIcon(file.name) +
-        '</div>' +
-
-        '<div class="file-name">' +
-          escapeHtml(file.name) +
-        '</div>' +
-
-      '</div>' +
-
-      '<button ' +
-        'class="download" ' +
-        'onclick="prepareDownload(\'' +
-        encoded +
-        '\')">' +
-        'DOWNLOAD' +
-      '</button>';
-
-    container.appendChild(card);
-
-  });
-}
-
-/* ================= LOAD ================= */
-
-function loadFiles() {
-
-  var status =
-    document.getElementById("status");
-
-  var container =
-    document.getElementById("files");
-
-  status.innerText =
-    "Loading files...";
-
-  container.innerHTML =
-    '<div class="loading">' +
-    'Loading...' +
-    '</div>';
-
-  fetch("/file-list")
-
-    .then(function(response) {
-
-      if (!response.ok) {
-        throw new Error(
-          "HTTP " + response.status
-        );
-      }
-
-      return response.json();
-
-    })
-
-    .then(function(data) {
-
-      if (
-        !data.ok ||
-        !Array.isArray(data.files)
-      ) {
-
-        throw new Error(
-          "Invalid server response"
-        );
-      }
-
-      allFiles =
-        data.files.slice();
-
-      renderFiles(allFiles);
-
-      status.innerText =
-        allFiles.length +
-        " file(s)";
-
-    })
-
-    .catch(function(error) {
-
-      container.innerHTML =
-        '<div class="empty">' +
-        'Unable to load files.' +
-        '</div>';
-
-      status.innerText =
-        "Error: " +
-        error.message;
-    });
-}
-
-/* ================= SEARCH ================= */
-
-document
-  .getElementById("search")
-  .addEventListener(
-    "input",
-    function() {
-
-      var query =
-        this.value
-          .trim()
-          .toLowerCase();
-
-      var filtered =
-        allFiles.filter(
-          function(file) {
-
-            return file.name
-              .toLowerCase()
-              .indexOf(query) !== -1;
-
-          }
-        );
-
-      renderFiles(filtered);
-
+<script>
+(function () {
+    "use strict";
+
+    var SERVER_BASE = "https://myserver-b0ls.onrender.com";
+    var WS_URL = SERVER_BASE.replace(/^https:/, "wss:")
+                            .replace(/^http:/, "ws:") + "/ws";
+    var STORAGE_KEY = "worldchat_messages_v1";
+    var USER_KEY = "worldchat_user_v1";
+    var TTL = 24 * 60 * 60 * 1000;
+
+    var chat = document.getElementById("chat");
+    var empty = document.getElementById("empty");
+    var state = document.getElementById("state");
+    var userLine = document.getElementById("userLine");
+    var input = document.getElementById("messageInput");
+    var sendBtn = document.getElementById("sendBtn");
+    var attachBtn = document.getElementById("attachBtn");
+    var fileInput = document.getElementById("fileInput");
+
+    var user = null;
+    var socket = null;
+    var reconnectDelay = 1000;
+    var reconnectTimer = null;
+
+    function esc(value) {
+        return String(value == null ? "" : value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
     }
-  );
 
-/* ================= DOWNLOAD COUNTDOWN ================= */
+    function makeId() {
+        return String(Date.now()) + "_" +
+            Math.random().toString(36).substring(2) +
+            "_" + Math.random().toString(36).substring(2);
+    }
 
-function prepareDownload(encodedName) {
+    function loadUser() {
+        try {
+            var raw = localStorage.getItem(USER_KEY);
 
-  selectedDownloadUrl =
-    "/download/" + encodedName;
-
-  var modal =
-    document.getElementById(
-      "downloadModal"
-    );
-
-  var number =
-    document.getElementById(
-      "countNumber"
-    );
-
-  var text =
-    document.getElementById(
-      "modalText"
-    );
-
-  var ready =
-    document.getElementById(
-      "readyButton"
-    );
-
-  ready.classList.add("hidden");
-
-  modal.style.display =
-    "flex";
-
-  var count = 3;
-
-  number.innerText =
-    count;
-
-  number.style.animation =
-    "none";
-
-  void number.offsetWidth;
-
-  number.style.animation =
-    "countPulse .75s ease";
-
-  text.innerText =
-    "Preparing your download...";
-
-  if (countTimer) {
-    clearInterval(countTimer);
-  }
-
-  countTimer =
-    setInterval(
-      function() {
-
-        count--;
-
-        if (count > 0) {
-
-          number.innerText =
-            count;
-
-          number.style.animation =
-            "none";
-
-          void number.offsetWidth;
-
-          number.style.animation =
-            "countPulse .75s ease";
-
-        } else {
-
-          clearInterval(countTimer);
-
-          number.innerText =
-            "✓";
-
-          text.innerText =
-            "Your download is ready.";
-
-          ready.classList.remove(
-            "hidden"
-          );
-
+            if (raw) {
+                user = JSON.parse(raw);
+            }
+        } catch (e) {
+            user = null;
         }
 
-      },
-      1000
-    );
-}
+        if (!user || !user.id || !user.name) {
+            var defaultName = "User" +
+                Math.floor(1000 + Math.random() * 9000);
 
-/* ================= DOWNLOAD ================= */
+            var entered = window.prompt(
+                "World Chat name:",
+                defaultName
+            );
 
-function startDownload() {
+            if (entered == null || !String(entered).trim()) {
+                entered = defaultName;
+            }
 
-  if (!selectedDownloadUrl) {
-    return;
-  }
+            user = {
+                id: makeId(),
+                name: String(entered).trim().substring(0, 40)
+            };
 
-  var link =
-    document.createElement("a");
+            try {
+                localStorage.setItem(USER_KEY, JSON.stringify(user));
+            } catch (e2) {
+            }
+        }
 
-  link.href =
-    selectedDownloadUrl;
+        userLine.textContent = user.name;
+    }
 
-  link.download = "";
+    function cleanHistory() {
+        var list = [];
 
-  document.body.appendChild(
-    link
-  );
+        try {
+            list = JSON.parse(
+                localStorage.getItem(STORAGE_KEY) || "[]"
+            );
+        } catch (e) {
+            list = [];
+        }
 
-  link.click();
+        var now = Date.now();
+        var kept = [];
 
-  document.body.removeChild(
-    link
-  );
+        for (var i = 0; i < list.length; i++) {
+            if (now - Number(list[i].timestamp || 0) <= TTL) {
+                kept.push(list[i]);
+            }
+        }
 
-  closeModal();
-}
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(kept));
+        } catch (e2) {
+        }
 
-function closeModal() {
+        return kept;
+    }
 
-  document.getElementById(
-    "downloadModal"
-  ).style.display =
-    "none";
+    function saveMessage(message) {
+        var list = cleanHistory();
+        list.push(message);
 
-  if (countTimer) {
+        try {
+            localStorage.setItem(
+                STORAGE_KEY,
+                JSON.stringify(list.slice(-300))
+            );
+        } catch (e) {
+            try {
+                localStorage.removeItem(STORAGE_KEY);
+            } catch (e2) {
+            }
+        }
+    }
 
-    clearInterval(
-      countTimer
-    );
+    function formatTime(timestamp) {
+        try {
+            return new Date(timestamp).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit"
+            });
+        } catch (e) {
+            return "";
+        }
+    }
 
-    countTimer = null;
-  }
+    function formatSize(bytes) {
+        bytes = Number(bytes || 0);
 
-  selectedDownloadUrl =
-    "";
-}
+        if (bytes < 1024) return bytes + " B";
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
+        if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + " MB";
 
-/* ================= START ================= */
+        return (bytes / (1024 * 1024 * 1024)).toFixed(1) + " GB";
+    }
 
-loadFiles();
+    function renderMessage(message) {
+        if (empty) {
+            empty.style.display = "none";
+        }
 
-</script></body>
+        var row = document.createElement("div");
+        row.className = "row" +
+            (message.senderId === user.id ? " me" : "");
+
+        var bubble = document.createElement("div");
+        bubble.className = "bubble";
+
+        var content = "";
+
+        if (message.senderId !== user.id) {
+            content += '<div class="name">' +
+                esc(message.senderName || "User") +
+                '</div>';
+        }
+
+        if (message.messageType === "text") {
+            content += '<div class="text">' +
+                esc(message.text || "") +
+                '</div>';
+        } else {
+            var fileUrl = SERVER_BASE +
+                "/file/" + encodeURIComponent(message.fileId || "");
+
+            var icon = "📎";
+
+            if ((message.mime || "").indexOf("image/") === 0) {
+                icon = "🖼️";
+            } else if ((message.mime || "").indexOf("video/") === 0) {
+                icon = "🎬";
+            }
+
+            content +=
+                '<a class="fileLink" href="' + esc(fileUrl) + '" target="_blank">' +
+                '<div class="file">' +
+                '<div class="fileIcon">' + icon + '</div>' +
+                '<div>' +
+                '<div class="fileName">' + esc(message.fileName || "File") + '</div>' +
+                '<div class="fileSize">' + formatSize(message.size) + '</div>' +
+                '</div>' +
+                '</div></a>';
+        }
+
+        content += '<div class="meta">' +
+            formatTime(message.timestamp) +
+            '</div>';
+
+        bubble.innerHTML = content;
+        row.appendChild(bubble);
+        chat.appendChild(row);
+
+        chat.scrollTop = chat.scrollHeight;
+    }
+
+    function renderHistory() {
+        var list = cleanHistory();
+        chat.innerHTML = "";
+
+        if (!list.length) {
+            chat.appendChild(empty);
+            empty.style.display = "flex";
+            return;
+        }
+
+        empty.style.display = "none";
+
+        for (var i = 0; i < list.length; i++) {
+            renderMessage(list[i]);
+        }
+    }
+
+    function systemMessage(text) {
+        var row = document.createElement("div");
+        row.className = "system";
+        row.textContent = text;
+        chat.appendChild(row);
+        chat.scrollTop = chat.scrollHeight;
+    }
+
+    function setState(text, online) {
+        state.textContent = text;
+
+        if (online) {
+            state.style.color = "#80d991";
+            state.style.background = "#16241b";
+        } else {
+            state.style.color = "#e5b7b7";
+            state.style.background = "#2a1b1d";
+        }
+    }
+
+    function connect() {
+        clearTimeout(reconnectTimer);
+
+        setState("CONNECTING", false);
+
+        try {
+            socket = new WebSocket(WS_URL);
+        } catch (e) {
+            scheduleReconnect();
+            return;
+        }
+
+        socket.onopen = function () {
+            reconnectDelay = 1000;
+            setState("ONLINE", true);
+
+            socket.send(JSON.stringify({
+                type: "hello",
+                userId: user.id,
+                name: user.name
+            }));
+        };
+
+        socket.onmessage = function (event) {
+            var data;
+
+            try {
+                data = JSON.parse(event.data);
+            } catch (e) {
+                return;
+            }
+
+            if (data.type === "ready") {
+                setState("ONLINE", true);
+                return;
+            }
+
+            if (data.type === "presence") {
+                return;
+            }
+
+            if (data.type === "message") {
+                saveMessage(data);
+                renderMessage(data);
+            }
+        };
+
+        socket.onerror = function () {
+            setState("ERROR", false);
+        };
+
+        socket.onclose = function () {
+            setState("OFFLINE", false);
+            scheduleReconnect();
+        };
+    }
+
+    function scheduleReconnect() {
+        clearTimeout(reconnectTimer);
+
+        reconnectTimer = setTimeout(function () {
+            connect();
+        }, reconnectDelay);
+
+        reconnectDelay = Math.min(reconnectDelay * 2, 30000);
+    }
+
+    function sendText() {
+        var text = String(input.value || "").trim();
+
+        if (!text) {
+            return;
+        }
+
+        if (!socket || socket.readyState !== 1) {
+            systemMessage("Server se connection nahi hai.");
+            return;
+        }
+
+        socket.send(JSON.stringify({
+            type: "message",
+            messageId: makeId(),
+            senderId: user.id,
+            senderName: user.name,
+            messageType: "text",
+            text: text,
+            timestamp: Date.now()
+        }));
+
+        input.value = "";
+        input.style.height = "34px";
+    }
+
+    function uploadFile(file) {
+        if (!file) {
+            return;
+        }
+
+        if (file.size > 100 * 1024 * 1024) {
+            systemMessage("Maximum file size 100 MB hai.");
+            return;
+        }
+
+        var progressRow = document.createElement("div");
+        progressRow.className = "system";
+        progressRow.textContent = "Uploading " + file.name;
+
+        var progress = document.createElement("div");
+        progress.className = "progress";
+
+        var bar = document.createElement("div");
+        progress.appendChild(bar);
+        progressRow.appendChild(progress);
+        chat.appendChild(progressRow);
+        chat.scrollTop = chat.scrollHeight;
+
+        var xhr = new XMLHttpRequest();
+
+        xhr.open(
+            "POST",
+            SERVER_BASE +
+            "/upload?name=" + encodeURIComponent(file.name) +
+            "&mime=" + encodeURIComponent(file.type || "application/octet-stream"),
+            true
+        );
+
+        xhr.setRequestHeader(
+            "Content-Type",
+            file.type || "application/octet-stream"
+        );
+
+        xhr.upload.onprogress = function (event) {
+            if (event.lengthComputable) {
+                bar.style.width =
+                    Math.round((event.loaded / event.total) * 100) + "%";
+            }
+        };
+
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState !== 4) {
+                return;
+            }
+
+            if (xhr.status >= 200 && xhr.status < 300) {
+                var result;
+
+                try {
+                    result = JSON.parse(xhr.responseText);
+                } catch (e) {
+                    result = null;
+                }
+
+                if (!result || !result.fileId) {
+                    systemMessage("Upload response invalid.");
+                    return;
+                }
+
+                if (!socket || socket.readyState !== 1) {
+                    systemMessage("File upload ho gaya, lekin chat connection offline hai.");
+                    return;
+                }
+
+                socket.send(JSON.stringify({
+                    type: "message",
+                    messageId: makeId(),
+                    senderId: user.id,
+                    senderName: user.name,
+                    messageType: "file",
+                    fileId: result.fileId,
+                    fileName: result.fileName,
+                    mime: result.mime,
+                    size: result.size,
+                    text: "",
+                    timestamp: Date.now()
+                }));
+            } else {
+                systemMessage("File upload failed.");
+            }
+        };
+
+        xhr.onerror = function () {
+            systemMessage("Network error while uploading.");
+        };
+
+        try {
+            xhr.send(file);
+        } catch (e) {
+            systemMessage("Upload start nahi ho saka.");
+        }
+    }
+
+    sendBtn.onclick = sendText;
+
+    input.addEventListener("keydown", function (event) {
+        if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            sendText();
+        }
+    });
+
+    input.addEventListener("input", function () {
+        input.style.height = "34px";
+        input.style.height =
+            Math.min(input.scrollHeight, 100) + "px";
+    });
+
+    attachBtn.onclick = function () {
+        fileInput.click();
+    };
+
+    fileInput.onchange = function () {
+        if (fileInput.files && fileInput.files.length) {
+            uploadFile(fileInput.files[0]);
+        }
+
+        fileInput.value = "";
+    };
+
+    loadUser();
+    renderHistory();
+    connect();
+})();
+</script>
+</body>
 </html>
