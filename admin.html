@@ -1,29 +1,205 @@
 <!doctype html>
-<html><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>World Chat Admin</title>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>World Chat • Admin</title>
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#07090d;color:#f5f7fa}.wrap{max-width:850px;margin:auto;padding:22px}.hero{padding:24px;border:1px solid #3a3020;border-radius:22px;background:linear-gradient(145deg,#211b10,#0e1117);box-shadow:0 20px 50px #0008}.badge{display:inline-block;padding:6px 10px;border-radius:20px;background:#382b12;color:#f4ca67;font-size:11px}.title{font-size:28px;font-weight:800;margin-top:12px}.muted{color:#8e98a7;font-size:12px}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:14px}.card{padding:18px;border:1px solid #252c35;border-radius:18px;background:#11161d}.row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #202631}.row:last-child{border:0}.btn{border:0;border-radius:11px;padding:10px 14px;background:#b68a35;color:#fff;font-weight:700}.btn.dark{background:#252e39}.input,textarea{width:100%;border:1px solid #2b3541;background:#0d1218;color:#fff;border-radius:11px;padding:11px;outline:0}.msg{margin-top:10px}.danger{color:#ff9d9d}.status{margin-top:12px;font-size:12px;color:#8ee5aa}@media(max-width:650px){.grid{grid-template-columns:1fr}}
-</style></head><body><div class="wrap">
-<div class="hero"><span class="badge">★ ADMIN CONTROL</span><div class="title">World Chat Command</div><div class="muted">Server controls • temporary sync buffer • live broadcast</div></div>
-<div class="card" style="margin-top:14px"><div class="muted">Admin token</div><input class="input" id="token" type="password" placeholder="Enter ADMIN_TOKEN"><button class="btn" style="margin-top:9px" onclick="saveToken()">Save token locally</button></div>
-<div class="grid">
-<div class="card"><h3>Chat controls</h3><div class="row"><span>Messages</span><button class="btn dark" id="msgBtn" onclick="toggle('messageEnabled')">Loading</button></div><div class="row"><span>Attachments</span><button class="btn dark" id="fileBtn" onclick="toggle('attachmentEnabled')">Loading</button></div><div class="row"><span>Cooldown</span><input class="input" id="cooldown" type="number" min="0" placeholder="ms"></div><button class="btn" style="margin-top:12px" onclick="apply()">Apply settings</button></div>
-<div class="card"><h3>Admin message</h3><textarea id="message" rows="5" placeholder="Send a premium admin announcement..."></textarea><button class="btn" style="margin-top:10px" onclick="sendMessage()">Broadcast as ADMIN</button><button class="btn dark" style="margin-top:10px" onclick="clearHistory()">Clear temporary sync history</button></div>
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;font-family:Arial,sans-serif;background:#080b10;color:#f3f6fb}
+body{overflow:hidden}
+.app{height:100%;display:flex;flex-direction:column;background:radial-gradient(circle at 20% 0%,#172435 0,#080b10 44%)}
+.top{height:70px;display:flex;align-items:center;justify-content:space-between;padding:0 15px;border-bottom:1px solid #222b36;background:rgba(12,17,24,.95)}
+.brand{display:flex;align-items:center;gap:11px}
+.logo{width:40px;height:40px;border-radius:13px;background:linear-gradient(135deg,#725728,#18140d);display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 5px 18px #0008}
+.title{font-size:18px;font-weight:800}.sub{font-size:10px;color:#8290a1;margin-top:3px}
+.state{font-size:10px;padding:7px 10px;border-radius:20px;color:#f1ca6b;background:#2b2110}
+.main{flex:1;overflow:auto;padding:13px}
+.card{background:rgba(17,24,32,.92);border:1px solid #273442;border-radius:17px;padding:14px;margin-bottom:12px;box-shadow:0 8px 25px #0004}
+.card h3{margin:0 0 12px;font-size:14px}.muted{font-size:10px;color:#7e8b9b}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 0;border-bottom:1px solid #222c37}
+.row:last-child{border-bottom:0}
+button{border:0;color:#fff;background:#1c2a38;border:1px solid #314354;border-radius:11px;padding:9px 12px;font-weight:700}
+button.gold{background:linear-gradient(135deg,#7d5a25,#b98b38);border-color:#c0964b}
+button.red{background:#382025;border-color:#63303a}
+input,textarea{width:100%;border:1px solid #2b3947;background:#0e141b;color:#fff;border-radius:11px;padding:10px;outline:0;font-family:inherit}
+textarea{resize:none}
+.inputLine{display:flex;gap:8px}.inputLine input{flex:1}
+.switch{min-width:62px}
+.on{background:#183125;border-color:#315c46;color:#9be4b5}.off{background:#302126;border-color:#5a323b;color:#ffb0b0}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.stat{padding:12px;border:1px solid #293744;border-radius:13px;background:#121a23}.num{font-size:19px;font-weight:800}.label{font-size:9px;color:#7f8c9d;margin-top:3px}
+.preview{background:#0b1016;border:1px solid #27323e;border-radius:14px;padding:11px}.previewName{font-size:10px;color:#f0c76c;font-weight:800;margin-bottom:5px}.previewText{font-size:14px;line-height:1.4}
+.status{font-size:11px;color:#8bdbaa;margin-top:9px;min-height:15px}
+@media(max-width:600px){.stats{grid-template-columns:1fr 1fr}.top{height:66px}.main{padding:10px}}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="top">
+ <div class="brand">
+  <div class="logo">★</div>
+  <div><div class="title">World Chat</div><div class="sub">ADMIN COMMAND CENTER</div></div>
+ </div>
+ <div class="state" id="state">ADMIN</div>
 </div>
-<div class="card" style="margin-top:14px"><h3>Server notice</h3><input class="input" id="notice" placeholder="Optional notice shown when users connect"><button class="btn" style="margin-top:10px" onclick="apply()">Update notice</button><div class="status" id="status">Ready</div></div>
+
+<div class="main">
+
+<div class="card">
+ <div class="stats">
+  <div class="stat"><div class="num" id="online">—</div><div class="label">ONLINE</div></div>
+  <div class="stat"><div class="num" id="messages">—</div><div class="label">SYNC BUFFER</div></div>
+  <div class="stat"><div class="num" id="cooldownStat">0s</div><div class="label">COOLDOWN</div></div>
+ </div>
 </div>
+
+<div class="card">
+ <h3>🔐 Admin Authentication</h3>
+ <div class="muted">Enter the same ADMIN_TOKEN configured in Render.</div>
+ <div class="inputLine" style="margin-top:9px">
+  <input id="token" type="password" placeholder="ADMIN_TOKEN">
+  <button class="gold" onclick="saveToken()">Connect</button>
+ </div>
+ <div class="status" id="authStatus">Not connected</div>
+</div>
+
+<div class="card">
+ <h3>⚡ Server Controls</h3>
+ <div class="row"><span>Messages</span><button class="switch" id="msgBtn" onclick="toggle('messageEnabled')">...</button></div>
+ <div class="row"><span>Attachments</span><button class="switch" id="fileBtn" onclick="toggle('attachmentEnabled')">...</button></div>
+ <div class="row"><span>Message cooldown</span><div style="width:125px"><input id="cooldown" type="number" min="0" placeholder="milliseconds"></div></div>
+ <button class="gold" style="margin-top:12px;width:100%" onclick="apply()">Apply server settings</button>
+ <div class="status" id="status"></div>
+</div>
+
+<div class="card">
+ <h3>👑 Premium Admin Message</h3>
+ <div class="muted">Messages sent here appear as ADMIN and are visually different from normal users.</div>
+ <textarea id="message" rows="4" style="margin-top:9px" placeholder="Write an announcement..."></textarea>
+ <div class="preview" style="margin-top:9px">
+  <div class="previewName">★ ADMIN • PREVIEW</div>
+  <div class="previewText" id="preview">Your admin message will appear here.</div>
+ </div>
+ <button class="gold" style="width:100%;margin-top:10px" onclick="sendMessage()">★ Broadcast as ADMIN</button>
+</div>
+
+<div class="card">
+ <h3>📢 Global Notice</h3>
+ <input id="notice" placeholder="Shown when users connect">
+ <button style="width:100%;margin-top:9px" onclick="applyNotice()">Publish notice</button>
+</div>
+
+<div class="card">
+ <h3>🧹 Moderation</h3>
+ <div class="muted">This clears only the temporary server sync buffer. Users' existing local storage is not remotely erased.</div>
+ <button class="red" style="width:100%;margin-top:10px" onclick="clearHistory()">Clear temporary sync history</button>
+</div>
+
+</div>
+</div>
+
 <script>
+(function(){
+"use strict";
+
 var settings={messageEnabled:true,attachmentEnabled:true,cooldownMs:0};
+var tokenInput=document.getElementById("token");
+
 function token(){return localStorage.getItem("wc_admin_token")||""}
-function saveToken(){localStorage.setItem("wc_admin_token",document.getElementById("token").value);load()}
-function setStatus(t){document.getElementById("status").textContent=t}
-function api(path,body){return fetch(path,{method:"POST",headers:{"Content-Type":"application/json","X-Admin-Token":token()},body:JSON.stringify(body||{})}).then(function(r){return r.json()})}
-function draw(){document.getElementById("msgBtn").textContent=settings.messageEnabled?"ON":"OFF";document.getElementById("fileBtn").textContent=settings.attachmentEnabled?"ON":"OFF";document.getElementById("cooldown").value=settings.cooldownMs}
-function load(){fetch("/health").then(function(r){return r.json()}).then(function(d){settings=d.settings||settings;draw()}).catch(function(){setStatus("Server unavailable")})}
+function setStatus(t,good){
+ document.getElementById("status").textContent=t;
+ document.getElementById("status").style.color=good?"#8bdbaa":"#ffadad";
+}
+function authStatus(t,good){
+ document.getElementById("authStatus").textContent=t;
+ document.getElementById("authStatus").style.color=good?"#8bdbaa":"#ffadad";
+}
+function saveToken(){
+ var t=tokenInput.value.trim();
+ if(!t){authStatus("Please enter ADMIN_TOKEN.",false);return}
+ localStorage.setItem("wc_admin_token",t);
+ load();
+}
+function api(path,body){
+ return fetch(path,{
+  method:"POST",
+  headers:{"Content-Type":"application/json","X-Admin-Token":token()},
+  body:JSON.stringify(body||{})
+ }).then(function(r){
+  return r.json().catch(function(){return {ok:false,error:"BAD_RESPONSE"}});
+ });
+}
+function draw(){
+ var m=document.getElementById("msgBtn"),f=document.getElementById("fileBtn");
+ m.textContent=settings.messageEnabled?"ON":"OFF";
+ f.textContent=settings.attachmentEnabled?"ON":"OFF";
+ m.className="switch "+(settings.messageEnabled?"on":"off");
+ f.className="switch "+(settings.attachmentEnabled?"on":"off");
+ document.getElementById("cooldown").value=settings.cooldownMs||0;
+ document.getElementById("cooldownStat").textContent=Math.round((settings.cooldownMs||0)/1000)+"s";
+}
+function load(){
+ fetch("/health",{cache:"no-store"}).then(function(r){return r.json()}).then(function(d){
+  if(!d.ok)throw new Error();
+  settings=d.settings||settings;
+  document.getElementById("online").textContent=d.online==null?"—":d.online;
+  document.getElementById("messages").textContent="—";
+  draw();
+  authStatus("Server reachable. Admin token saved.",true);
+ }).catch(function(){
+  authStatus("Server reachable, but admin authentication could not be verified.",false);
+ });
+}
 function toggle(k){settings[k]=!settings[k];draw()}
-function apply(){settings.cooldownMs=Math.max(0,parseInt(document.getElementById("cooldown").value||"0",10)||0);api("/admin/settings",{messageEnabled:settings.messageEnabled,attachmentEnabled:settings.attachmentEnabled,cooldownMs:settings.cooldownMs,notice:document.getElementById("notice").value}).then(function(d){if(d.ok){settings=d.settings;draw();setStatus("Settings updated")}else setStatus("Unauthorized or failed")}).catch(function(){setStatus("Request failed")})}
-function sendMessage(){var t=document.getElementById("message").value.trim();if(!t)return;api("/admin/message",{text:t}).then(function(d){if(d.ok){document.getElementById("message").value="";setStatus("Admin message broadcasted")}else setStatus("Unauthorized or failed")})}
-function clearHistory(){api("/admin/clear-history",{}).then(function(d){setStatus(d.ok?"Temporary sync history cleared":"Unauthorized or failed")})}
-document.getElementById("token").value=token();load();
-</script></body></html>
+function apply(){
+ settings.cooldownMs=Math.max(0,parseInt(document.getElementById("cooldown").value||"0",10)||0);
+ api("/admin/settings",{
+  messageEnabled:settings.messageEnabled,
+  attachmentEnabled:settings.attachmentEnabled,
+  cooldownMs:settings.cooldownMs,
+  notice:document.getElementById("notice").value
+ }).then(function(d){
+  if(d.ok){settings=d.settings||settings;draw();setStatus("Server settings updated successfully.",true)}
+  else setStatus("Admin authentication failed. Check ADMIN_TOKEN.",false);
+ }).catch(function(){setStatus("Connection failed.",false)});
+}
+function applyNotice(){
+ api("/admin/settings",{
+  messageEnabled:settings.messageEnabled,
+  attachmentEnabled:settings.attachmentEnabled,
+  cooldownMs:settings.cooldownMs,
+  notice:document.getElementById("notice").value
+ }).then(function(d){
+  if(d.ok)setStatus("Global notice published.",true);
+  else setStatus("Admin authentication failed.",false);
+ });
+}
+function sendMessage(){
+ var t=document.getElementById("message").value.trim();
+ if(!t)return;
+ api("/admin/message",{text:t}).then(function(d){
+  if(d.ok){
+   document.getElementById("message").value="";
+   document.getElementById("preview").textContent="Your admin message will appear here.";
+   setStatus("★ ADMIN message broadcast successfully.",true);
+  }else setStatus("Admin authentication failed. Check ADMIN_TOKEN.",false);
+ }).catch(function(){setStatus("Connection failed.",false)});
+}
+function clearHistory(){
+ if(!confirm("Clear temporary server sync history?"))return;
+ api("/admin/clear-history",{}).then(function(d){
+  if(d.ok)setStatus("Temporary sync history cleared.",true);
+  else setStatus("Admin authentication failed.",false);
+ });
+}
+document.getElementById("message").oninput=function(){
+ document.getElementById("preview").textContent=this.value||"Your admin message will appear here.";
+};
+tokenInput.value=token();
+draw();
+load();
+setInterval(load,10000);
+})();
+</script>
+</body>
+</html>
