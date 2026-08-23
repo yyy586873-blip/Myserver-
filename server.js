@@ -18,7 +18,7 @@ var crypto = require("crypto");
 var PORT = parseInt(process.env.PORT || "10000", 10);
 var HOST = "0.0.0.0";
 
-var ADMIN_TOKEN = String(process.env.Madhuban || "");
+var ADMIN_TOKEN = String(process.env.ADMIN_TOKEN || "");
 var INDEX_FILE = path.join(__dirname, "index.html");
 var ADMIN_FILE = path.join(__dirname, "admin.html");
 
