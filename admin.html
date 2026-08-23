@@ -1,0 +1,29 @@
+<!doctype html>
+<html><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>World Chat Admin</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:#07090d;color:#f5f7fa}.wrap{max-width:850px;margin:auto;padding:22px}.hero{padding:24px;border:1px solid #3a3020;border-radius:22px;background:linear-gradient(145deg,#211b10,#0e1117);box-shadow:0 20px 50px #0008}.badge{display:inline-block;padding:6px 10px;border-radius:20px;background:#382b12;color:#f4ca67;font-size:11px}.title{font-size:28px;font-weight:800;margin-top:12px}.muted{color:#8e98a7;font-size:12px}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:14px}.card{padding:18px;border:1px solid #252c35;border-radius:18px;background:#11161d}.row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #202631}.row:last-child{border:0}.btn{border:0;border-radius:11px;padding:10px 14px;background:#b68a35;color:#fff;font-weight:700}.btn.dark{background:#252e39}.input,textarea{width:100%;border:1px solid #2b3541;background:#0d1218;color:#fff;border-radius:11px;padding:11px;outline:0}.msg{margin-top:10px}.danger{color:#ff9d9d}.status{margin-top:12px;font-size:12px;color:#8ee5aa}@media(max-width:650px){.grid{grid-template-columns:1fr}}
+</style></head><body><div class="wrap">
+<div class="hero"><span class="badge">★ ADMIN CONTROL</span><div class="title">World Chat Command</div><div class="muted">Server controls • temporary sync buffer • live broadcast</div></div>
+<div class="card" style="margin-top:14px"><div class="muted">Admin token</div><input class="input" id="token" type="password" placeholder="Enter ADMIN_TOKEN"><button class="btn" style="margin-top:9px" onclick="saveToken()">Save token locally</button></div>
+<div class="grid">
+<div class="card"><h3>Chat controls</h3><div class="row"><span>Messages</span><button class="btn dark" id="msgBtn" onclick="toggle('messageEnabled')">Loading</button></div><div class="row"><span>Attachments</span><button class="btn dark" id="fileBtn" onclick="toggle('attachmentEnabled')">Loading</button></div><div class="row"><span>Cooldown</span><input class="input" id="cooldown" type="number" min="0" placeholder="ms"></div><button class="btn" style="margin-top:12px" onclick="apply()">Apply settings</button></div>
+<div class="card"><h3>Admin message</h3><textarea id="message" rows="5" placeholder="Send a premium admin announcement..."></textarea><button class="btn" style="margin-top:10px" onclick="sendMessage()">Broadcast as ADMIN</button><button class="btn dark" style="margin-top:10px" onclick="clearHistory()">Clear temporary sync history</button></div>
+</div>
+<div class="card" style="margin-top:14px"><h3>Server notice</h3><input class="input" id="notice" placeholder="Optional notice shown when users connect"><button class="btn" style="margin-top:10px" onclick="apply()">Update notice</button><div class="status" id="status">Ready</div></div>
+</div>
+<script>
+var settings={messageEnabled:true,attachmentEnabled:true,cooldownMs:0};
+function token(){return localStorage.getItem("wc_admin_token")||""}
+function saveToken(){localStorage.setItem("wc_admin_token",document.getElementById("token").value);load()}
+function setStatus(t){document.getElementById("status").textContent=t}
+function api(path,body){return fetch(path,{method:"POST",headers:{"Content-Type":"application/json","X-Admin-Token":token()},body:JSON.stringify(body||{})}).then(function(r){return r.json()})}
+function draw(){document.getElementById("msgBtn").textContent=settings.messageEnabled?"ON":"OFF";document.getElementById("fileBtn").textContent=settings.attachmentEnabled?"ON":"OFF";document.getElementById("cooldown").value=settings.cooldownMs}
+function load(){fetch("/health").then(function(r){return r.json()}).then(function(d){settings=d.settings||settings;draw()}).catch(function(){setStatus("Server unavailable")})}
+function toggle(k){settings[k]=!settings[k];draw()}
+function apply(){settings.cooldownMs=Math.max(0,parseInt(document.getElementById("cooldown").value||"0",10)||0);api("/admin/settings",{messageEnabled:settings.messageEnabled,attachmentEnabled:settings.attachmentEnabled,cooldownMs:settings.cooldownMs,notice:document.getElementById("notice").value}).then(function(d){if(d.ok){settings=d.settings;draw();setStatus("Settings updated")}else setStatus("Unauthorized or failed")}).catch(function(){setStatus("Request failed")})}
+function sendMessage(){var t=document.getElementById("message").value.trim();if(!t)return;api("/admin/message",{text:t}).then(function(d){if(d.ok){document.getElementById("message").value="";setStatus("Admin message broadcasted")}else setStatus("Unauthorized or failed")})}
+function clearHistory(){api("/admin/clear-history",{}).then(function(d){setStatus(d.ok?"Temporary sync history cleared":"Unauthorized or failed")})}
+document.getElementById("token").value=token();load();
+</script></body></html>
