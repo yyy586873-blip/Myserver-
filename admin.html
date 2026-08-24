@@ -1,386 +1,456 @@
-<!DOCTYPE html>
-<html lang="en">
+<!doctype html>
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>World Chat • Admin</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>World Chat</title>
 
 <style>
-*{
-    box-sizing:border-box;
-    -webkit-tap-highlight-color:transparent;
-}
-
+*{box-sizing:border-box}
 html,body{
-    margin:0;
-    width:100%;
-    height:100%;
-    overflow:hidden;
-    font-family:Arial,sans-serif;
-    background:#070a0f;
-    color:#fff;
+margin:0;
+width:100%;
+height:100%;
+font-family:Arial,sans-serif;
+background:#080b10;
+color:#f3f6fb
 }
+body{overflow:hidden}
 
 .app{
-    width:100%;
-    height:100%;
-    display:flex;
-    flex-direction:column;
-    background:
-        radial-gradient(circle at top left,#182534 0,#0b1017 42%,#070a0f 100%);
+height:100%;
+display:flex;
+flex-direction:column;
+background:radial-gradient(circle at 20% 0%,#172435 0,#080b10 42%)
 }
 
-/* HEADER */
-
-.header{
-    height:68px;
-    flex-shrink:0;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    padding:0 13px;
-    border-bottom:1px solid #26323e;
-    background:rgba(10,15,22,.94);
+.top{
+height:70px;
+display:flex;
+align-items:center;
+justify-content:space-between;
+padding:0 15px;
+border-bottom:1px solid #222b36;
+background:rgba(12,17,24,.94)
 }
 
 .brand{
-    display:flex;
-    align-items:center;
-    gap:10px;
+display:flex;
+align-items:center;
+gap:11px
 }
 
 .logo{
-    width:42px;
-    height:42px;
-    border-radius:14px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-size:20px;
-    background:linear-gradient(135deg,#725421,#18130b);
-    border:1px solid #8d6b32;
-    box-shadow:0 6px 22px #0008;
+width:40px;
+height:40px;
+border-radius:13px;
+background:linear-gradient(135deg,#263b51,#111923);
+display:flex;
+align-items:center;
+justify-content:center;
+font-size:21px;
+box-shadow:0 5px 18px #0006
 }
 
-.brandTitle{
-    font-size:17px;
-    font-weight:bold;
+.title{
+font-size:18px;
+font-weight:800
 }
 
-.brandSub{
-    margin-top:3px;
-    color:#7e8c9c;
-    font-size:9px;
-    letter-spacing:.5px;
+.sub{
+font-size:10px;
+color:#8290a1;
+margin-top:3px
 }
 
-.headerRight{
-    display:flex;
-    align-items:center;
-    gap:5px;
+.topRight{
+display:flex;
+align-items:center;
+gap:5px
 }
 
-.online{
-    padding:7px 9px;
-    border-radius:20px;
-    font-size:9px;
-    color:#9be0b2;
-    background:#13261b;
-    border:1px solid #294d37;
+.state{
+font-size:10px;
+padding:7px 10px;
+border-radius:20px
 }
 
-.menuButton{
-    width:38px;
-    height:38px;
-    border:0;
-    background:transparent;
-    color:#dce5ee;
-    font-size:25px;
+.menu{
+width:38px;
+height:38px;
+border:0;
+background:transparent;
+color:#e9eef5;
+font-size:25px;
+padding:0
 }
-
-/* CHAT */
 
 .chat{
-    flex:1;
-    overflow-y:auto;
-    padding:12px;
+flex:1;
+overflow:auto;
+padding:14px 12px
 }
 
-.message{
-    display:flex;
-    margin-bottom:11px;
+.row{
+margin:8px 0;
+display:flex
 }
 
-.message.mine{
-    justify-content:flex-end;
+.row.me{
+justify-content:flex-end
 }
 
 .bubble{
-    max-width:78%;
-    padding:9px 11px;
-    border-radius:15px;
-    background:#121a23;
-    border:1px solid #273542;
-    box-shadow:0 5px 15px #0004;
+max-width:84%;
+background:#141d27;
+border:1px solid #253241;
+border-radius:17px;
+padding:10px 12px;
+box-shadow:0 5px 16px #0003
 }
 
-.mine .bubble{
-    background:#172638;
-    border-color:#30495f;
+.me .bubble{
+background:#183148;
+border-color:#28516e
 }
 
-.adminMessage .bubble{
-    background:linear-gradient(135deg,#241d11,#17130c);
-    border-color:#8b682e;
-    box-shadow:0 6px 20px #0007;
+.admin .bubble{
+background:#332817;
+border-color:#7a5b20
 }
 
 .name{
-    font-size:10px;
-    font-weight:bold;
-    color:#8ea0b2;
-    margin-bottom:4px;
+font-size:10px;
+color:#7fc2ff;
+margin-bottom:5px;
+font-weight:700
 }
 
-.adminMessage .name{
-    color:#e2b85d;
+.adminName{
+color:#f2c45c
 }
 
 .text{
-    font-size:14px;
-    line-height:1.4;
-    word-break:break-word;
+white-space:pre-wrap;
+word-break:break-word;
+font-size:15px;
+line-height:1.4
 }
 
-.time{
-    margin-top:5px;
-    font-size:8px;
-    color:#697888;
-    text-align:right;
+.meta{
+font-size:9px;
+color:#778494;
+margin-top:5px;
+text-align:right
 }
 
-/* INPUT */
+.system{
+text-align:center;
+color:#738093;
+font-size:10px;
+margin:9px
+}
+
+.fileCard{
+border:1px solid #2a3a4b;
+border-radius:13px;
+padding:10px;
+min-width:190px
+}
+
+.fileTop{
+display:flex;
+gap:10px;
+align-items:center
+}
+
+.fileIcon{
+font-size:24px
+}
+
+.fileName{
+font-size:13px;
+word-break:break-all
+}
+
+.fileSize{
+font-size:10px;
+color:#8290a1;
+margin-top:3px
+}
+
+.downloadBtn{
+margin-top:9px;
+border:1px solid #39566e;
+border-radius:9px;
+padding:7px 10px;
+background:#172635;
+color:#9fd0f7;
+font-size:11px;
+text-decoration:none;
+display:inline-block
+}
+
+.empty{
+height:100%;
+display:flex;
+align-items:center;
+justify-content:center;
+color:#657286;
+text-align:center
+}
 
 .bottom{
-    flex-shrink:0;
-    padding:9px;
-    border-top:1px solid #25313c;
-    background:rgba(9,14,20,.97);
+padding:9px;
+border-top:1px solid #222b36;
+background:rgba(10,15,21,.96)
 }
 
-.inputRow{
-    display:flex;
-    align-items:flex-end;
-    gap:7px;
+.composer{
+display:flex;
+gap:8px;
+align-items:flex-end
+}
+
+.attach,.send{
+width:45px;
+height:45px;
+border:0;
+border-radius:14px;
+color:#fff;
+font-size:20px
 }
 
 .attach{
-    width:42px;
-    height:42px;
-    border-radius:13px;
-    border:1px solid #30404e;
-    background:#121b24;
-    color:#dce5ee;
-    font-size:19px;
-}
-
-.messageInput{
-    flex:1;
-    min-height:42px;
-    max-height:100px;
-    resize:none;
-    outline:0;
-    border-radius:13px;
-    border:1px solid #30404e;
-    background:#101720;
-    color:#fff;
-    padding:12px;
-    font-family:Arial,sans-serif;
-    font-size:14px;
+background:#1b2734
 }
 
 .send{
-    width:44px;
-    height:42px;
-    border:0;
-    border-radius:13px;
-    background:linear-gradient(135deg,#725421,#b98a39);
-    color:#fff;
-    font-size:18px;
-    font-weight:bold;
+background:#4a8fc9
+}
+
+.inputWrap{
+flex:1;
+background:#151e28;
+border:1px solid #293745;
+border-radius:14px;
+padding:4px 8px
+}
+
+textarea{
+width:100%;
+height:35px;
+max-height:100px;
+resize:none;
+border:0;
+outline:0;
+background:transparent;
+color:#fff;
+font-family:inherit;
+font-size:15px;
+padding:7px
+}
+
+.progress{
+height:4px;
+background:#273443;
+border-radius:9px;
+margin-top:8px;
+overflow:hidden
+}
+
+.progress>div{
+height:100%;
+width:0;
+background:#74b4e8
+}
+
+input[type=file]{
+display:none
 }
 
 /* ADMIN MENU */
 
-.overlay{
-    position:fixed;
-    inset:0;
-    z-index:40;
-    display:none;
+.adminOverlay{
+position:fixed;
+inset:0;
+z-index:40;
+display:none
 }
 
-.overlay.show{
-    display:block;
+.adminOverlay.show{
+display:block
 }
 
 .adminMenu{
-    position:fixed;
-    z-index:50;
-    top:61px;
-    right:10px;
-    width:285px;
-    display:none;
-    padding:10px;
-    border-radius:18px;
-    background:rgba(14,20,28,.98);
-    border:1px solid #3a4a59;
-    box-shadow:0 20px 55px #000b;
+position:fixed;
+z-index:50;
+right:10px;
+top:62px;
+width:285px;
+background:rgba(14,20,28,.98);
+border:1px solid #394a59;
+border-radius:17px;
+padding:10px;
+box-shadow:0 20px 55px #000b;
+display:none
 }
 
 .adminMenu.show{
-    display:block;
+display:block
 }
 
-.adminHeader{
-    padding:8px 8px 11px;
-    border-bottom:1px solid #293643;
-    margin-bottom:4px;
+.adminHead{
+padding:8px;
+border-bottom:1px solid #293643;
+margin-bottom:4px
 }
 
 .adminTitle{
-    color:#e8bd62;
-    font-size:13px;
-    font-weight:bold;
+font-size:13px;
+font-weight:800;
+color:#f0c76c
 }
 
-.adminDescription{
-    margin-top:3px;
-    color:#7e8c9b;
-    font-size:9px;
+.adminSub{
+font-size:9px;
+color:#7d8a99;
+margin-top:3px
 }
 
 .adminRow{
-    min-height:45px;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:8px;
-    padding:7px 8px;
-    border-radius:10px;
-    font-size:11px;
+display:flex;
+align-items:center;
+justify-content:space-between;
+gap:8px;
+padding:9px 7px;
+border-radius:10px;
+font-size:11px
 }
 
 .adminRow:hover{
-    background:#18232d;
+background:#18232e
 }
 
-.adminControl{
-    border:1px solid #384b5d;
-    border-radius:9px;
-    padding:7px 10px;
-    color:#fff;
-    background:#16222c;
-    font-size:10px;
-    font-weight:bold;
+.adminButton{
+border:1px solid #394c5d;
+background:#17232e;
+color:#fff;
+border-radius:9px;
+padding:7px 10px;
+font-size:10px;
+font-weight:bold
 }
 
-.adminControl.on{
-    color:#98dfaf;
-    border-color:#315b43;
+.adminButton.on{
+color:#99dfb1;
+border-color:#315b43
 }
 
-.adminControl.off{
-    color:#ffaaaa;
-    border-color:#63383e;
+.adminButton.off{
+color:#ffaaaa;
+border-color:#63383e
 }
 
 .cooldown{
-    width:95px;
-    padding:7px;
-    border-radius:8px;
-    outline:0;
-    border:1px solid #394a59;
-    background:#0c131a;
-    color:#fff;
-    font-size:10px;
+width:90px;
+border:1px solid #394c5d;
+background:#0c131a;
+color:#fff;
+border-radius:8px;
+padding:7px;
+font-size:10px;
+outline:0
 }
 
-/* LOGIN */
+.adminNotice{
+margin:5px 7px;
+width:calc(100% - 14px);
+border:1px solid #344554;
+background:#0d141b;
+color:#fff;
+border-radius:9px;
+padding:8px;
+font-size:11px;
+outline:0
+}
 
-.login{
-    position:fixed;
-    z-index:100;
-    inset:0;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:20px;
-    background:#06090eee;
+/* ADMIN LOGIN */
+
+.adminLogin{
+position:fixed;
+inset:0;
+z-index:100;
+display:flex;
+align-items:center;
+justify-content:center;
+padding:20px;
+background:#05080dee
 }
 
 .loginCard{
-    width:100%;
-    max-width:390px;
-    padding:20px;
-    border-radius:20px;
-    background:#111922;
-    border:1px solid #394a59;
-    box-shadow:0 25px 70px #000c;
+width:100%;
+max-width:390px;
+padding:20px;
+border-radius:20px;
+background:#111922;
+border:1px solid #394a59;
+box-shadow:0 25px 70px #000c
 }
 
 .loginLogo{
-    width:50px;
-    height:50px;
-    border-radius:16px;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    background:linear-gradient(135deg,#725421,#19130b);
-    border:1px solid #967237;
-    font-size:23px;
-    margin-bottom:12px;
+width:52px;
+height:52px;
+border-radius:16px;
+display:flex;
+align-items:center;
+justify-content:center;
+background:linear-gradient(135deg,#725728,#18140d);
+border:1px solid #927039;
+font-size:23px;
+margin-bottom:12px
 }
 
 .loginTitle{
-    font-size:20px;
-    font-weight:bold;
+font-size:20px;
+font-weight:800
 }
 
-.loginSub{
-    margin-top:6px;
-    color:#8492a0;
-    font-size:11px;
-    line-height:1.5;
+.loginText{
+font-size:11px;
+color:#8492a0;
+line-height:1.5;
+margin-top:6px
 }
 
 .token{
-    width:100%;
-    margin-top:15px;
-    padding:12px;
-    border-radius:11px;
-    outline:0;
-    border:1px solid #394a59;
-    background:#0b1117;
-    color:#fff;
-    font-size:13px;
+width:100%;
+margin-top:15px;
+padding:12px;
+border-radius:11px;
+outline:0;
+border:1px solid #394a59;
+background:#0b1117;
+color:#fff;
+font-size:13px
 }
 
 .connect{
-    width:100%;
-    margin-top:10px;
-    padding:12px;
-    border:0;
-    border-radius:11px;
-    background:linear-gradient(135deg,#725421,#b98a39);
-    color:#fff;
-    font-weight:bold;
+width:100%;
+margin-top:10px;
+padding:12px;
+border:0;
+border-radius:11px;
+background:linear-gradient(135deg,#725421,#b98a39);
+color:#fff;
+font-weight:bold
 }
 
-.error{
-    min-height:15px;
-    margin-top:8px;
-    color:#ffaaaa;
-    font-size:10px;
+.loginError{
+min-height:15px;
+margin-top:8px;
+font-size:10px;
+color:#ffaaaa
 }
 </style>
 </head>
@@ -389,968 +459,2238 @@ html,body{
 
 <div class="app">
 
-    <!-- HEADER -->
-    <div class="header">
+<div class="top">
 
-        <div class="brand">
+<div class="brand">
 
-            <div class="logo">★</div>
+<div class="logo">🌐</div>
 
-            <div>
-                <div class="brandTitle">World Chat</div>
-                <div class="brandSub">GLOBAL COMMUNITY</div>
-            </div>
+<div>
+<div class="title">World Chat</div>
+<div class="sub" id="userLine">Connecting...</div>
+</div>
 
-        </div>
+</div>
 
-        <div class="headerRight">
+<div class="topRight">
 
-            <div class="online" id="onlineStatus">
-                ● ONLINE
-            </div>
+<div class="state" id="state">
+CONNECTING
+</div>
 
-            <button class="menuButton" id="menuButton">
-                ⋮
-            </button>
+<button class="menu" id="menuButton">
+⋮
+</button>
 
-        </div>
-
-    </div>
-
-
-    <!-- CHAT -->
-    <div class="chat" id="chat">
-
-        <div class="message adminMessage">
-
-            <div class="bubble">
-
-                <div class="name">
-                    ★ ADMIN
-                </div>
-
-                <div class="text">
-                    Welcome to World Chat.
-                </div>
-
-                <div class="time">
-                    Admin
-                </div>
-
-            </div>
-
-        </div>
-
-    </div>
-
-
-    <!-- INPUT -->
-    <div class="bottom">
-
-        <div class="inputRow">
-
-            <button class="attach" id="attach">
-                ＋
-            </button>
-
-            <textarea
-                class="messageInput"
-                id="messageInput"
-                placeholder="Message everyone..."
-                rows="1"></textarea>
-
-            <button class="send" id="send">
-                ➤
-            </button>
-
-        </div>
-
-    </div>
+</div>
 
 </div>
 
 
-<!-- OVERLAY -->
+<div class="chat" id="chat">
 
-<div class="overlay" id="overlay"></div>
+<div class="empty" id="empty">
+
+<div>
+
+<div style="font-size:34px">
+🌍
+</div>
+
+<div style="margin-top:8px">
+Welcome to World Chat
+</div>
+
+<div style="font-size:11px;margin-top:5px">
+Your local history is kept for 24 hours.
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+
+<div class="bottom">
+
+<div class="composer">
+
+<button class="attach" id="attach">
+＋
+</button>
+
+<div class="inputWrap">
+
+<textarea
+id="input"
+placeholder="Message everyone..."
+></textarea>
+
+</div>
+
+<button class="send" id="send">
+➤
+</button>
+
+</div>
+
+<input id="file" type="file">
+
+</div>
+
+</div>
+
+
+<!-- ADMIN OVERLAY -->
+
+<div
+class="adminOverlay"
+id="adminOverlay">
+</div>
 
 
 <!-- ADMIN MENU -->
 
-<div class="adminMenu" id="adminMenu">
+<div
+class="adminMenu"
+id="adminMenu">
 
-    <div class="adminHeader">
+<div class="adminHead">
 
-        <div class="adminTitle">
-            ★ ADMIN COMMAND CENTER
-        </div>
+<div class="adminTitle">
+★ ADMIN COMMAND CENTER
+</div>
 
-        <div class="adminDescription">
-            Authorized server controls
-        </div>
+<div class="adminSub">
+Authorized controls
+</div>
 
-    </div>
-
-
-    <div class="adminRow">
-
-        <span>
-            Messages
-        </span>
-
-        <button
-            class="adminControl on"
-            id="messageToggle">
-            ON
-        </button>
-
-    </div>
+</div>
 
 
-    <div class="adminRow">
+<div class="adminRow">
 
-        <span>
-            Attachments
-        </span>
+<span>
+Messages
+</span>
 
-        <button
-            class="adminControl on"
-            id="attachmentToggle">
-            ON
-        </button>
+<button
+class="adminButton on"
+id="messageButton">
+ON
+</button>
 
-    </div>
-
-
-    <div class="adminRow">
-
-        <span>
-            Message cooldown
-        </span>
-
-        <input
-            class="cooldown"
-            id="cooldown"
-            type="number"
-            min="0"
-            value="0"
-            placeholder="milliseconds">
-
-    </div>
+</div>
 
 
-    <div class="adminRow">
+<div class="adminRow">
 
-        <span>
-            Global notice
-        </span>
+<span>
+Attachments
+</span>
 
-        <button
-            class="adminControl"
-            id="noticeButton">
-            SET
-        </button>
+<button
+class="adminButton on"
+id="attachmentButton">
+ON
+</button>
 
-    </div>
-
-
-    <div class="adminRow">
-
-        <span>
-            Clear sync history
-        </span>
-
-        <button
-            class="adminControl off"
-            id="clearButton">
-            CLEAR
-        </button>
-
-    </div>
+</div>
 
 
-    <div class="adminRow">
+<div class="adminRow">
 
-        <span>
-            Logout
-        </span>
+<span>
+Cooldown
+</span>
 
-        <button
-            class="adminControl"
-            id="logoutButton">
-            LOGOUT
-        </button>
+<input
+class="cooldown"
+id="cooldown"
+type="number"
+min="0"
+value="0"
+placeholder="milliseconds">
 
-    </div>
+</div>
+
+
+<div class="adminRow">
+
+<span>
+Global notice
+</span>
+
+<button
+class="adminButton"
+id="noticeButton">
+SET
+</button>
+
+</div>
+
+
+<div class="adminRow">
+
+<span>
+ADMIN message
+</span>
+
+<button
+class="adminButton"
+id="adminMessageButton">
+SEND
+</button>
+
+</div>
+
+
+<div class="adminRow">
+
+<span>
+Clear sync history
+</span>
+
+<button
+class="adminButton off"
+id="clearButton">
+CLEAR
+</button>
+
+</div>
+
+
+<div class="adminRow">
+
+<span>
+Logout
+</span>
+
+<button
+class="adminButton"
+id="logoutButton">
+LOGOUT
+</button>
+
+</div>
 
 </div>
 
 
 <!-- ADMIN LOGIN -->
 
-<div class="login" id="login">
+<div
+class="adminLogin"
+id="adminLogin">
 
-    <div class="loginCard">
+<div class="loginCard">
 
-        <div class="loginLogo">
-            ★
-        </div>
+<div class="loginLogo">
+★
+</div>
 
-        <div class="loginTitle">
-            World Chat Admin
-        </div>
+<div class="loginTitle">
+World Chat Admin
+</div>
 
-        <div class="loginSub">
-            Same World Chat interface with administrator
-            controls. Enter the ADMIN_TOKEN configured
-            in your Render environment.
-        </div>
+<div class="loginText">
+Normal World Chat UI is active. Enter your
+Render ADMIN_TOKEN to unlock administrator
+controls.
+</div>
 
-        <input
-            class="token"
-            id="token"
-            type="password"
-            placeholder="ADMIN_TOKEN">
+<input
+class="token"
+id="adminToken"
+type="password"
+placeholder="ADMIN_TOKEN">
 
-        <button
-            class="connect"
-            id="connect">
-            CONNECT AS ADMIN
-        </button>
+<button
+class="connect"
+id="connectButton">
+CONNECT AS ADMIN
+</button>
 
-        <div
-            class="error"
-            id="error">
-        </div>
+<div
+class="loginError"
+id="loginError">
+</div>
 
-    </div>
+</div>
 
 </div>
 
 
 <script>
+(function(){
 
 "use strict";
 
 
-/* ==============================
-   CONFIG
-============================== */
-
 var SERVER =
-    "https://myserver-b0ls.onrender.com";
+"https://myserver-b0ls.onrender.com";
 
-var TOKEN_KEY =
-    "worldchat_admin_token";
+var WS =
+"wss://myserver-b0ls.onrender.com/ws";
+
+var USERKEY =
+"wc_user_v3";
+
+var CHATKEY =
+"wc_chat_v3";
+
+var ADMINKEY =
+"worldchat_admin_token";
+
+var TTL =
+86400000;
 
 
-/* ==============================
-   ELEMENTS
-============================== */
+var chat =
+document.getElementById("chat");
 
-var login =
-    document.getElementById("login");
+var empty =
+document.getElementById("empty");
 
-var tokenInput =
-    document.getElementById("token");
+var state =
+document.getElementById("state");
 
-var connect =
-    document.getElementById("connect");
+var userLine =
+document.getElementById("userLine");
 
-var error =
-    document.getElementById("error");
+var input =
+document.getElementById("input");
+
+var send =
+document.getElementById("send");
+
+var attach =
+document.getElementById("attach");
+
+var file =
+document.getElementById("file");
+
 
 var menuButton =
-    document.getElementById("menuButton");
+document.getElementById("menuButton");
 
-var menu =
-    document.getElementById("adminMenu");
+var adminMenu =
+document.getElementById("adminMenu");
 
-var overlay =
-    document.getElementById("overlay");
+var adminOverlay =
+document.getElementById("adminOverlay");
 
-var messageToggle =
-    document.getElementById("messageToggle");
+var adminLogin =
+document.getElementById("adminLogin");
 
-var attachmentToggle =
-    document.getElementById("attachmentToggle");
+var adminToken =
+document.getElementById("adminToken");
+
+var connectButton =
+document.getElementById("connectButton");
+
+var loginError =
+document.getElementById("loginError");
+
+
+var messageButton =
+document.getElementById("messageButton");
+
+var attachmentButton =
+document.getElementById("attachmentButton");
 
 var cooldown =
-    document.getElementById("cooldown");
-
-var noticeButton =
-    document.getElementById("noticeButton");
-
-var clearButton =
-    document.getElementById("clearButton");
-
-var logoutButton =
-    document.getElementById("logoutButton");
+document.getElementById("cooldown");
 
 
-/* ==============================
-   SETTINGS
-============================== */
+var user = null;
+
+var socket = null;
+
+var reconnectTimer = null;
+
+var reconnectDelay = 1000;
+
 
 var settings = {
+messageEnabled:true,
+attachmentEnabled:true,
+cooldownMs:0
+};
 
-    messageEnabled:true,
 
-    attachmentEnabled:true,
+/* =========================
+   BASIC
+========================= */
 
-    cooldownMs:0
+function id(){
+
+return Date.now() +
+"_" +
+Math.random().toString(36).slice(2) +
+"_" +
+Math.random().toString(36).slice(2);
+
+}
+
+
+function esc(s){
+
+return String(
+s == null ? "" : s
+)
+.replace(/&/g,"&amp;")
+.replace(/</g,"&lt;")
+.replace(/>/g,"&gt;")
+.replace(/"/g,"&quot;");
+
+}
+
+
+function setState(text,on){
+
+state.textContent =
+text;
+
+if(on){
+
+state.style.color =
+"#82dfa0";
+
+state.style.background =
+"#14271c";
+
+}else{
+
+state.style.color =
+"#efb4b4";
+
+state.style.background =
+"#2b1b1d";
+
+}
+
+}
+
+
+/* =========================
+   USER
+========================= */
+
+function loadUser(){
+
+try{
+
+user =
+JSON.parse(
+localStorage.getItem(USERKEY) ||
+"null"
+);
+
+}catch(e){
+
+user = null;
+
+}
+
+
+if(
+!user ||
+!user.id ||
+!user.name
+){
+
+var name =
+prompt(
+"World Chat name:",
+"User" +
+Math.floor(
+1000 +
+Math.random()*9000
+)
+);
+
+
+if(
+!name ||
+!name.trim()
+){
+
+name =
+"User" +
+Math.floor(
+1000 +
+Math.random()*9000
+);
+
+}
+
+
+user = {
+
+id:id(),
+
+name:
+name
+.trim()
+.substring(0,40)
 
 };
 
 
-/* ==============================
-   TOKEN
-============================== */
+try{
 
-function getToken(){
+localStorage.setItem(
+USERKEY,
+JSON.stringify(user)
+);
 
-    return localStorage.getItem(
-        TOKEN_KEY
-    ) || "";
-
-}
-
-
-function setError(text){
-
-    error.textContent =
-        text || "";
+}catch(e2){}
 
 }
 
 
-/* ==============================
-   API
-============================== */
+userLine.textContent =
+user.name;
 
-function adminRequest(
-    endpoint,
-    data
+}
+
+
+/* =========================
+   LOCAL HISTORY
+========================= */
+
+function history(){
+
+var list = [];
+
+try{
+
+list =
+JSON.parse(
+localStorage.getItem(
+CHATKEY
+) ||
+"[]"
+);
+
+}catch(e){
+
+list = [];
+
+}
+
+
+var now =
+Date.now();
+
+var kept = [];
+
+
+for(
+var i=0;
+i<list.length;
+i++
 ){
 
-    return fetch(
+if(
+now -
+Number(
+list[i].timestamp || 0
+)
+<= TTL
+){
 
-        SERVER + endpoint,
+kept.push(list[i]);
 
-        {
-            method:"POST",
-
-            headers:{
-                "Content-Type":
-                    "application/json",
-
-                "X-Admin-Token":
-                    getToken()
-            },
-
-            body:
-                JSON.stringify(
-                    data || {}
-                )
-
-        }
-
-    )
-    .then(
-        function(response){
-
-            return response.json()
-                .catch(
-                    function(){
-
-                        return {
-                            ok:false,
-                            error:
-                                "INVALID_RESPONSE"
-                        };
-
-                    }
-                );
-
-        }
-    );
+}
 
 }
 
 
-/* ==============================
-   DRAW SETTINGS
-============================== */
+try{
 
-function drawSettings(){
+localStorage.setItem(
+CHATKEY,
+JSON.stringify(
+kept.slice(-500)
+)
+);
 
-    messageToggle.textContent =
-        settings.messageEnabled
-        ? "ON"
-        : "OFF";
-
-    attachmentToggle.textContent =
-        settings.attachmentEnabled
-        ? "ON"
-        : "OFF";
+}catch(e2){}
 
 
-    messageToggle.className =
-        "adminControl " +
-        (
-            settings.messageEnabled
-            ? "on"
-            : "off"
-        );
-
-
-    attachmentToggle.className =
-        "adminControl " +
-        (
-            settings.attachmentEnabled
-            ? "on"
-            : "off"
-        );
-
-
-    cooldown.value =
-        settings.cooldownMs || 0;
+return kept.slice(-500);
 
 }
 
 
-/* ==============================
+function save(message){
+
+var list =
+history();
+
+var exists =
+false;
+
+
+for(
+var i=0;
+i<list.length;
+i++
+){
+
+if(
+list[i].messageId ===
+message.messageId
+){
+
+exists = true;
+break;
+
+}
+
+}
+
+
+if(!exists){
+
+list.push(message);
+
+}
+
+
+try{
+
+localStorage.setItem(
+CHATKEY,
+JSON.stringify(
+list.slice(-500)
+)
+);
+
+}catch(e){}
+
+}
+
+
+/* =========================
+   DISPLAY
+========================= */
+
+function time(t){
+
+try{
+
+return new Date(t)
+.toLocaleTimeString(
+[],
+{
+hour:"2-digit",
+minute:"2-digit"
+}
+);
+
+}catch(e){
+
+return "";
+
+}
+
+}
+
+
+function size(n){
+
+n =
+Number(n || 0);
+
+if(
+n < 1024
+){
+
+return n + " B";
+
+}
+
+if(
+n < 1048576
+){
+
+return (
+n / 1024
+).toFixed(1) +
+" KB";
+
+}
+
+if(
+n < 1073741824
+){
+
+return (
+n / 1048576
+).toFixed(1) +
+" MB";
+
+}
+
+return (
+n / 1073741824
+).toFixed(1) +
+" GB";
+
+}
+
+
+function render(message){
+
+if(empty){
+
+empty.style.display =
+"none";
+
+}
+
+
+var row =
+document.createElement(
+"div"
+);
+
+
+row.className =
+"row" +
+(
+message.senderId ===
+user.id
+? " me"
+: ""
+) +
+(
+message.role ===
+"admin"
+? " admin"
+: ""
+);
+
+
+var bubble =
+document.createElement(
+"div"
+);
+
+bubble.className =
+"bubble";
+
+
+var html = "";
+
+
+if(
+message.senderId !==
+user.id
+){
+
+html +=
+'<div class="name ' +
+(
+message.role === "admin"
+? "adminName"
+: ""
+) +
+'">' +
+
+(
+message.role === "admin"
+? "★ "
+: ""
+) +
+
+esc(
+message.senderName ||
+"User"
+) +
+
+"</div>";
+
+}
+
+
+if(
+message.messageType ===
+"file"
+){
+
+var url =
+SERVER +
+"/file/" +
+encodeURIComponent(
+message.fileId || ""
+);
+
+
+var icon =
+"📎";
+
+
+if(
+(message.mime || "")
+.indexOf("image/") === 0
+){
+
+icon = "🖼️";
+
+}else if(
+(message.mime || "")
+.indexOf("video/") === 0
+){
+
+icon = "🎬";
+
+}
+
+
+html +=
+
+'<div class="fileCard">' +
+
+'<div class="fileTop">' +
+
+'<div class="fileIcon">' +
+icon +
+"</div>" +
+
+"<div>" +
+
+'<div class="fileName">' +
+esc(
+message.fileName ||
+"Attachment"
+) +
+"</div>" +
+
+'<div class="fileSize">' +
+size(message.size) +
+"</div>" +
+
+"</div>" +
+
+"</div>" +
+
+'<a class="downloadBtn" href="' +
+esc(url) +
+'" target="_blank" download="' +
+esc(
+message.fileName ||
+"download"
+) +
+'">Download</a>' +
+
+"</div>";
+
+}else{
+
+html +=
+'<div class="text">' +
+esc(message.text || "") +
+"</div>";
+
+}
+
+
+html +=
+'<div class="meta">' +
+time(message.timestamp) +
+"</div>";
+
+
+bubble.innerHTML =
+html;
+
+row.appendChild(
+bubble
+);
+
+chat.appendChild(
+row
+);
+
+chat.scrollTop =
+chat.scrollHeight;
+
+}
+
+
+function system(text){
+
+var row =
+document.createElement(
+"div"
+);
+
+row.className =
+"system";
+
+row.textContent =
+text;
+
+chat.appendChild(
+row
+);
+
+chat.scrollTop =
+chat.scrollHeight;
+
+}
+
+
+function renderHistory(){
+
+var list =
+history();
+
+chat.innerHTML =
+"";
+
+
+if(!list.length){
+
+chat.appendChild(
+empty
+);
+
+empty.style.display =
+"flex";
+
+return;
+
+}
+
+
+empty.style.display =
+"none";
+
+
+for(
+var i=0;
+i<list.length;
+i++
+){
+
+render(
+list[i]
+);
+
+}
+
+}
+
+
+/* =========================
+   WEBSOCKET
+========================= */
+
+function packet(data){
+
+if(
+!socket ||
+socket.readyState !== 1
+){
+
+system(
+"Server connection unavailable."
+);
+
+return false;
+
+}
+
+
+try{
+
+socket.send(
+JSON.stringify(data)
+);
+
+return true;
+
+}catch(e){
+
+return false;
+
+}
+
+}
+
+
+function connect(){
+
+clearTimeout(
+reconnectTimer
+);
+
+setState(
+"CONNECTING",
+false
+);
+
+
+try{
+
+socket =
+new WebSocket(
+WS
+);
+
+}catch(e){
+
+retry();
+
+return;
+
+}
+
+
+socket.onopen =
+function(){
+
+reconnectDelay =
+1000;
+
+setState(
+"ONLINE",
+true
+);
+
+
+packet({
+
+type:"hello",
+
+userId:
+user.id,
+
+name:
+user.name
+
+});
+
+};
+
+
+socket.onmessage =
+function(event){
+
+var data;
+
+
+try{
+
+data =
+JSON.parse(
+event.data
+);
+
+}catch(e){
+
+return;
+
+}
+
+
+if(
+data.type ===
+"ready"
+){
+
+settings =
+data.settings ||
+settings;
+
+setState(
+"ONLINE",
+true
+);
+
+userLine.textContent =
+user.name +
+" • " +
+(data.online || 0) +
+" online";
+
+
+if(data.notice){
+
+system(
+data.notice
+);
+
+}
+
+return;
+
+}
+
+
+if(
+data.type ===
+"presence"
+){
+
+userLine.textContent =
+user.name +
+" • " +
+(data.online || 0) +
+" online";
+
+return;
+
+}
+
+
+if(
+data.type ===
+"settings"
+){
+
+settings =
+data.settings ||
+settings;
+
+return;
+
+}
+
+
+if(
+data.type ===
+"history_sync"
+){
+
+var messages =
+data.messages ||
+[];
+
+
+for(
+var i=0;
+i<messages.length;
+i++
+){
+
+save(
+messages[i]
+);
+
+}
+
+
+renderHistory();
+
+system(
+"Synced " +
+messages.length +
+" recent messages."
+);
+
+return;
+
+}
+
+
+if(
+data.type ===
+"history_cleared"
+){
+
+localStorage.removeItem(
+CHATKEY
+);
+
+renderHistory();
+
+system(
+"Chat history was cleared."
+);
+
+return;
+
+}
+
+
+if(
+data.type ===
+"error"
+){
+
+system(
+data.message ||
+"Server error"
+);
+
+return;
+
+}
+
+
+if(
+data.type ===
+"message"
+){
+
+save(data);
+
+render(data);
+
+}
+
+};
+
+
+socket.onerror =
+function(){
+
+setState(
+"ERROR",
+false
+);
+
+};
+
+
+socket.onclose =
+function(){
+
+setState(
+"OFFLINE",
+false
+);
+
+retry();
+
+};
+
+}
+
+
+function retry(){
+
+clearTimeout(
+reconnectTimer
+);
+
+
+reconnectTimer =
+setTimeout(
+connect,
+reconnectDelay
+);
+
+
+reconnectDelay =
+Math.min(
+reconnectDelay * 2,
+30000
+);
+
+}
+
+
+/* =========================
+   SEND NORMAL MESSAGE
+========================= */
+
+function sendText(){
+
+var text =
+input.value.trim();
+
+
+if(!text){
+
+return;
+
+}
+
+
+if(
+!settings.messageEnabled
+){
+
+system(
+"Messages are disabled."
+);
+
+return;
+
+}
+
+
+if(
+packet({
+
+type:"message",
+
+messageId:
+id(),
+
+senderId:
+user.id,
+
+senderName:
+user.name,
+
+messageType:
+"text",
+
+text:
+text,
+
+timestamp:
+Date.now()
+
+})
+){
+
+input.value =
+"";
+
+input.style.height =
+"35px";
+
+}
+
+}
+
+
+/* =========================
+   UPLOAD
+========================= */
+
+function upload(f){
+
+if(
+!settings.attachmentEnabled
+){
+
+system(
+"Attachments are disabled."
+);
+
+return;
+
+}
+
+
+if(!f){
+
+return;
+
+}
+
+
+if(
+f.size >
+104857600
+){
+
+system(
+"Maximum file size is 100 MB."
+);
+
+return;
+
+}
+
+
+var row =
+document.createElement(
+"div"
+);
+
+row.className =
+"system";
+
+row.textContent =
+"Uploading " +
+f.name;
+
+
+var progress =
+document.createElement(
+"div"
+);
+
+progress.className =
+"progress";
+
+
+var bar =
+document.createElement(
+"div"
+);
+
+progress.appendChild(
+bar
+);
+
+row.appendChild(
+progress
+);
+
+chat.appendChild(
+row
+);
+
+chat.scrollTop =
+chat.scrollHeight;
+
+
+var xhr =
+new XMLHttpRequest();
+
+
+xhr.open(
+"POST",
+SERVER +
+"/upload?name=" +
+encodeURIComponent(
+f.name
+) +
+"&mime=" +
+encodeURIComponent(
+f.type ||
+"application/octet-stream"
+),
+true
+);
+
+
+xhr.setRequestHeader(
+"Content-Type",
+f.type ||
+"application/octet-stream"
+);
+
+
+xhr.upload.onprogress =
+function(event){
+
+if(
+event.lengthComputable
+){
+
+bar.style.width =
+Math.round(
+event.loaded /
+event.total *
+100
+) +
+"%";
+
+}
+
+};
+
+
+xhr.onload =
+function(){
+
+if(
+xhr.status < 200 ||
+xhr.status >= 300
+){
+
+system(
+"Upload failed."
+);
+
+return;
+
+}
+
+
+var result;
+
+
+try{
+
+result =
+JSON.parse(
+xhr.responseText
+);
+
+}catch(e){
+
+result = null;
+
+}
+
+
+if(
+!result ||
+!result.ok
+){
+
+system(
+"Upload response invalid."
+);
+
+return;
+
+}
+
+
+packet({
+
+type:"message",
+
+messageId:
+id(),
+
+senderId:
+user.id,
+
+senderName:
+user.name,
+
+messageType:
+"file",
+
+fileId:
+result.fileId,
+
+fileName:
+result.fileName,
+
+mime:
+result.mime,
+
+size:
+result.size,
+
+timestamp:
+Date.now()
+
+});
+
+};
+
+
+xhr.onerror =
+function(){
+
+system(
+"Upload network error."
+);
+
+};
+
+
+try{
+
+xhr.send(f);
+
+}catch(e){
+
+system(
+"Upload start nahi ho saka."
+);
+
+}
+
+}
+
+
+/* =========================
+   ADMIN API
+========================= */
+
+function adminToken(){
+
+return localStorage.getItem(
+ADMINKEY
+) || "";
+
+}
+
+
+function adminRequest(
+path,
+data
+){
+
+return fetch(
+SERVER + path,
+{
+method:"POST",
+
+headers:{
+"Content-Type":
+"application/json",
+
+"X-Admin-Token":
+adminToken()
+},
+
+body:
+JSON.stringify(
+data || {}
+)
+
+}
+)
+.then(
+function(response){
+
+return response.json()
+.catch(
+function(){
+
+return {
+ok:false,
+error:
+"BAD_RESPONSE"
+};
+
+}
+);
+
+}
+);
+
+}
+
+
+/* =========================
    ADMIN LOGIN
-============================== */
+========================= */
 
 function verifyAdmin(){
 
-    setError(
-        "Connecting..."
-    );
+loginError.textContent =
+"Checking admin access...";
 
 
-    adminRequest(
+adminRequest(
+"/admin/settings",
+{
+messageEnabled:
+settings.messageEnabled,
 
-        "/admin/settings",
+attachmentEnabled:
+settings.attachmentEnabled,
 
-        {
-            messageEnabled:
-                settings.messageEnabled,
+cooldownMs:
+settings.cooldownMs
+}
+)
+.then(
+function(data){
 
-            attachmentEnabled:
-                settings.attachmentEnabled,
+if(
+data &&
+data.ok
+){
 
-            cooldownMs:
-                settings.cooldownMs
-        }
+settings =
+data.settings ||
+settings;
 
-    )
-    .then(
-        function(data){
+cooldown.value =
+settings.cooldownMs ||
+0;
 
-            if(
-                data &&
-                data.ok
-            ){
+adminLogin.style.display =
+"none";
 
-                settings =
-                    data.settings ||
-                    settings;
+loginError.textContent =
+"";
 
-                drawSettings();
+system(
+"★ Admin access enabled."
+);
 
-                login.style.display =
-                    "none";
+}else{
 
-                setError("");
+loginError.textContent =
+"Admin authentication failed. Check ADMIN_TOKEN.";
 
-            }
-            else{
+}
 
-                setError(
-                    "Invalid ADMIN_TOKEN. Check Render Environment Variables."
-                );
+}
+)
+.catch(
+function(){
 
-            }
+loginError.textContent =
+"Could not connect to admin server.";
 
-        }
-    )
-    .catch(
-        function(){
-
-            setError(
-                "Could not connect to server."
-            );
-
-        }
-    );
+}
+);
 
 }
 
 
-/* ==============================
-   CONNECT
-============================== */
-
-connect.onclick =
+connectButton.onclick =
 function(){
 
-    var value =
-        tokenInput.value.trim();
+var token =
+adminToken.value.trim();
 
 
-    if(!value){
+if(!token){
 
-        setError(
-            "Enter your ADMIN_TOKEN."
-        );
+loginError.textContent =
+"Enter ADMIN_TOKEN.";
 
-        return;
-    }
+return;
 
-
-    localStorage.setItem(
-        TOKEN_KEY,
-        value
-    );
+}
 
 
-    verifyAdmin();
+localStorage.setItem(
+ADMINKEY,
+token
+);
+
+
+verifyAdmin();
 
 };
 
 
-/* ==============================
-   MENU
-============================== */
+adminToken.value =
+adminTokenValue();
+
+
+function adminTokenValue(){
+
+return localStorage.getItem(
+ADMINKEY
+) || "";
+
+}
+
+
+/* =========================
+   ADMIN MENU
+========================= */
 
 menuButton.onclick =
 function(){
 
-    menu.classList.toggle(
-        "show"
-    );
+adminMenu.classList.toggle(
+"show"
+);
 
-    overlay.classList.toggle(
-        "show"
-    );
+adminOverlay.classList.toggle(
+"show"
+);
 
 };
 
 
-overlay.onclick =
+adminOverlay.onclick =
 function(){
 
-    menu.classList.remove(
-        "show"
-    );
+adminMenu.classList.remove(
+"show"
+);
 
-    overlay.classList.remove(
-        "show"
-    );
+adminOverlay.classList.remove(
+"show"
+);
 
 };
 
 
-/* ==============================
-   MESSAGE TOGGLE
-============================== */
+/* =========================
+   MESSAGE SETTING
+========================= */
 
-messageToggle.onclick =
+messageButton.onclick =
 function(){
 
-    var old =
-        settings.messageEnabled;
+settings.messageEnabled =
+!settings.messageEnabled;
 
 
-    settings.messageEnabled =
-        !settings.messageEnabled;
-
-
-    adminRequest(
-
-        "/admin/settings",
-
-        {
-            messageEnabled:
-                settings.messageEnabled,
-
-            attachmentEnabled:
-                settings.attachmentEnabled,
-
-            cooldownMs:
-                settings.cooldownMs
-        }
-
-    )
-    .then(
-        function(data){
-
-            if(data && data.ok){
-
-                settings =
-                    data.settings ||
-                    settings;
-
-                drawSettings();
-
-            }
-            else{
-
-                settings.messageEnabled =
-                    old;
-
-                drawSettings();
-
-                alert(
-                    "Admin authorization failed."
-                );
-
-            }
-
-        }
-    )
-    .catch(
-        function(){
-
-            settings.messageEnabled =
-                old;
-
-            drawSettings();
-
-            alert(
-                "Server connection failed."
-            );
-
-        }
-    );
+applySettings();
 
 };
 
 
-/* ==============================
-   ATTACHMENT TOGGLE
-============================== */
+/* =========================
+   ATTACHMENT SETTING
+========================= */
 
-attachmentToggle.onclick =
+attachmentButton.onclick =
 function(){
 
-    var old =
-        settings.attachmentEnabled;
+settings.attachmentEnabled =
+!settings.attachmentEnabled;
 
 
-    settings.attachmentEnabled =
-        !settings.attachmentEnabled;
-
-
-    adminRequest(
-
-        "/admin/settings",
-
-        {
-            messageEnabled:
-                settings.messageEnabled,
-
-            attachmentEnabled:
-                settings.attachmentEnabled,
-
-            cooldownMs:
-                settings.cooldownMs
-        }
-
-    )
-    .then(
-        function(data){
-
-            if(data && data.ok){
-
-                settings =
-                    data.settings ||
-                    settings;
-
-                drawSettings();
-
-            }
-            else{
-
-                settings.attachmentEnabled =
-                    old;
-
-                drawSettings();
-
-                alert(
-                    "Admin authorization failed."
-                );
-
-            }
-
-        }
-    )
-    .catch(
-        function(){
-
-            settings.attachmentEnabled =
-                old;
-
-            drawSettings();
-
-            alert(
-                "Server connection failed."
-            );
-
-        }
-    );
+applySettings();
 
 };
 
 
-/* ==============================
-   COOLDOWN
-============================== */
+/* =========================
+   APPLY SETTINGS
+========================= */
+
+function drawAdmin(){
+
+messageButton.textContent =
+settings.messageEnabled
+? "ON"
+: "OFF";
+
+
+attachmentButton.textContent =
+settings.attachmentEnabled
+? "ON"
+: "OFF";
+
+
+messageButton.className =
+"adminButton " +
+(
+settings.messageEnabled
+? "on"
+: "off"
+);
+
+
+attachmentButton.className =
+"adminButton " +
+(
+settings.attachmentEnabled
+? "on"
+: "off"
+);
+
+
+cooldown.value =
+settings.cooldownMs ||
+0;
+
+}
+
+
+function applySettings(){
+
+var value =
+parseInt(
+cooldown.value ||
+"0",
+10
+);
+
+
+if(isNaN(value)){
+value = 0;
+}
+
+
+if(value < 0){
+value = 0;
+}
+
+
+settings.cooldownMs =
+value;
+
+
+adminRequest(
+"/admin/settings",
+{
+
+messageEnabled:
+settings.messageEnabled,
+
+attachmentEnabled:
+settings.attachmentEnabled,
+
+cooldownMs:
+settings.cooldownMs
+
+}
+)
+.then(
+function(data){
+
+if(
+data &&
+data.ok
+){
+
+settings =
+data.settings ||
+settings;
+
+drawAdmin();
+
+}else{
+
+alert(
+"Admin authentication failed."
+);
+
+}
+
+}
+)
+.catch(
+function(){
+
+alert(
+"Server connection failed."
+);
+
+}
+);
+
+}
+
 
 cooldown.onchange =
 function(){
 
-    var value =
-        parseInt(
-            cooldown.value || "0",
-            10
-        );
-
-
-    if(isNaN(value)){
-        value = 0;
-    }
-
-
-    if(value < 0){
-        value = 0;
-    }
-
-
-    settings.cooldownMs =
-        value;
-
-
-    adminRequest(
-
-        "/admin/settings",
-
-        {
-            messageEnabled:
-                settings.messageEnabled,
-
-            attachmentEnabled:
-                settings.attachmentEnabled,
-
-            cooldownMs:
-                settings.cooldownMs
-        }
-
-    )
-    .then(
-        function(data){
-
-            if(data && data.ok){
-
-                settings =
-                    data.settings ||
-                    settings;
-
-                drawSettings();
-
-            }
-            else{
-
-                alert(
-                    "Admin authorization failed."
-                );
-
-            }
-
-        }
-    );
+applySettings();
 
 };
 
 
-/* ==============================
+/* =========================
    GLOBAL NOTICE
-============================== */
+========================= */
 
-noticeButton.onclick =
+document.getElementById(
+"noticeButton"
+).onclick =
 function(){
 
-    var notice =
-        prompt(
-            "Enter global notice:"
-        );
+var notice =
+prompt(
+"Global notice:"
+);
 
 
-    if(notice === null){
-        return;
-    }
+if(notice === null){
+
+return;
+
+}
 
 
-    adminRequest(
+adminRequest(
+"/admin/settings",
+{
 
-        "/admin/settings",
+messageEnabled:
+settings.messageEnabled,
 
-        {
-            messageEnabled:
-                settings.messageEnabled,
+attachmentEnabled:
+settings.attachmentEnabled,
 
-            attachmentEnabled:
-                settings.attachmentEnabled,
+cooldownMs:
+settings.cooldownMs,
 
-            cooldownMs:
-                settings.cooldownMs,
+notice:
+notice
 
-            notice:
-                notice
-        }
+}
+)
+.then(
+function(data){
 
-    )
-    .then(
-        function(data){
+if(
+data &&
+data.ok
+){
 
-            if(
-                data &&
-                data.ok
-            ){
+system(
+"★ Global notice published."
+);
 
-                alert(
-                    "Global notice published."
-                );
+}else{
 
-            }
-            else{
+alert(
+"Admin authentication failed."
+);
 
-                alert(
-                    "Admin authorization failed."
-                );
+}
 
-            }
-
-        }
-    );
+}
+);
 
 };
 
 
-/* ==============================
-   CLEAR SYNC
-============================== */
+/* =========================
+   ADMIN MESSAGE
+========================= */
 
-clearButton.onclick =
+document.getElementById(
+"adminMessageButton"
+).onclick =
 function(){
 
-    var answer =
-        confirm(
-            "Clear temporary server sync history?"
-        );
+var text =
+prompt(
+"Write ADMIN message:"
+);
 
 
-    if(!answer){
-        return;
-    }
+if(
+text === null ||
+!text.trim()
+){
+
+return;
+
+}
 
 
-    adminRequest(
-        "/admin/clear-history",
-        {}
-    )
-    .then(
-        function(data){
+adminRequest(
+"/admin/message",
+{
+text:
+text.trim()
+}
+)
+.then(
+function(data){
 
-            if(
-                data &&
-                data.ok
-            ){
+if(
+data &&
+data.ok
+){
 
-                alert(
-                    "Temporary sync history cleared."
-                );
+system(
+"★ ADMIN message broadcast."
+);
 
-            }
-            else{
+}else{
 
-                alert(
-                    "Admin authorization failed."
-                );
+alert(
+"Admin authentication failed."
+);
 
-            }
+}
 
-        }
-    )
-    .catch(
-        function(){
+}
+)
+.catch(
+function(){
 
-            alert(
-                "Server connection failed."
-            );
+alert(
+"Connection failed."
+);
 
-        }
-    );
+}
+);
 
 };
 
 
-/* ==============================
+/* =========================
+   CLEAR HISTORY
+========================= */
+
+document.getElementById(
+"clearButton"
+).onclick =
+function(){
+
+if(
+!confirm(
+"Clear temporary server sync history?"
+)
+){
+
+return;
+
+}
+
+
+adminRequest(
+"/admin/clear-history",
+{}
+)
+.then(
+function(data){
+
+if(
+data &&
+data.ok
+){
+
+system(
+"Temporary sync history cleared."
+);
+
+}else{
+
+alert(
+"Admin authentication failed."
+);
+
+}
+
+}
+);
+
+};
+
+
+/* =========================
    LOGOUT
-============================== */
+========================= */
 
-logoutButton.onclick =
+document.getElementById(
+"logoutButton"
+).onclick =
 function(){
 
-    localStorage.removeItem(
-        TOKEN_KEY
-    );
+localStorage.removeItem(
+ADMINKEY
+);
 
+adminLogin.style.display =
+"flex";
 
-    login.style.display =
-        "flex";
+adminToken.value =
+"";
 
+adminMenu.classList.remove(
+"show"
+);
 
-    tokenInput.value =
-        "";
-
-
-    menu.classList.remove(
-        "show"
-    );
-
-    overlay.classList.remove(
-        "show"
-    );
+adminOverlay.classList.remove(
+"show"
+);
 
 };
 
 
-/* ==============================
-   INIT
-============================== */
+/* =========================
+   NORMAL CHAT EVENTS
+========================= */
 
-tokenInput.value =
-    getToken();
-
-
-drawSettings();
+send.onclick =
+sendText;
 
 
-if(getToken()){
+input.addEventListener(
+"keydown",
+function(event){
 
-    verifyAdmin();
+if(
+event.key === "Enter" &&
+!event.shiftKey
+){
+
+event.preventDefault();
+
+sendText();
 
 }
-else{
 
-    login.style.display =
-        "flex";
+}
+);
+
+
+input.addEventListener(
+"input",
+function(){
+
+input.style.height =
+"35px";
+
+input.style.height =
+Math.min(
+input.scrollHeight,
+100
+) +
+"px";
+
+}
+);
+
+
+attach.onclick =
+function(){
+
+if(
+settings.attachmentEnabled
+){
+
+file.click();
+
+}else{
+
+system(
+"Attachments are disabled."
+);
 
 }
 
+};
+
+
+file.onchange =
+function(){
+
+if(
+file.files &&
+file.files.length
+){
+
+upload(
+file.files[0]
+);
+
+}
+
+file.value =
+"";
+
+};
+
+
+/* =========================
+   START
+========================= */
+
+loadUser();
+
+renderHistory();
+
+drawAdmin();
+
+connect();
+
+
+if(
+adminTokenValue()
+){
+
+verifyAdmin();
+
+}else{
+
+adminLogin.style.display =
+"flex";
+
+}
+
+})();
 </script>
 
 </body>
