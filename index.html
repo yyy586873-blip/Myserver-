@@ -1,366 +1,306 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>3D Character Scene</title>
+    <title>Functional Calculator</title>
 <style>
-      body {
-        margin: 0;
-        padding: 0;
-        background: radial-gradient(circle, #2b2b2b, #000);
-        height: 100vh;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        perspective: 1000px;
-        overflow: hidden;
-        font-family: sans-serif;
-      }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
 
-      .scene-container {
-        width: 400px;
-        height: 600px;
-        position: relative;
-        transform-style: preserve-3d;
-        animation: float 6s ease-in-out infinite;
-      }
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #121212;
+        }
 
-      @keyframes float {
-        0%, 100% { transform: translateY(0px) rotateY(0deg); }
-        50% { transform: translateY(-20px) rotateY(5deg); }
-      }
+        .calculator {
+            background-color: #1e1e1e;
+            padding: 20px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            width: 320px;
+        }
 
-      /* Lighting Effects */
-      .light-source {
-        position: absolute;
-        top: -100px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 200px;
-        height: 200px;
-        background: radial-gradient(circle, rgba(255,255,255,0.4) 0%, transparent 70%);
-        z-index: 10;
-        pointer-events: none;
-      }
+        .display {
+            background-color: #000;
+            color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: right;
+            margin-bottom: 20px;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            word-wrap: break-word;
+            word-break: break-all;
+        }
 
-      /* Character Base */
-      .character {
-        position: relative;
-        width: 100%;
-        height: 100%;
-        transform-style: preserve-3d;
-      }
+        .previous-operand {
+            font-size: 14px;
+            color: #aaa;
+            min-height: 20px;
+        }
 
-      /* Head */
-      .head {
-        position: absolute;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 100px;
-        height: 120px;
-        background: #f4c2a8;
-        border-radius: 50px 50px 60px 60px;
-        box-shadow: inset -5px -5px 20px rgba(0,0,0,0.2), 0 10px 30px rgba(0,0,0,0.5);
-        z-index: 10;
-      }
+        .current-operand {
+            font-size: 32px;
+            font-weight: bold;
+        }
 
-      .hair {
-        position: absolute;
-        top: -10px;
-        left: -10px;
-        width: 120px;
-        height: 100px;
-        background: #333;
-        border-radius: 60px 60px 20px 20px;
-        z-index: 11;
-      }
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
 
-      .hair-strand {
-        position: absolute;
-        top: 80px;
-        width: 20px;
-        height: 150px;
-        background: #333;
-        border-radius: 0 0 20px 20px;
-        z-index: 9;
-      }
-      .hair-strand.left { left: 0; transform: rotate(10deg); }
-      .hair-strand.right { right: 0; transform: rotate(-10deg); }
+        button {
+            padding: 20px;
+            font-size: 18px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            background-color: #2d2d2d;
+            color: #fff;
+            transition: background-color 0.2s, transform 0.1s;
+            font-weight: 500;
+        }
 
-      .face-details {
-        position: absolute;
-        top: 40px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 80px;
-        height: 60px;
-      }
+        button:hover {
+            background-color: #3d3d3d;
+        }
 
-      .eye {
-        position: absolute;
-        width: 15px;
-        height: 15px;
-        background: #000;
-        border-radius: 50%;
-        top: 10px;
-      }
-      .eye.left { left: 15px; }
-      .eye.right { right: 15px; }
-      
-      .eye::after {
-        content: '';
-        position: absolute;
-        top: 2px;
-        right: 2px;
-        width: 5px;
-        height: 5px;
-        background: #fff;
-        border-radius: 50%;
-      }
+        button:active {
+            transform: scale(0.95);
+        }
 
-      .mouth {
-        position: absolute;
-        bottom: 10px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 20px;
-        height: 10px;
-        border-bottom: 2px solid #d2691e;
-        border-radius: 0 0 20px 20px;
-      }
+        button.span-two {
+            grid-column: span 2;
+        }
 
-      /* Body & Torso */
-      .torso {
-        position: absolute;
-        top: 130px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 140px;
-        height: 180px;
-        background: #f4c2a8;
-        border-radius: 40px 40px 20px 20px;
-        box-shadow: inset -10px 0 20px rgba(0,0,0,0.1), 0 15px 30px rgba(0,0,0,0.3);
-        z-index: 5;
-        transform-style: preserve-3d;
-      }
+        .btn-operator {
+            background-color: #ff9500;
+            color: #fff;
+        }
 
-      /* Breasts (3D Spheres) */
-      .breasts-container {
-        position: absolute;
-        top: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 100%;
-        height: 100px;
-        display: flex;
-        justify-content: space-between;
-        padding: 0 20px;
-        box-sizing: border-box;
-      }
+        .btn-operator:hover {
+            background-color: #ffaa33;
+        }
 
-      .breast {
-        width: 60px;
-        height: 70px;
-        background: radial-gradient(circle at 30% 30%, #f4c2a8, #e0b090);
-        border-radius: 50% 50% 40% 40%;
-        position: relative;
-        box-shadow: inset -5px -5px 15px rgba(0,0,0,0.1), 5px 10px 20px rgba(0,0,0,0.2);
-        transition: all 0.5s ease;
-      }
+        .btn-clear, .btn-delete {
+            background-color: #a5a5a5;
+            color: #000;
+        }
 
-      /* Arms */
-      .arm {
-        position: absolute;
-        width: 25px;
-        height: 160px;
-        background: #f4c2a8;
-        border-radius: 15px;
-        z-index: 6;
-        transform-origin: top center;
-        transition: transform 1s ease-in-out;
-      }
+        .btn-clear:hover, .btn-delete:hover {
+            background-color: #c5c5c5;
+        }
 
-      .arm.left {
-        left: 35px;
-        top: 130px;
-        transform: rotate(15deg);
-      }
+        .btn-equals {
+            background-color: #007aff;
+        }
 
-      .arm.right {
-        right: 35px;
-        top: 130px;
-        transform: rotate(-15deg);
-      }
-
-      /* Hands */
-      .hand {
-        position: absolute;
-        bottom: -10px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 20px;
-        height: 30px;
-        background: #f4c2a8;
-        border-radius: 10px;
-        box-shadow: 0 5px 10px rgba(0,0,0,0.2);
-      }
-
-      /* Animation State: Arms Raising */
-      .scene-container.interacting .arm.left {
-        transform: rotate(-130deg) translateX(20px);
-      }
-
-      .scene-container.interacting .arm.right {
-        transform: rotate(130deg) translateX(-20px);
-      }
-
-      /* Animation State: Hands on Chest */
-      .scene-container.interacting .breast {
-        transform: scale(1.1);
-        box-shadow: inset -2px -2px 10px rgba(0,0,0,0.2), 0 0 15px rgba(255,255,255,0.2);
-      }
-
-      /* Shadow under character */
-      .shadow {
-        position: absolute;
-        bottom: 20px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 120px;
-        height: 20px;
-        background: rgba(0,0,0,0.4);
-        border-radius: 50%;
-        filter: blur(10px);
-        z-index: 1;
-      }
-
-      /* Skirt/Lower Body */
-      .skirt {
-        position: absolute;
-        top: 300px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 160px;
-        height: 150px;
-        background: linear-gradient(to bottom, #333, #111);
-        border-radius: 20px 20px 60px 60px;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.4);
-        z-index: 4;
-      }
-
-      /* Legs */
-      .legs-container {
-        position: absolute;
-        top: 420px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 100px;
-        display: flex;
-        gap: 15px;
-        z-index: 3;
-      }
-
-      .leg {
-        width: 30px;
-        height: 130px;
-        background: #f4c2a8;
-        border-radius: 10px;
-        box-shadow: inset -3px 0 10px rgba(0,0,0,0.1);
-      }
-
-      .shoe {
-        position: absolute;
-        bottom: 0;
-        width: 35px;
-        height: 15px;
-        background: #000;
-        border-radius: 10px 10px 5px 5px;
-      }
-
-      /* Interaction Button */
-      .control-panel {
-        position: absolute;
-        bottom: 30px;
-        left: 50%;
-        transform: translateX(-50%);
-        z-index: 100;
-      }
-
-      button {
-        padding: 10px 20px;
-        font-size: 16px;
-        background: #fff;
-        border: none;
-        border-radius: 20px;
-        cursor: pointer;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        transition: transform 0.2s;
-      }
-
-      button:hover {
-        transform: scale(1.05);
-      }
-
+        .btn-equals:hover {
+            background-color: #3395ff;
+        }
 </style>
   </head>
   <body>
 
-    <div class="scene-container" id="scene">
-      <div class="light-source"></div>
+    <div class="calculator">
+	  <div class="display">
+		<div class="previous-operand" id="previous-operand"></div>
+		<div class="current-operand" id="current-operand">0</div>
+	  </div>
+	  <div class="buttons">
+		<button class="btn-clear span-two" id="clear">AC</button>
+		<button class="btn-delete" id="delete">DEL</button>
+		<button class="btn-operator" id="divide">÷</button>
 
-      <div class="character">
-        <div class="hair"></div>
-        <div class="hair-strand left"></div>
-        <div class="hair-strand right"></div>
+		<button id="7">7</button>
+		<button id="8">8</button>
+		<button id="9">9</button>
+		<button class="btn-operator" id="multiply">×</button>
 
-        <div class="head">
-          <div class="face-details">
-            <div class="eye left"></div>
-            <div class="eye right"></div>
-          </div>
-          <div class="mouth"></div>
-        </div>
+		<button id="4">4</button>
+		<button id="5">5</button>
+		<button id="6">6</button>
+		<button class="btn-operator" id="subtract">−</button>
 
-        <div class="torso">
-          <div class="breasts-container">
-            <div class="breast left-breast"></div>
-            <div class="breast right-breast"></div>
-          </div>
-        </div>
+		<button id="1">1</button>
+		<button id="2">2</button>
+		<button id="3">3</button>
+		<button class="btn-operator" id="add">+</button>
 
-        <div class="arm left">
-          <div class="hand"></div>
-        </div>
-        <div class="arm right">
-          <div class="hand"></div>
-        </div>
-
-        <div class="skirt"></div>
-
-        <div class="legs-container">
-          <div class="leg">
-            <div class="shoe"></div>
-          </div>
-          <div class="leg">
-            <div class="shoe"></div>
-          </div>
-        </div>
-      </div>
-
-      <div class="shadow"></div>
-    </div>
-
-    <div class="control-panel">
-      <button onclick="toggleInteraction()">Press & Hold</button>
+		<button id="0">0</button>
+		<button id="decimal">.</button>
+		<button class="btn-equals span-two" id="equals">=</button>
+	  </div>
     </div>
 
 <script>
-      function toggleInteraction() {
-        const scene = document.getElementById('scene');
-        scene.classList.toggle('interacting');
-      }
+        class Calculator {
+            constructor(previousOperandTextElement, currentOperandTextElement) {
+                this.previousOperandTextElement = previousOperandTextElement;
+                this.currentOperandTextElement = currentOperandTextElement;
+                this.clear();
+            }
+
+            clear() {
+                this.currentOperand = '0';
+                this.previousOperand = '';
+                this.operation = undefined;
+                this.updateDisplay();
+            }
+
+            delete() {
+                if (this.currentOperand === '0') return;
+                this.currentOperand = this.currentOperand.toString().slice(0, -1);
+                if (this.currentOperand === '' || this.currentOperand === '-') {
+                    this.currentOperand = '0';
+                }
+                this.updateDisplay();
+            }
+
+            appendNumber(number) {
+                if (number === '.' && this.currentOperand.includes('.')) return;
+                if (this.currentOperand === '0' && number !== '.') {
+                    this.currentOperand = number.toString();
+                } else {
+                    this.currentOperand = `${this.currentOperand}${number}`;
+                }
+                this.updateDisplay();
+            }
+
+            chooseOperation(operation) {
+                if (this.currentOperand === '') return;
+                if (this.previousOperand !== '') {
+                    this.compute();
+                }
+                this.operation = operation;
+                this.previousOperand = this.currentOperand;
+                this.currentOperand = '';
+                this.updateDisplay();
+            }
+
+            compute() {
+                let computation;
+                const prev = parseFloat(this.previousOperand);
+                const current = parseFloat(this.currentOperand);
+                if (isNaN(prev) || isNaN(current)) return;
+                
+                switch (this.operation) {
+                    case '+':
+                        computation = prev + current;
+                        break;
+                    case '−':
+                        computation = prev - current;
+                        break;
+                    case '×':
+                        computation = prev * current;
+                        break;
+                    case '÷':
+                        if (current === 0) {
+                            alert("Cannot divide by zero");
+                            this.clear();
+                            return;
+                        }
+                        computation = prev / current;
+                        break;
+                    default:
+                        return;
+                }
+                
+                // Handle floating point precision issues roughly
+                this.currentOperand = Math.round(computation * 100000000) / 100000000;
+                this.operation = undefined;
+                this.previousOperand = '';
+                this.updateDisplay();
+            }
+
+            getDisplayNumber(number) {
+                const stringNumber = number.toString();
+                const integerDigits = parseFloat(stringNumber.split('.')[0]);
+                const decimalDigits = stringNumber.split('.')[1];
+                let integerDisplay;
+                if (isNaN(integerDigits)) {
+                    integerDisplay = '';
+                } else {
+                    integerDisplay = integerDigits.toLocaleString('en', { maximumFractionDigits: 0 });
+                }
+                if (decimalDigits != null) {
+                    return `${integerDisplay}.${decimalDigits}`;
+                } else {
+                    return integerDisplay;
+                }
+            }
+
+            updateDisplay() {
+                this.currentOperandTextElement.innerText = this.getDisplayNumber(this.currentOperand);
+                if (this.operation != null) {
+                    this.previousOperandTextElement.innerText = 
+                        `${this.getDisplayNumber(this.previousOperand)} ${this.operation}`;
+                } else {
+                    this.previousOperandTextElement.innerText = '';
+                }
+            }
+        }
+
+        const numberButtons = document.querySelectorAll('[id^="number"], [id^="0"], [id^="1"], [id^="2"], [id^="3"], [id^="4"], [id^="5"], [id^="6"], [id^="7"], [id^="8"], [id^="9"], [id="decimal"]');
+        const operationButtons = document.querySelectorAll('.btn-operator');
+        const equalsButton = document.getElementById('equals');
+        const deleteButton = document.getElementById('delete');
+        const allClearButton = document.getElementById('clear');
+        const previousOperandTextElement = document.getElementById('previous-operand');
+        const currentOperandTextElement = document.getElementById('current-operand');
+
+        const calculator = new Calculator(previousOperandTextElement, currentOperandTextElement);
+
+        numberButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                calculator.appendNumber(button.innerText);
+            });
+        });
+
+        operationButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                calculator.chooseOperation(button.innerText);
+            });
+        });
+
+        equalsButton.addEventListener('click', () => {
+            calculator.compute();
+        });
+
+        allClearButton.addEventListener('click', () => {
+            calculator.clear();
+        });
+
+        deleteButton.addEventListener('click', () => {
+            calculator.delete();
+        });
+
+        // Keyboard Support
+        document.addEventListener('keydown', (e) => {
+            if (e.key >= '0' && e.key <= '9') calculator.appendNumber(e.key);
+            if (e.key === '.') calculator.appendNumber('.');
+            if (e.key === '+') calculator.chooseOperation('+');
+            if (e.key === '-') calculator.chooseOperation('−');
+            if (e.key === '*') calculator.chooseOperation('×');
+            if (e.key === '/') {
+                e.preventDefault();
+                calculator.chooseOperation('÷');
+            }
+            if (e.key === 'Enter' || e.key === '=') calculator.compute();
+            if (e.key === 'Backspace') calculator.delete();
+            if (e.key === 'Escape') calculator.clear();
+        });
 </script>
 
   </body>
