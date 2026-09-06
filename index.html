@@ -1,164 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Steering Wheel Racer</title>
-<style>
+    <title>Hill Climb Racer 2D</title>
+    <style>
         body {
             margin: 0;
             padding: 0;
-            background-color: #111;
+            background-color: #87CEEB; /* Sky Blue */
             overflow: hidden;
             font-family: 'Arial', sans-serif;
             touch-action: none;
             user-select: none;
-            -webkit-user-select: none;
         }
 
-        #game-container {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-            background-color: #2c3e50; /* Sky color */
-            overflow: hidden;
-        }
-
-        /* The Road */
-        #road {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 80%; 
-            background-color: #34495e;
-            border-left: 4px solid white;
-            border-right: 4px solid white;
-            z-index: 1;
-        }
-
-        /* Lane Marker */
-        .lane-marker {
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 4px;
-            height: 40px;
-            background-color: white;
-        }
-
-        /* The Player Car */
-        #player {
-            position: absolute;
-            bottom: 180px; /* Above steering wheel */
-            left: 50%;
-            width: 40px;
-            height: 70px;
-            background-color: #e74c3c;
-            border-radius: 8px;
-            transform: translateX(-50%);
-            z-index: 10;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.6);
-        }
-        
-        /* Car Details */
-        #player::before {
-            content: '';
-            position: absolute;
-            top: 10px;
-            left: 2px;
-            width: 36px;
-            height: 15px;
-            background-color: #2c3e50;
-            border-radius: 2px;
-        }
-        #player::after {
-            content: '';
-            position: absolute;
-            bottom: 5px;
-            left: 2px;
-            width: 36px;
-            height: 10px;
-            background-color: #2c3e50;
-        }
-
-        /* Enemy Cars */
-        .enemy {
-            position: absolute;
-            width: 40px;
-            height: 70px;
-            background-color: #3498db;
-            border-radius: 8px;
-            z-index: 9;
-            box-sizing: border-box;
-            border: 1px solid #111;
-        }
-
-        /* Steering Wheel Area */
-        #steering-area {
-            position: absolute;
-            bottom: 0;
-            left: 0;
+        #gameCanvas {
+            display: block;
             width: 100%;
-            height: 150px;
-            z-index: 20;
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            height: 100%;
         }
 
-        #wheel {
-            width: 120px;
-            height: 120px;
-            background: radial-gradient(circle, #333 20%, #000 21%, #000 60%, #444 61%);
-            border-radius: 50%;
-            position: relative;
-            border: 4px solid #555;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
-            transform-origin: center center;
-            transition: transform 0.1s ease-out;
-        }
-
-        /* Spokes */
-        #wheel::before {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 80px;
-            height: 12px;
-            background: #444;
-            border-radius: 5px;
-        }
-        #wheel::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 12px;
-            height: 50px;
-            background: #444;
-            border-radius: 5px;
-        }
-        
-        /* Horn Button */
-        #horn-btn {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 40px;
-            height: 40px;
-            background: #888;
-            border-radius: 50%;
-            border: 2px solid #aaa;
-            z-index: 2;
-        }
-        
-        /* UI */
         #ui-layer {
             position: absolute;
             top: 0;
@@ -166,7 +28,6 @@
             width: 100%;
             height: 100%;
             pointer-events: none;
-            z-index: 20;
         }
 
         #score-board {
@@ -179,7 +40,6 @@
             text-shadow: 2px 2px 0 #000;
         }
 
-        /* Game Over Screen */
         #game-over-screen {
             display: none;
             position: absolute;
@@ -187,21 +47,20 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(0, 0, 0, 0.7);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             pointer-events: auto;
-            z-index: 30;
+            z-index: 10;
         }
 
         h1 {
-            color: #e74c3c;
+            color: #fff;
             font-size: 40px;
             margin: 0 0 20px 0;
-            text-transform: uppercase;
-            text-shadow: 0 0 10px black;
+            text-shadow: 2px 2px 0 #000;
         }
 
         button {
@@ -210,7 +69,7 @@
             border: none;
             padding: 15px 30px;
             font-size: 20px;
-            border-radius: 50px;
+            border-radius: 10px;
             cursor: pointer;
             box-shadow: 0 4px 0 #27ae60;
         }
@@ -219,302 +78,405 @@
             transform: scale(0.95);
             box-shadow: 0 2px 0 #27ae60;
         }
-        
-        #controls-hint {
+
+        /* Touch Controls */
+        #controls {
             position: absolute;
-            bottom: 160px;
+            bottom: 0;
             width: 100%;
-            text-align: center;
-            color: rgba(255,255,255,0.5);
-            font-size: 12px;
-            pointer-events: none;
+            height: 100px;
+            pointer-events: none; /* Let clicks pass to canvas if needed, but we use specific zones */
+            display: flex;
         }
 
-</style>
-  </head>
-  <body>
+        .control-zone {
+            flex: 1;
+            /* background: rgba(255,255,255,0.1); Debug */
+        }
+        
+        .icon {
+            position: absolute;
+            bottom: 20px;
+            width: 50px;
+            height: 50px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            pointer-events: auto; /* Re-enable clicks for buttons */
+        }
 
-    <div id="game-container">
-	  <div id="road">
-		<!-- Lane markers injected via JS -->
-	  </div>
+        #btn-brake { left: 20px; }
+        #btn-gas { right: 20px; }
 
-	  <div id="player"></div>
+    </style>
+</head>
+<body>
 
-	  <div id="ui-layer">
-		<div id="score-board">Score: 0</div>
-	  </div>
+    <canvas id="gameCanvas"></canvas>
 
-	  <div id="controls-hint">Use Wheel to Drive</div>
+    <div id="ui-layer">
+        <div id="score-board">Dist: 0m</div>
+        
+        <div id="controls">
+            <div class="control-zone" id="zone-brake">
+                <div id="btn-brake" class="icon">B</div>
+            </div>
+            <div class="control-zone" id="zone-gas">
+                <div id="btn-gas" class="icon">G</div>
+            </div>
+        </div>
 
-	  <!-- Steering Wheel Controls -->
-	  <div id="steering-area">
-		<div id="wheel">
-		  <div id="horn-btn"></div>
-		</div>
-	  </div>
-
-	  <div id="game-over-screen" style="display: none;">
-		<h1>CRASHED!</h1>
-		<div style="color:white; font-size: 20px; margin-bottom: 20px;">Score: <span id="final-score">0</span></div>
-		<button id="restart-btn">TRY AGAIN</button>
-	  </div>
+        <div id="game-over-screen" style="display: none;">
+            <h1>GAME OVER</h1>
+            <div style="color:white; font-size: 20px; margin-bottom: 20px;">Distance: <span id="final-score">0</span>m</div>
+            <button id="restart-btn">PLAY AGAIN</button>
+        </div>
     </div>
 
-<script>
-        // --- Configuration ---
-        const GAME_SPEED_START = 6;
-        const SPEED_INCREMENT = 0.005;
-        const SPAWN_RATE_START = 80; 
-        const MAX_STEER_ANGLE = 90; // Max degrees wheel can turn
-
-        // --- State ---
-        let isGameRunning = false;
-        let score = 0;
-        let gameSpeed = GAME_SPEED_START;
-        let frameCount = 0;
-        let spawnRate = SPAWN_RATE_START;
-        
-        // Steering State
-        let steerAngle = 0;
-        let steerVelocity = 0;
-        let isSteering = false;
-        let steerDirection = 0; // -1 left, 1 right
-
-        // Player State
-        let playerX = 50; // Percentage (50% is center)
-        let targetX = 50;
-        
-        // Elements
-        const road = document.getElementById('road');
-        const player = document.getElementById('player');
-        const wheel = document.getElementById('wheel');
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
         const scoreEl = document.getElementById('score-board');
         const gameOverScreen = document.getElementById('game-over-screen');
         const finalScoreEl = document.getElementById('final-score');
         const restartBtn = document.getElementById('restart-btn');
+        const btnGas = document.getElementById('btn-gas');
+        const btnBrake = document.getElementById('btn-brake');
 
-        // Arrays
-        let enemies = [];
-        let roadMarkers = [];
+        // Resize Canvas
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
 
-        // --- Initialization ---
-        function init() {
-            createRoadMarkers();
+        // Game State
+        let isRunning = false;
+        let frame = 0;
+        let score = 0;
+        
+        // Input State
+        let gasPressed = false;
+        let brakePressed = false;
+
+        // Physics Constants
+        const GRAVITY = 0.2;
+        const FRICTION = 0.98;
+        const ACCELERATION = 0.15;
+        const BRAKE_FORCE = 0.1;
+        const MAX_SPEED = 12;
+
+        // Car Object
+        const car = {
+            x: 200,
+            y: 0,
+            vx: 0,
+            vy: 0,
+            width: 60,
+            height: 30,
+            radius: 15, // Wheel radius
+            angle: 0, // Tilt angle
+            wheelAngle: 0,
+            onGround: false,
             
-            // Steering Wheel Touch Logic
-            const wheelArea = document.getElementById('steering-area');
-            
-            wheelArea.addEventListener('touchstart', handleWheelStart, {passive: false});
-            wheelArea.addEventListener('touchmove', handleWheelMove, {passive: false});
-            wheelArea.addEventListener('touchend', handleWheelEnd, {passive: false});
+            update: function() {
+                // Apply Gravity
+                this.vy += GRAVITY;
 
-            // Mouse support for testing
-            wheelArea.addEventListener('mousedown', handleWheelStart);
-            window.addEventListener('mousemove', handleWheelMove);
-            window.addEventListener('mouseup', handleWheelEnd);
+                // Apply Speed
+                if (gasPressed) {
+                    this.vx += ACCELERATION;
+                }
+                if (brakePressed) {
+                    this.vx -= BRAKE_FORCE;
+                }
 
-            restartBtn.addEventListener('click', startGame);
+                // Cap Speed
+                if (this.vx > MAX_SPEED) this.vx = MAX_SPEED;
+                if (this.vx < -MAX_SPEED/2) this.vx = -MAX_SPEED/2;
+
+                // Friction
+                this.vx *= FRICTION;
+
+                // Move
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Wheel Rotation
+                this.wheelAngle += this.vx * 0.1;
+
+                // Calculate Ground Height at current X
+                const groundY = getTerrainY(this.x);
+                
+                // Collision: If car is below ground, push it up
+                // Car bottom is y + height/2 (roughly)
+                const carBottom = this.y + this.radius; 
+
+                if (carBottom > groundY) {
+                    this.y = groundY - this.radius;
+                    this.vy = 0;
+                    this.onGround = true;
+                    
+                    // Calculate slope angle for tilt
+                    const nextX = this.x + 10;
+                    const prevX = this.x - 10;
+                    const nextY = getTerrainY(nextX);
+                    const prevY = getTerrainY(prevX);
+                    const slope = Math.atan2(nextY - prevY, nextX - prevX);
+                    
+                    // Smoothly interpolate angle
+                    this.angle += (slope - this.angle) * 0.1;
+                    
+                } else {
+                    this.onGround = false;
+                    // If in air, return to 0 angle slowly? Or keep angle?
+                    // Let's keep angle for "Hill Climb" feel
+                }
+            },
+
+            draw: function() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+
+                // Draw Car Body
+                ctx.fillStyle = '#e74c3c';
+                ctx.fillRect(-30, -20, 60, 20); // Main body
+                
+                // Cabin
+                ctx.fillStyle = '#c0392b';
+                ctx.fillRect(-15, -35, 30, 15);
+
+                // Wheel Arches
+                ctx.fillStyle = '#333';
+                ctx.beginPath();
+                ctx.arc(-20, 5, 12, 0, Math.PI * 2);
+                ctx.arc(20, 5, 12, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.restore();
+
+                // Draw Wheels (Separately so they rotate independently of tilt)
+                this.drawWheel(this.x - 20, this.y + 5);
+                this.drawWheel(this.x + 20, this.y + 5);
+            },
+
+            drawWheel: function(x, y) {
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(this.wheelAngle);
+                
+                // Tire
+                ctx.beginPath();
+                ctx.arc(0, 0, 10, 0, Math.PI * 2);
+                ctx.fillStyle = '#222';
+                ctx.fill();
+                ctx.strokeStyle = '#555';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Spokes
+                ctx.strokeStyle = '#aaa';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(-8, 0); ctx.lineTo(8, 0);
+                ctx.moveTo(0, -8); ctx.lineTo(0, 8);
+                ctx.stroke();
+
+                ctx.restore();
+            }
+        };
+
+        // Terrain Generation
+        const terrainPoints = [];
+        const segmentWidth = 10;
+        let lastX = 0;
+        let lastY = 0;
+        let noiseOffset = 0;
+
+        function initTerrain() {
+            terrainPoints.length = 0;
+            lastX = -1000;
+            lastY = canvas.height / 2;
+            noiseOffset = Math.random() * 1000;
             
-            startGame();
+            // Generate enough terrain for the screen + buffer
+            for (let i = 0; i < 2000; i++) {
+                addTerrainPoint();
+            }
+        }
+
+        function addTerrainPoint() {
+            // Simple sine wave combination for hills
+            noiseOffset += 0.1;
+            const y = canvas.height / 2 + 
+                      Math.sin(noiseOffset) * 50 + 
+                      Math.sin(noiseOffset * 0.5) * 30;
+            
+            terrainPoints.push({ x: lastX + segmentWidth, y: y });
+            lastX += segmentWidth;
+        }
+
+        function getTerrainX(index) {
+            return terrainPoints[index].x;
+        }
+
+        function getTerrainY(x) {
+            // Find which segment X is in
+            const index = Math.floor(x / segmentWidth);
+            const nextIndex = index + 1;
+            
+            if (index < 0) return terrainPoints[0].y;
+            if (index >= terrainPoints.length - 1) return terrainPoints[terrainPoints.length - 1].y;
+
+            const p1 = terrainPoints[index];
+            const p2 = terrainPoints[nextIndex];
+            
+            // Linear interpolation
+            const t = (x - p1.x) / segmentWidth;
+            return p1.y + (p2.y - p1.y) * t;
+        }
+
+        function drawTerrain() {
+            // Find start and end index for current view
+            const startX = Math.max(0, Math.floor(car.x / segmentWidth) - 10);
+            const endX = Math.min(terrainPoints.length - 1, startX + canvas.width / segmentWidth + 20);
+
+            ctx.beginPath();
+            ctx.moveTo(terrainPoints[startX].x, terrainPoints[startX].y);
+
+            for (let i = startX + 1; i <= endX; i++) {
+                ctx.lineTo(terrainPoints[i].x, terrainPoints[i].y);
+            }
+
+            ctx.lineTo(terrainPoints[endX].x, canvas.height);
+            ctx.lineTo(terrainPoints[startX].x, canvas.height);
+            ctx.fillStyle = '#2ecc71'; // Grass
+            ctx.fill();
+            
+            // Dirt below
+            ctx.beginPath();
+            for (let i = startX; i <= endX; i++) {
+                ctx.lineTo(terrainPoints[i].x, terrainPoints[i].y);
+            }
+            ctx.strokeStyle = '#27ae60';
+            ctx.lineWidth = 5;
+            ctx.stroke();
+        }
+
+        function updateCamera() {
+            // Camera follows car, but keeps car at 1/3rd of screen
+            const targetCamX = car.x - canvas.width / 3;
+            // Smooth camera
+            // We don't store a camX, we just shift context in draw
+            
+            // Check if we need to generate more terrain
+            if (terrainPoints[terrainPoints.length-1].x < car.x + canvas.width) {
+                for(let i=0; i<50; i++) addTerrainPoint();
+            }
+            
+            // Remove old terrain to save memory
+            if (terrainPoints.length > 2000) {
+                terrainPoints.splice(0, 100);
+                // Update lastX to keep continuity
+                if(terrainPoints.length > 0) {
+                    lastX = terrainPoints[terrainPoints.length-1].x;
+                }
+            }
+        }
+
+        function drawBackground() {
+            // Simple clouds
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            const cloudX = (car.x * 0.5) % canvas.width;
+            ctx.fillRect(canvas.width - cloudX, 100, 100, 40);
+            ctx.fillRect(canvas.width - cloudX + 150, 80, 120, 50);
+        }
+
+        function loop() {
+            if (!isRunning) return;
+
+            // Clear
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Update Physics
+            car.update();
+            updateCamera();
+
+            // Draw
+            drawBackground();
+            
+            ctx.save();
+            // Camera Transform
+            const camX = -car.x + canvas.width / 3;
+            const camY = -canvas.height / 2; // Center vertically roughly
+            ctx.translate(camX, camY);
+
+            drawTerrain();
+            car.draw();
+
+            ctx.restore();
+
+            // Score
+            score = Math.floor(car.x / 10);
+            scoreEl.innerText = "Dist: " + score + "m";
+
+            // Game Over Check (Flip over)
+            if (Math.abs(car.angle) > 1.2) { // 90 degrees is 1.57
+                endGame();
+            }
+
+            requestAnimationFrame(loop);
         }
 
         function startGame() {
-            // Reset State
-            isGameRunning = true;
+            initTerrain();
+            car.x = 200;
+            car.y = 0;
+            car.vx = 0;
+            car.vy = 0;
+            car.angle = 0;
             score = 0;
-            gameSpeed = GAME_SPEED_START;
-            spawnRate = SPAWN_RATE_START;
-            frameCount = 0;
-            steerAngle = 0;
-            steerVelocity = 0;
-            playerX = 50;
-            targetX = 50;
-            
-            // Clear UI
-            enemies.forEach(e => e.element.remove());
-            enemies = [];
+            isRunning = true;
             gameOverScreen.style.display = 'none';
-            scoreEl.innerText = 'Score: 0';
-            
-            requestAnimationFrame(gameLoop);
+            loop();
         }
 
-        function handleWheelStart(e) {
-            isSteering = true;
-            const rect = document.getElementById('wheel').getBoundingClientRect();
-            const centerX = rect.left + rect.width / 2;
-            
-            // Get touch or mouse X
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            
-            // Determine direction
-            if (clientX < centerX) steerDirection = -1; // Left
-            else steerDirection = 1; // Right
-        }
-
-        function handleWheelMove(e) {
-            if (!isSteering || !isGameRunning) return;
-            
-            const rect = document.getElementById('wheel').getBoundingClientRect();
-            const centerX = rect.left + rect.width / 2;
-            
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            
-            // Calculate distance from center
-            let diff = clientX - centerX;
-            
-            // Clamp max angle
-            if (diff > 100) diff = 100;
-            if (diff < -100) diff = -100;
-            
-            // Map distance to angle
-            steerAngle = diff; 
-            
-            // Apply visual rotation
-            wheel.style.transform = `rotate(${steerAngle}deg)`;
-        }
-
-        function handleWheelEnd(e) {
-            isSteering = false;
-            // Smooth return to 0
-            wheel.style.transition = 'transform 0.5s ease-out';
-            wheel.style.transform = `rotate(0deg)`;
-        }
-
-        function createRoadMarkers() {
-            const markerCount = 10;
-            const height = 40;
-            const gap = (window.innerHeight / markerCount);
-
-            for(let i=0; i<markerCount; i++) {
-                let m = document.createElement('div');
-                m.className = 'lane-marker';
-                m.style.height = height + 'px';
-                m.style.top = (i * gap) + 'px';
-                road.appendChild(m);
-                roadMarkers.push({ element: m, y: i * gap });
-            }
-        }
-
-        function spawnEnemy() {
-            // Random Lane: 3 lanes
-            // Lanes: 25%, 50%, 75% of screen width
-            const xPositions = [25, 50, 75];
-            const x = xPositions[Math.floor(Math.random() * 3)];
-
-            const el = document.createElement('div');
-            el.className = 'enemy';
-            const r = Math.floor(Math.random() * 200);
-            const g = Math.floor(Math.random() * 100);
-            const b = Math.floor(Math.random() * 100);
-            el.style.backgroundColor = `rgb(${r},${g},${b})`;
-            
-            el.style.left = x + '%';
-            el.style.top = '-100px'; 
-            
-            road.appendChild(el);
-            
-            enemies.push({
-                element: el,
-                x: x,
-                y: -100
-            });
-        }
-
-        function updateRoad() {
-            roadMarkers.forEach(m => {
-                m.y += gameSpeed;
-                if (m.y > window.innerHeight) {
-                    m.y = -50;
-                }
-                m.element.style.top = m.y + 'px';
-            });
-        }
-
-        function updateEnemies() {
-            if (frameCount % Math.floor(spawnRate) === 0) {
-                spawnEnemy();
-            }
-
-            for (let i = enemies.length - 1; i >= 0; i--) {
-                let e = enemies[i];
-                e.y += gameSpeed * 1.5;
-                e.element.style.top = e.y + 'px';
-
-                // Improved Collision Detection
-                const playerRect = player.getBoundingClientRect();
-                const enemyRect = e.element.getBoundingClientRect();
-
-                // Shrink hitboxes slightly for fairness
-                const padding = 5; 
-
-                const hit = (
-                    playerRect.left + padding < enemyRect.right - padding &&
-                    playerRect.right - padding > enemyRect.left + padding &&
-                    playerRect.top + padding < enemyRect.bottom - padding &&
-                    playerRect.bottom - padding > enemyRect.top + padding
-                );
-
-                if (hit) {
-                    gameOver();
-                }
-
-                if (e.y > window.innerHeight + 100) {
-                    e.element.remove();
-                    enemies.splice(i, 1);
-                    score += 10;
-                    scoreEl.innerText = 'Score: ' + score;
-                    
-                    gameSpeed += 0.1;
-                    if(spawnRate > 40) spawnRate -= 1;
-                }
-            }
-        }
-
-        function renderPlayer() {
-            // Physics: Steer angle affects speed of X movement
-            if (isSteering) {
-                // Move towards the direction indicated by wheel
-                const speed = Math.abs(steerAngle) * 0.05; // Sensitivity
-                targetX += steerDirection * speed;
-                
-                // Clamp to road bounds (10% to 90%)
-                if (targetX < 15) targetX = 15;
-                if (targetX > 85) targetX = 85;
-            } else {
-                // Auto-center if not steering (optional, feels more like a game)
-                // targetX += (50 - targetX) * 0.01; 
-            }
-            
-            // Smooth interpolation
-            playerX += (targetX - playerX) * 0.2;
-            player.style.left = playerX + '%';
-            
-            // Tilt car based on steering
-            player.style.transform = `translateX(-50%) rotate(${-steerAngle * 0.2}deg)`;
-        }
-
-        function gameLoop() {
-            if (!isGameRunning) return;
-
-            frameCount++;
-            updateRoad();
-            updateEnemies();
-            renderPlayer();
-
-            requestAnimationFrame(gameLoop);
-        }
-
-        function gameOver() {
-            isGameRunning = false;
+        function endGame() {
+            isRunning = false;
             finalScoreEl.innerText = score;
             gameOverScreen.style.display = 'flex';
         }
 
-        // Start
-        init();
+        // Controls
+        function addTouch(elem, startEvent, endEvent) {
+            elem.addEventListener(startEvent, (e) => { e.preventDefault(); e.target.blur(); if(startEvent === 'touchstart') gasPressed = true; if(startEvent === 'touchstart') brakePressed = true; });
+            elem.addEventListener(endEvent, (e) => { e.preventDefault(); if(endEvent === 'touchend') gasPressed = false; if(endEvent === 'touchend') brakePressed = false; });
+        }
 
-</script>
-  </body>
+        // Gas
+        btnGas.addEventListener('touchstart', (e) => { e.preventDefault(); gasPressed = true; });
+        btnGas.addEventListener('touchend', (e) => { e.preventDefault(); gasPressed = false; });
+        btnGas.addEventListener('mousedown', () => gasPressed = true);
+        btnGas.addEventListener('mouseup', () => gasPressed = false);
+
+        // Brake
+        btnBrake.addEventListener('touchstart', (e) => { e.preventDefault(); brakePressed = true; });
+        btnBrake.addEventListener('touchend', (e) => { e.preventDefault(); brakePressed = false; });
+        btnBrake.addEventListener('mousedown', () => brakePressed = true);
+        btnBrake.addEventListener('mouseup', () => brakePressed = false);
+
+        restartBtn.addEventListener('click', startGame);
+
+        // Init
+        startGame();
+
+    </script>
+</body>
 </html>
