@@ -4,171 +4,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reverse Infinite Countdown</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
+    <title>Instagram Login</title>
     <style>
-        /* CSS is handled in the separate file as requested, but inline for preview */
         body {
-            margin: 0;
-            padding: 0;
-            background-color: #050505;
-            color: #00ffcc;
-            font-family: 'Orbitron', sans-serif;
+            background-color: #fafafa;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            overflow: hidden;
+            margin: 0;
         }
 
-        .container {
-            text-align: center;
-            background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
+        .login-container {
+            background-color: #fff;
+            border: 1px solid #dbdbdb;
             padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 0 50px rgba(0, 255, 204, 0.1);
-            border: 1px solid #333;
-            position: relative;
+            width: 350px;
+            text-align: center;
+            margin-bottom: 10px;
         }
 
-        .title {
-            font-family: 'Rajdhani', sans-serif;
-            font-size: 1.5rem;
-            letter-spacing: 5px;
-            color: #666;
-            margin-bottom: 30px;
+        .logo {
+            font-family: 'Grand Hotel', cursive; /* Fallback if Google Fonts isn't linked, but using system font for simplicity */
+            font-size: 36px;
+            margin-bottom: 20px;
+            font-weight: normal;
+            font-style: italic;
+        }
+
+        .input-group {
+            margin-bottom: 6px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 8px;
+            background: #fafafa;
+            border: 1px solid #dbdbdb;
+            border-radius: 3px;
+            font-size: 12px;
+            box-sizing: border-box;
+            outline: none;
+        }
+
+        input:focus {
+            border: 1px solid #a8a8a8;
+        }
+
+        .login-btn {
+            background-color: #0095f6;
+            border: none;
+            color: #fff;
+            padding: 7px 16px;
+            border-radius: 8px;
+            width: 100%;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+
+        .login-btn:disabled {
+            opacity: 0.7;
+            cursor: default;
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 18px 0;
+        }
+
+        .line {
+            flex-grow: 1;
+            height: 1px;
+            background-color: #dbdbdb;
+        }
+
+        .or-text {
+            margin: 0 16px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #8e8e8e;
             text-transform: uppercase;
         }
 
-        .timer-display {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            align-items: flex-end;
-        }
-
-        .time-unit {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .digit-box {
-            font-size: 4rem;
-            font-weight: 700;
-            color: #fff;
-            text-shadow: 0 0 20px #00ffcc, 0 0 10px #00ffcc;
-            min-width: 100px;
-            text-align: center;
-            background: #0a0a0a;
-            padding: 10px;
-            border-radius: 10px;
-            border: 1px solid #333;
-            box-shadow: inset 0 0 20px rgba(0, 255, 204, 0.1);
-        }
-
-        .label {
-            font-family: 'Rajdhani', sans-serif;
-            font-size: 1rem;
-            color: #888;
-            margin-top: 10px;
-            letter-spacing: 2px;
-        }
-
-        .separator {
-            font-size: 3rem;
-            color: #00ffcc;
-            animation: blink 1s infinite;
-            align-self: center;
+        .forgot {
+            display: block;
+            color: #00376b;
+            font-size: 12px;
+            text-decoration: none;
+            margin-top: 16px;
             margin-bottom: 20px;
         }
 
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.2; }
+        .signup-box {
+            background-color: #fff;
+            border: 1px solid #dbdbdb;
+            padding: 20px;
+            width: 350px;
+            text-align: center;
+            font-size: 14px;
         }
 
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            .digit-box {
-                font-size: 2rem;
-                min-width: 50px;
-            }
-            .separator {
-                font-size: 1.5rem;
-            }
-            .timer-display {
-                gap: 10px;
-            }
+        .signup-box a {
+            color: #0095f6;
+            text-decoration: none;
+            font-weight: 600;
         }
     </style>
+    <!-- Google Font for Logo -->
+    <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <div class="container">
-        <div class="title">Reverse Countdown</div>
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
+        <div class="login-container">
+            <div class="logo">Instagram</div>
+            <form>
+                <div class="input-group">
+                    <input type="text" placeholder="Phone number, username, or email" required>
+                </div>
+                <div class="input-group">
+                    <input type="password" placeholder="Password" required>
+                </div>
+                <button type="submit" class="login-btn">Log in</button>
+            </form>
+            <div class="divider">
+                <div class="line"></div>
+                <span class="or-text">or</span>
+                <div class="line"></div>
+            </div>
+            <a href="#" class="forgot">Forgot password?</a>
+        </div>
         
-        <div class="timer-display">
-            <!-- Days -->
-            <div class="time-unit">
-                <div class="digit-box" id="days">00</div>
-                <div class="label">DAYS</div>
-            </div>
-
-            <div class="separator">:</div>
-
-            <!-- Hours -->
-            <div class="time-unit">
-                <div class="digit-box" id="hours">00</div>
-                <div class="label">HOURS</div>
-            </div>
-
-            <div class="separator">:</div>
-
-            <!-- Minutes -->
-            <div class="time-unit">
-                <div class="digit-box" id="minutes">00</div>
-                <div class="label">MINUTES</div>
-            </div>
-
-            <div class="separator">:</div>
-
-            <!-- Seconds -->
-            <div class="time-unit">
-                <div class="digit-box" id="seconds">00</div>
-                <div class="label">SECONDS</div>
-            </div>
+        <div class="signup-box">
+            Don't have an account? <a href="#">Sign up</a>
         </div>
     </div>
 
-    <script>
-        // Start time: 1 Day (86400 seconds)
-        let totalSeconds = 86400; 
-
-        function updateTimer() {
-            // Calculate time units
-            const days = Math.floor(totalSeconds / 86400);
-            const hours = Math.floor((totalSeconds % 86400) / 3600);
-            const minutes = Math.floor((totalSeconds % 3600) / 60);
-            const seconds = totalSeconds % 60;
-
-            // Update DOM
-            document.getElementById('days').innerText = String(days).padStart(2, '0');
-            document.getElementById('hours').innerText = String(hours).padStart(2, '0');
-            document.getElementById('minutes').innerText = String(minutes).padStart(2, '0');
-            document.getElementById('seconds').innerText = String(seconds).padStart(2, '0');
-
-            // Decrement
-            if (totalSeconds > 0) {
-                totalSeconds--;
-            } else {
-                totalSeconds = 86400; // Reset for endless cycle
-            }
-        }
-
-        // Run every second
-        setInterval(updateTimer, 1000);
-        updateTimer(); // Initial call
-    </script>
 </body>
 </html>
