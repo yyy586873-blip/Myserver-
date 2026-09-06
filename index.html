@@ -1,15 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Hill Climb Adventure</title>
-<style>
+    <style>
         body {
             margin: 0;
             overflow: hidden;
             background-color: #87CEEB; /* Sky Blue */
             font-family: 'Arial', sans-serif;
+            touch-action: none; /* Prevents scrolling on mobile while playing */
         }
 
         canvas {
@@ -25,6 +26,7 @@
             font-weight: bold;
             text-shadow: 2px 2px 4px #000;
             pointer-events: none;
+            z-index: 10;
         }
 
         #game-over {
@@ -34,10 +36,12 @@
             transform: translate(-50%, -50%);
             text-align: center;
             display: none;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.85);
             padding: 40px;
             border-radius: 10px;
             color: white;
+            z-index: 20;
+            border: 2px solid #fff;
         }
 
         #game-over h1 {
@@ -60,23 +64,96 @@
         #game-over button:hover {
             background: #45a049;
         }
-</style>
-  </head>
-  <body>
+
+        /* Mobile Controls Styling */
+        .controls {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+            box-sizing: border-box;
+            z-index: 10;
+            pointer-events: none; /* Let clicks pass through empty areas */
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            pointer-events: auto;
+        }
+
+        .control-btn {
+            width: 80px;
+            height: 80px;
+            background: rgba(255, 255, 255, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            color: white;
+            user-select: none;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            transition: background 0.1s;
+        }
+
+        .control-btn:active, .control-btn.active {
+            background: rgba(255, 255, 255, 0.6);
+            transform: scale(0.95);
+        }
+
+        .brake {
+            background: rgba(255, 0, 0, 0.4);
+            border-color: rgba(255, 0, 0, 0.6);
+        }
+        
+        .brake:active, .brake.active {
+            background: rgba(255, 0, 0, 0.7);
+        }
+
+        /* Hide controls on large screens if desired, but keeping them visible for all is safer for testing */
+        @media (min-width: 1024px) {
+            .controls {
+                opacity: 0.6;
+            }
+        }
+    </style>
+</head>
+<body>
 
     <div id="ui-layer">
-	  Distance: <span id="distance">0</span> m
+        Distance: <span id="distance">0</span> m
     </div>
 
     <div id="game-over">
-	  <h1>CRASHED!</h1>
-	  <p>You flipped over.</p>
-	  <button onclick="resetGame()">Try Again</button>
+        <h1>CRASHED!</h1>
+        <p>You flipped over.</p>
+        <button onclick="resetGame()">Try Again</button>
+    </div>
+
+    <!-- Control Buttons -->
+    <div class="controls">
+        <div class="btn-group">
+            <!-- Brake / Reverse -->
+            <div class="control-btn brake" id="btn-brake">
+                <span>🛑</span>
+            </div>
+        </div>
+        <div class="btn-group">
+            <!-- Gas -->
+            <div class="control-btn" id="btn-gas">
+                <span>🚀</span>
+            </div>
+        </div>
     </div>
 
     <canvas id="gameCanvas"></canvas>
 
-<script>
+    <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const distanceEl = document.getElementById('distance');
@@ -90,29 +167,49 @@
         window.addEventListener('resize', resize);
         resize();
 
-        // Input handling
+        // Input State
         const keys = {
             right: false,
-            left: false
+            left: false,
+            brake: false
         };
 
+        // Keyboard Events
         window.addEventListener('keydown', (e) => {
             if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = true;
             if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = true;
+            if (e.code === 'Space') keys.brake = true;
         });
 
         window.addEventListener('keyup', (e) => {
             if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = false;
             if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = false;
+            if (e.code === 'Space') keys.brake = false;
         });
 
+        // Touch/Mouse Events for Buttons
+        const btnGas = document.getElementById('btn-gas');
+        const btnBrake = document.getElementById('btn-brake');
+
+        const addTouch = (elem, key) => {
+            elem.addEventListener('mousedown', (e) => { e.preventDefault(); keys[key] = true; elem.classList.add('active'); });
+            elem.addEventListener('mouseup', (e) => { e.preventDefault(); keys[key] = false; elem.classList.remove('active'); });
+            elem.addEventListener('mouseleave', (e) => { keys[key] = false; elem.classList.remove('active'); });
+            
+            elem.addEventListener('touchstart', (e) => { e.preventDefault(); keys[key] = true; elem.classList.add('active'); }, {passive: false});
+            elem.addEventListener('touchend', (e) => { e.preventDefault(); keys[key] = false; elem.classList.remove('active'); });
+            elem.addEventListener('touchcancel', (e) => { keys[key] = false; elem.classList.remove('active'); });
+        };
+
+        addTouch(btnGas, 'right');
+        addTouch(btnBrake, 'brake');
+
         // Game Constants
-        const GRAVITY = 0.2;
+        const GRAVITY = 0.25;
         const FRICTION = 0.98;
-        const ENGINE_POWER = 0.3;
-        const MAX_SPEED = 12;
-        const SUSPENSION_STIFFNESS = 0.15;
-        const SUSPENSION_DAMPING = 0.85;
+        const ENGINE_POWER = 0.4;
+        const BRAKE_POWER = 0.2;
+        const MAX_SPEED = 15;
         const TERRAIN_BLOCK_SIZE = 40;
 
         // Game State
@@ -129,21 +226,11 @@
             width: 60,
             height: 30,
             wheelRadius: 12,
-            wheelOffsetX: 25, // Distance from center to wheel
-            wheelYOffset: 15,  // Distance from center to wheel Y
+            wheelOffsetX: 25,
+            wheelYOffset: 15,
             angle: 0,
             angularVelocity: 0,
             onGround: false,
-            
-            // Physics state for suspension
-            rearSuspension: {
-                extension: 0,
-                velocity: 0
-            },
-            frontSuspension: {
-                extension: 0,
-                velocity: 0
-            },
 
             update: function() {
                 if (isGameOver) return;
@@ -159,46 +246,50 @@
                     if (keys.left) {
                         this.vx -= ENGINE_POWER;
                     }
+                    if (keys.brake) {
+                        this.vx *= 0.9; // Rapid deceleration
+                        this.angularVelocity *= 0.9; // Stabilize when braking
+                    }
                 }
 
                 // Cap Speed
                 if (this.vx > MAX_SPEED) this.vx = MAX_SPEED;
                 if (this.vx < -MAX_SPEED) this.vx = -MAX_SPEED;
 
-                // Friction
-                this.vx *= FRICTION;
+                // Friction (Air resistance/Ground friction)
+                this.vx *= 0.99; 
 
                 // Update Position
                 this.x += this.vx;
                 this.y += this.vy;
 
-                // Calculate Terrain Height at car's X positions
+                // Calculate Terrain Height
                 const rearWheelX = this.x - this.wheelOffsetX * Math.cos(this.angle);
                 const frontWheelX = this.x + this.wheelOffsetX * Math.cos(this.angle);
                 
                 const rearTerrainY = getTerrainHeight(rearWheelX);
                 const frontTerrainY = getTerrainHeight(frontWheelX);
 
-                // Determine if wheels are touching ground
                 const rearWheelBottom = this.y + this.wheelYOffset - this.wheelRadius;
                 const frontWheelBottom = this.y + this.wheelYOffset - this.wheelRadius;
 
-                // Simple collision resolution
                 let hitBack = false;
                 let hitFront = false;
 
-                // Check Rear Wheel
+                // Check Rear Wheel Collision
                 if (rearWheelBottom > rearTerrainY) {
                     hitBack = true;
-                    this.y -= (rearWheelBottom - rearTerrainY);
-                    this.vy *= 0.8; // Bounce dampening
+                    const penetration = rearWheelBottom - rearTerrainY;
+                    this.y -= penetration;
+                    this.vy *= 0.7; // Bounce
                 }
 
-                // Check Front Wheel
+                // Check Front Wheel Collision
                 if (frontWheelBottom > frontTerrainY) {
                     hitFront = true;
-                    this.y -= (frontWheelBottom - frontTerrainY);
-                    this.vy *= 0.8;
+                    const penetration = frontWheelBottom - frontTerrainY;
+                    this.y -= penetration;
+                    this.vy *= 0.7;
                 }
 
                 this.onGround = hitBack || hitFront;
@@ -206,51 +297,30 @@
                 // Calculate Target Angle based on terrain slope
                 let targetAngle = 0;
                 if (this.onGround) {
-                    // Calculate angle between rear and front wheel contact points
                     const dy = frontTerrainY - rearTerrainY;
                     const dx = frontWheelX - rearWheelX;
                     targetAngle = Math.atan2(dy, dx);
                 }
 
-                // Spring Physics for Rotation (Suspension)
-                // If the car body angle is different from the terrain angle, apply torque
+                // Spring Physics for Rotation
                 const angleDiff = targetAngle - this.angle;
-                this.angularVelocity += angleDiff * 0.1; // Spring constant
-                this.angularVelocity *= 0.85; // Damping
+                this.angularVelocity += angleDiff * 0.15;
+                this.angularVelocity *= 0.85;
                 this.angle += this.angularVelocity;
 
-                // Head Over Heels Detection (Game Over)
-                // If the car rotates too far (e.g., upside down)
-                if (Math.abs(this.angle) > Math.PI * 0.8) {
-                    // Check if the "roof" of the car hits the ground
-                    // Simple check: if angle is near PI and y is high enough relative to terrain
-                    // Or simpler: if angle > 100 degrees and we are moving
-                    if (Math.abs(this.angle) > Math.PI / 1.2) {
-                         // Check if the center of mass is below the wheels relative to the slope
-                         // Simplified: If angle is very high, crash.
-                         // Let's use a simpler heuristic: if angle > 90 deg and we have velocity
-                         // Or just check if the top of the car hits the ground
-                         
-                         // Get terrain height at center
-                         const centerTerrainY = getTerrainHeight(this.x);
-                         const carTopY = this.y - this.height / 2;
-                         
-                         if (carTopY > centerTerrainY - 10) {
-                             triggerGameOver();
-                         }
-                    }
+                // Game Over Logic (Head hitting ground)
+                // Check if the "roof" of the car hits the ground
+                const centerTerrainY = getTerrainHeight(this.x);
+                
+                // Calculate the position of the "roof" point relative to center
+                // Roof is at top center. Rotate the point (0, -height/2) by current angle
+                const roofX = this.x + (-this.height/2) * Math.sin(this.angle);
+                const roofY = this.y + (-this.height/2) * Math.cos(this.angle);
+
+                if (roofY > centerTerrainY) {
+                    triggerGameOver();
                 }
                 
-                // Also crash if stuck in ground for too long (simplified)
-                if (hitBack && hitFront && Math.abs(this.angle) > 1) {
-                     // Check if top hits ground
-                     const centerTerrainY = getTerrainHeight(this.x);
-                     const carTopY = this.y - this.height / 2;
-                     if (carTopY > centerTerrainY - 5) {
-                         triggerGameOver();
-                     }
-                }
-
                 // Update Distance
                 if (this.x > distanceTraveled) {
                     distanceTraveled = this.x;
@@ -264,37 +334,32 @@
                 ctx.rotate(this.angle);
 
                 // Draw Car Body
-                ctx.fillStyle = '#FF4444'; // Red Car
+                ctx.fillStyle = '#FF4444'; 
                 ctx.fillRect(-30, -15, 60, 30);
                 
                 // Draw Driver
-                ctx.fillStyle = '#FFFF00'; // Yellow Helmet
+                ctx.fillStyle = '#FFFF00';
                 ctx.beginPath();
                 ctx.arc(0, -5, 8, 0, Math.PI * 2);
                 ctx.fill();
                 
-                // Draw Car Frame/Chassis detail
+                // Outline
                 ctx.strokeStyle = '#333';
                 ctx.lineWidth = 2;
                 ctx.strokeRect(-30, -15, 60, 30);
 
                 ctx.restore();
 
-                // Draw Wheels (Independent rotation, but follow body angle for suspension visualization)
-                // Rear Wheel
+                // Draw Wheels
                 this.drawWheel(this.x - this.wheelOffsetX, this.y + this.wheelYOffset, this.angle);
-                // Front Wheel
                 this.drawWheel(this.x + this.wheelOffsetX, this.y + this.wheelYOffset, this.angle);
             },
 
             drawWheel: function(x, y, bodyAngle) {
                 ctx.save();
                 ctx.translate(x, y);
-                // Wheels rotate independently of the car body tilt, but stay attached to the chassis position
-                // For visual suspension, we don't rotate the wheel itself with the body, 
-                // we just draw it at the calculated position relative to the car center.
-                // However, to look good, let's add a little bounce based on terrain
-                ctx.rotate(Date.now() / 100); // Spin animation
+                // Spin wheel based on car speed
+                ctx.rotate(Date.now() / 50); 
                 
                 ctx.fillStyle = '#333';
                 ctx.beginPath();
@@ -323,17 +388,15 @@
 
         // Terrain Generation
         const terrainPoints = [];
-        const pointCount = 2000; // Generate enough points for a long track
+        const pointCount = 2000;
 
         function generateTerrain() {
             terrainPoints.length = 0;
             let y = canvas.height / 2;
             for (let i = 0; i < pointCount; i++) {
-                // Create hills
                 const frequency = 0.01 + (Math.random() * 0.005);
                 const amplitude = 50 + (Math.random() * 50);
                 
-                // Use sine waves for smooth hills
                 const noise = Math.sin(i * frequency) * amplitude + 
                               Math.sin(i * frequency * 2.5) * (amplitude / 2);
                 
@@ -343,7 +406,6 @@
         }
 
         function getTerrainHeight(x) {
-            // Find the segment
             const index = Math.floor(x / TERRAIN_BLOCK_SIZE);
             const nextIndex = index + 1;
             
@@ -353,40 +415,35 @@
             const p1 = terrainPoints[index];
             const p2 = terrainPoints[nextIndex];
 
-            // Lerp
             const t = (x - p1.x) / TERRAIN_BLOCK_SIZE;
             return p1.y + (p2.y - p1.y) * t;
         }
 
         function drawTerrain() {
-            ctx.fillStyle = '#4CAF50'; // Grass Green
-            ctx.strokeStyle = '#388E3C'; // Darker Green
+            ctx.fillStyle = '#4CAF50'; 
+            ctx.strokeStyle = '#388E3C'; 
             
             ctx.beginPath();
-            // Start from bottom left of screen to bottom right
             const startX = Math.floor(cameraX / TERRAIN_BLOCK_SIZE) * TERRAIN_BLOCK_SIZE;
             const endX = startX + canvas.width + TERRAIN_BLOCK_SIZE;
 
-            ctx.moveTo(cameraX, canvas.height); // Bottom left corner
+            ctx.moveTo(cameraX, canvas.height);
 
-            // Draw only visible terrain to save performance
             for (let i = 0; i < terrainPoints.length; i++) {
                 if (terrainPoints[i].x > startX && terrainPoints[i].x < endX) {
                     ctx.lineTo(terrainPoints[i].x, terrainPoints[i].y);
                 }
             }
 
-            ctx.lineTo(endX, canvas.height); // Bottom right corner
+            ctx.lineTo(endX, canvas.height);
             ctx.closePath();
             ctx.fill();
             
-            // Draw line on top
             ctx.lineWidth = 4;
             ctx.stroke();
         }
 
         function drawBackground() {
-            // Simple cloud effect
             ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
             for(let i=0; i<5; i++) {
                 let cloudX = (cameraX * 0.1 + i * 300) % (canvas.width + 200);
@@ -418,12 +475,10 @@
         }
 
         function updateCamera() {
-            // Camera follows car
             cameraX = car.x - canvas.width / 3;
         }
 
         function loop() {
-            // Clear Canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             updateCamera();
@@ -440,7 +495,7 @@
         generateTerrain();
         loop();
 
-</script>
+    </script>
 
-  </body>
+</body>
 </html>
