@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Hill Climb Racer 2D</title>
+    <title>Flat Racer 2D</title>
     <style>
         body {
             margin: 0;
@@ -12,7 +13,6 @@
             overflow: hidden;
             font-family: 'Arial', sans-serif;
             touch-action: none;
-            user-select: none;
         }
 
         #gameCanvas {
@@ -47,7 +47,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.8);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -64,41 +64,39 @@
         }
 
         button {
-            background: #2ecc71;
+            background: #ff3333;
             color: white;
             border: none;
             padding: 15px 30px;
             font-size: 20px;
             border-radius: 10px;
             cursor: pointer;
-            box-shadow: 0 4px 0 #27ae60;
+            box-shadow: 0 4px 0 #990000;
         }
 
         button:active {
             transform: scale(0.95);
-            box-shadow: 0 2px 0 #27ae60;
+            box-shadow: 0 2px 0 #990000;
         }
 
-        /* Touch Controls */
+        /* Controls */
         #controls {
             position: absolute;
             bottom: 0;
             width: 100%;
-            height: 100px;
-            pointer-events: none; /* Let clicks pass to canvas if needed, but we use specific zones */
-            display: flex;
+            height: 150px;
+            pointer-events: none;
         }
 
         .control-zone {
             flex: 1;
-            /* background: rgba(255,255,255,0.1); Debug */
         }
-        
+
         .icon {
             position: absolute;
             bottom: 20px;
-            width: 50px;
-            height: 50px;
+            width: 60px;
+            height: 60px;
             background: rgba(255,255,255,0.3);
             border-radius: 50%;
             display: flex;
@@ -107,11 +105,11 @@
             color: white;
             font-size: 24px;
             font-weight: bold;
-            pointer-events: auto; /* Re-enable clicks for buttons */
+            pointer-events: auto;
         }
 
-        #btn-brake { left: 20px; }
-        #btn-gas { right: 20px; }
+        #btn-brake { left: 20px; border: 2px solid white; }
+        #btn-gas { right: 20px; border: 2px solid white; }
 
     </style>
 </head>
@@ -120,18 +118,18 @@
     <canvas id="gameCanvas"></canvas>
 
     <div id="ui-layer">
-        <div id="score-board">Dist: 0m</div>
+        <div id="score-board">Speed: 0 km/h</div>
         
         <div id="controls">
-            <div class="control-zone" id="zone-brake">
-                <div id="btn-brake" class="icon">B</div>
+            <div class="control-zone">
+                <div id="btn-brake" class="icon">Brake</div>
             </div>
-            <div class="control-zone" id="zone-gas">
-                <div id="btn-gas" class="icon">G</div>
+            <div class="control-zone">
+                <div id="btn-gas" class="icon">Gas</div>
             </div>
         </div>
 
-        <div id="game-over-screen" style="display: none;">
+        <div id="game-over-screen">
             <h1>GAME OVER</h1>
             <div style="color:white; font-size: 20px; margin-bottom: 20px;">Distance: <span id="final-score">0</span>m</div>
             <button id="restart-btn">PLAY AGAIN</button>
@@ -148,7 +146,7 @@
         const btnGas = document.getElementById('btn-gas');
         const btnBrake = document.getElementById('btn-brake');
 
-        // Resize Canvas
+        // Resize
         function resize() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
@@ -158,113 +156,75 @@
 
         // Game State
         let isRunning = false;
-        let frame = 0;
-        let score = 0;
+        let distance = 0;
         
-        // Input State
+        // Input
         let gasPressed = false;
         let brakePressed = false;
 
-        // Physics Constants
-        const GRAVITY = 0.2;
-        const FRICTION = 0.98;
-        const ACCELERATION = 0.15;
+        // Physics
+        const ACCELERATION = 0.2;
         const BRAKE_FORCE = 0.1;
-        const MAX_SPEED = 12;
+        const FRICTION = 0.98;
+        const MAX_SPEED = 20;
+        const ROAD_Y = 0; // Will be set in init
 
-        // Car Object
+        // Car
         const car = {
-            x: 200,
+            x: 0, // World X
             y: 0,
-            vx: 0,
-            vy: 0,
-            width: 60,
-            height: 30,
-            radius: 15, // Wheel radius
-            angle: 0, // Tilt angle
+            speed: 0,
             wheelAngle: 0,
-            onGround: false,
+            width: 80,
+            height: 30,
+            wheelRadius: 12,
             
             update: function() {
-                // Apply Gravity
-                this.vy += GRAVITY;
-
-                // Apply Speed
                 if (gasPressed) {
-                    this.vx += ACCELERATION;
+                    this.speed += ACCELERATION;
                 }
                 if (brakePressed) {
-                    this.vx -= BRAKE_FORCE;
+                    this.speed -= BRAKE_FORCE;
                 }
-
-                // Cap Speed
-                if (this.vx > MAX_SPEED) this.vx = MAX_SPEED;
-                if (this.vx < -MAX_SPEED/2) this.vx = -MAX_SPEED/2;
 
                 // Friction
-                this.vx *= FRICTION;
+                this.speed *= FRICTION;
+
+                // Cap Speed
+                if (this.speed > MAX_SPEED) this.speed = MAX_SPEED;
+                if (this.speed < 0) this.speed = 0;
 
                 // Move
-                this.x += this.vx;
-                this.y += this.vy;
-
-                // Wheel Rotation
-                this.wheelAngle += this.vx * 0.1;
-
-                // Calculate Ground Height at current X
-                const groundY = getTerrainY(this.x);
+                this.x += this.speed;
                 
-                // Collision: If car is below ground, push it up
-                // Car bottom is y + height/2 (roughly)
-                const carBottom = this.y + this.radius; 
+                // Wheel Rotation
+                this.wheelAngle += this.speed * 0.15;
 
-                if (carBottom > groundY) {
-                    this.y = groundY - this.radius;
-                    this.vy = 0;
-                    this.onGround = true;
-                    
-                    // Calculate slope angle for tilt
-                    const nextX = this.x + 10;
-                    const prevX = this.x - 10;
-                    const nextY = getTerrainY(nextX);
-                    const prevY = getTerrainY(prevX);
-                    const slope = Math.atan2(nextY - prevY, nextX - prevX);
-                    
-                    // Smoothly interpolate angle
-                    this.angle += (slope - this.angle) * 0.1;
-                    
-                } else {
-                    this.onGround = false;
-                    // If in air, return to 0 angle slowly? Or keep angle?
-                    // Let's keep angle for "Hill Climb" feel
-                }
+                // Update Score
+                distance = Math.floor(this.x / 10);
+                scoreEl.innerText = "Dist: " + distance + "m | Speed: " + Math.floor(this.speed * 10) + " km/h";
             },
 
             draw: function() {
+                // Draw Car relative to camera
+                const screenX = canvas.width / 2 - this.x; 
+                
                 ctx.save();
-                ctx.translate(this.x, this.y);
-                ctx.rotate(this.angle);
+                ctx.translate(screenX, canvas.height * 0.6); // Fixed Y position on screen
 
-                // Draw Car Body
+                // Car Body
                 ctx.fillStyle = '#e74c3c';
-                ctx.fillRect(-30, -20, 60, 20); // Main body
+                ctx.fillRect(-40, -25, 80, 25);
                 
                 // Cabin
                 ctx.fillStyle = '#c0392b';
-                ctx.fillRect(-15, -35, 30, 15);
+                ctx.fillRect(-20, -45, 40, 20);
 
-                // Wheel Arches
-                ctx.fillStyle = '#333';
-                ctx.beginPath();
-                ctx.arc(-20, 5, 12, 0, Math.PI * 2);
-                ctx.arc(20, 5, 12, 0, Math.PI * 2);
-                ctx.fill();
+                // Wheels
+                this.drawWheel(-25, 5);
+                this.drawWheel(25, 5);
 
                 ctx.restore();
-
-                // Draw Wheels (Separately so they rotate independently of tilt)
-                this.drawWheel(this.x - 20, this.y + 5);
-                this.drawWheel(this.x + 20, this.y + 5);
             },
 
             drawWheel: function(x, y) {
@@ -274,175 +234,104 @@
                 
                 // Tire
                 ctx.beginPath();
-                ctx.arc(0, 0, 10, 0, Math.PI * 2);
-                ctx.fillStyle = '#222';
+                ctx.arc(0, 0, this.wheelRadius, 0, Math.PI * 2);
+                ctx.fillStyle = '#333';
                 ctx.fill();
-                ctx.strokeStyle = '#555';
-                ctx.lineWidth = 2;
-                ctx.stroke();
+                
+                // Rim
+                ctx.beginPath();
+                ctx.arc(0, 0, this.wheelRadius * 0.6, 0, Math.PI * 2);
+                ctx.fillStyle = '#888';
+                ctx.fill();
 
                 // Spokes
-                ctx.strokeStyle = '#aaa';
+                ctx.strokeStyle = '#555';
                 ctx.lineWidth = 2;
                 ctx.beginPath();
-                ctx.moveTo(-8, 0); ctx.lineTo(8, 0);
-                ctx.moveTo(0, -8); ctx.lineTo(0, 8);
+                ctx.moveTo(-this.wheelRadius, 0); ctx.lineTo(this.wheelRadius, 0);
+                ctx.moveTo(0, -this.wheelRadius); ctx.lineTo(0, this.wheelRadius);
                 ctx.stroke();
 
                 ctx.restore();
             }
         };
 
-        // Terrain Generation
-        const terrainPoints = [];
-        const segmentWidth = 10;
-        let lastX = 0;
-        let lastY = 0;
-        let noiseOffset = 0;
-
-        function initTerrain() {
-            terrainPoints.length = 0;
-            lastX = -1000;
-            lastY = canvas.height / 2;
-            noiseOffset = Math.random() * 1000;
-            
-            // Generate enough terrain for the screen + buffer
-            for (let i = 0; i < 2000; i++) {
-                addTerrainPoint();
-            }
-        }
-
-        function addTerrainPoint() {
-            // Simple sine wave combination for hills
-            noiseOffset += 0.1;
-            const y = canvas.height / 2 + 
-                      Math.sin(noiseOffset) * 50 + 
-                      Math.sin(noiseOffset * 0.5) * 30;
-            
-            terrainPoints.push({ x: lastX + segmentWidth, y: y });
-            lastX += segmentWidth;
-        }
-
-        function getTerrainX(index) {
-            return terrainPoints[index].x;
-        }
-
-        function getTerrainY(x) {
-            // Find which segment X is in
-            const index = Math.floor(x / segmentWidth);
-            const nextIndex = index + 1;
-            
-            if (index < 0) return terrainPoints[0].y;
-            if (index >= terrainPoints.length - 1) return terrainPoints[terrainPoints.length - 1].y;
-
-            const p1 = terrainPoints[index];
-            const p2 = terrainPoints[nextIndex];
-            
-            // Linear interpolation
-            const t = (x - p1.x) / segmentWidth;
-            return p1.y + (p2.y - p1.y) * t;
-        }
-
-        function drawTerrain() {
-            // Find start and end index for current view
-            const startX = Math.max(0, Math.floor(car.x / segmentWidth) - 10);
-            const endX = Math.min(terrainPoints.length - 1, startX + canvas.width / segmentWidth + 20);
-
-            ctx.beginPath();
-            ctx.moveTo(terrainPoints[startX].x, terrainPoints[startX].y);
-
-            for (let i = startX + 1; i <= endX; i++) {
-                ctx.lineTo(terrainPoints[i].x, terrainPoints[i].y);
-            }
-
-            ctx.lineTo(terrainPoints[endX].x, canvas.height);
-            ctx.lineTo(terrainPoints[startX].x, canvas.height);
-            ctx.fillStyle = '#2ecc71'; // Grass
-            ctx.fill();
-            
-            // Dirt below
-            ctx.beginPath();
-            for (let i = startX; i <= endX; i++) {
-                ctx.lineTo(terrainPoints[i].x, terrainPoints[i].y);
-            }
-            ctx.strokeStyle = '#27ae60';
-            ctx.lineWidth = 5;
-            ctx.stroke();
-        }
-
-        function updateCamera() {
-            // Camera follows car, but keeps car at 1/3rd of screen
-            const targetCamX = car.x - canvas.width / 3;
-            // Smooth camera
-            // We don't store a camX, we just shift context in draw
-            
-            // Check if we need to generate more terrain
-            if (terrainPoints[terrainPoints.length-1].x < car.x + canvas.width) {
-                for(let i=0; i<50; i++) addTerrainPoint();
-            }
-            
-            // Remove old terrain to save memory
-            if (terrainPoints.length > 2000) {
-                terrainPoints.splice(0, 100);
-                // Update lastX to keep continuity
-                if(terrainPoints.length > 0) {
-                    lastX = terrainPoints[terrainPoints.length-1].x;
-                }
-            }
-        }
+        // Background (Fixed)
+        let bgOffset = 0;
 
         function drawBackground() {
-            // Simple clouds
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-            const cloudX = (car.x * 0.5) % canvas.width;
-            ctx.fillRect(canvas.width - cloudX, 100, 100, 40);
-            ctx.fillRect(canvas.width - cloudX + 150, 80, 120, 50);
+            // Sky
+            ctx.fillStyle = '#87CEEB';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Sun (Fixed)
+            ctx.fillStyle = '#FFD700';
+            ctx.beginPath();
+            ctx.arc(canvas.width - 50, 50, 30, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Clouds (Slowly moving for effect, but mostly fixed relative to road)
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            const cloudX = (car.x * 0.1) % canvas.width; // Very slow parallax
+            ctx.fillRect(100 - cloudX, 80, 100, 40);
+            ctx.fillRect(300 - cloudX, 40, 120, 50);
+        }
+
+        function drawRoad() {
+            const roadY = canvas.height * 0.65;
+            
+            // Grass
+            ctx.fillStyle = '#2ecc71';
+            ctx.fillRect(0, roadY, canvas.width, canvas.height - roadY);
+
+            // Road Surface
+            ctx.fillStyle = '#555';
+            ctx.fillRect(0, roadY, canvas.width, 60);
+
+            // Road Edge Lines
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(0, roadY, canvas.width, 5);
+            ctx.fillRect(0, roadY + 55, canvas.width, 5);
+
+            // Moving Dashed Line
+            ctx.fillStyle = '#fff';
+            const dashWidth = 40;
+            const gapWidth = 40;
+            const totalDash = dashWidth + gapWidth;
+            
+            // Calculate offset based on car position to make road move
+            const offset = car.x % totalDash;
+
+            for (let i = -1; i < canvas.width / totalDash + 2; i++) {
+                ctx.fillRect(
+                    (i * totalDash) - offset + canvas.width / 2, 
+                    roadY + 25, 
+                    dashWidth, 
+                    10
+                );
+            }
         }
 
         function loop() {
             if (!isRunning) return;
 
-            // Clear
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Update Physics
+            // Update
             car.update();
-            updateCamera();
 
             // Draw
-            drawBackground();
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            ctx.save();
-            // Camera Transform
-            const camX = -car.x + canvas.width / 3;
-            const camY = -canvas.height / 2; // Center vertically roughly
-            ctx.translate(camX, camY);
-
-            drawTerrain();
+            drawBackground();
+            drawRoad();
             car.draw();
-
-            ctx.restore();
-
-            // Score
-            score = Math.floor(car.x / 10);
-            scoreEl.innerText = "Dist: " + score + "m";
-
-            // Game Over Check (Flip over)
-            if (Math.abs(car.angle) > 1.2) { // 90 degrees is 1.57
-                endGame();
-            }
 
             requestAnimationFrame(loop);
         }
 
         function startGame() {
-            initTerrain();
-            car.x = 200;
-            car.y = 0;
-            car.vx = 0;
-            car.vy = 0;
-            car.angle = 0;
-            score = 0;
+            car.x = 0;
+            car.speed = 0;
+            distance = 0;
             isRunning = true;
             gameOverScreen.style.display = 'none';
             loop();
@@ -450,27 +339,20 @@
 
         function endGame() {
             isRunning = false;
-            finalScoreEl.innerText = score;
+            finalScoreEl.innerText = distance;
             gameOverScreen.style.display = 'flex';
         }
 
         // Controls
-        function addTouch(elem, startEvent, endEvent) {
-            elem.addEventListener(startEvent, (e) => { e.preventDefault(); e.target.blur(); if(startEvent === 'touchstart') gasPressed = true; if(startEvent === 'touchstart') brakePressed = true; });
-            elem.addEventListener(endEvent, (e) => { e.preventDefault(); if(endEvent === 'touchend') gasPressed = false; if(endEvent === 'touchend') brakePressed = false; });
+        function addTouch(elem, isGas) {
+            elem.addEventListener('touchstart', (e) => { e.preventDefault(); isGas ? gasPressed = true : brakePressed = true; });
+            elem.addEventListener('touchend', (e) => { e.preventDefault(); isGas ? gasPressed = false : brakePressed = false; });
+            elem.addEventListener('mousedown', () => isGas ? gasPressed = true : brakePressed = true);
+            elem.addEventListener('mouseup', () => isGas ? gasPressed = false : brakePressed = false);
         }
 
-        // Gas
-        btnGas.addEventListener('touchstart', (e) => { e.preventDefault(); gasPressed = true; });
-        btnGas.addEventListener('touchend', (e) => { e.preventDefault(); gasPressed = false; });
-        btnGas.addEventListener('mousedown', () => gasPressed = true);
-        btnGas.addEventListener('mouseup', () => gasPressed = false);
-
-        // Brake
-        btnBrake.addEventListener('touchstart', (e) => { e.preventDefault(); brakePressed = true; });
-        btnBrake.addEventListener('touchend', (e) => { e.preventDefault(); brakePressed = false; });
-        btnBrake.addEventListener('mousedown', () => brakePressed = true);
-        btnBrake.addEventListener('mouseup', () => brakePressed = false);
+        addTouch(btnGas, true);
+        addTouch(btnBrake, false);
 
         restartBtn.addEventListener('click', startGame);
 
@@ -480,3 +362,4 @@
     </script>
 </body>
 </html>
+
