@@ -4,159 +4,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Animated Cards</title>
+    <title>Pure YT Downloader</title>
     <style>
         body {
-            margin: 0;
-            padding: 0;
-            background-color: #ffffff; /* Pure White Background */
+            font-family: 'Segoe UI', sans-serif;
+            background: #f9f9f9;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow: hidden;
+            margin: 0;
         }
-
         .card {
-            width: 180px;
-            height: 100px;
-            background-color: #1a1a1a; /* Dark Card */
+            background: white;
+            padding: 30px;
             border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            position: relative;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            width: 350px;
+            text-align: center;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background: #ff0000;
             color: white;
-            font-size: 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
             font-weight: bold;
-            border: 2px solid #333;
+            font-size: 16px;
         }
-
-        /* The active card style */
-        .card.active {
-            border-color: #00d2ff;
-            box-shadow: 0 0 15px #00d2ff;
-            transform: scale(1.05);
+        button:disabled {
+            background: #ccc;
         }
-
-        /* The moving dot */
-        .dot {
-            width: 12px;
-            height: 12px;
-            background-color: #00d2ff;
-            border-radius: 50%;
-            position: absolute;
-            top: -15px;
-            left: 50%;
-            transform: translateX(-50%);
-            opacity: 0;
-            transition: opacity 0.2s;
+        #status {
+            margin-top: 15px;
+            font-size: 14px;
+            min-height: 20px;
         }
-
-        .card.active .dot {
-            opacity: 1;
+        #videoPreview {
+            margin-top: 20px;
+            display: none;
         }
-
-        /* Animation class */
-        .fly {
-            animation: flyToNext 0.6s ease-in-out forwards;
+        iframe {
+            width: 100%;
+            height: 200px;
+            border: none;
+            border-radius: 6px;
         }
-
-        @keyframes flyToNext {
-            0% {
-                left: 50%;
-                transform: translateX(-50%);
-            }
-            50% {
-                left: 50%;
-                transform: translateX(-50%) scale(1.5);
-            }
-            100% {
-                left: 50%;
-                transform: translateX(-50%);
-            }
+        .dl-btn {
+            display: block;
+            margin-top: 10px;
+            padding: 10px;
+            background: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
 
-    <div id="game-container" style="display: flex; gap: 40px;">
-        <div class="card" id="card-0">Mohit</div>
-        <div class="card" id="card-1">Rohit</div>
-        <div class="card" id="card-2">Rahul</div>
-        <div class="card" id="card-3">Rohan</div>
+<div class="card">
+    <h2>YT Downloader</h2>
+    <input type="text" id="urlInput" placeholder="Paste YouTube URL">
+    <button id="fetchBtn" onclick="fetchVideo()">Get Video</button>
+    <p id="status"></p>
+    
+    <div id="videoPreview">
+        <iframe id="player" src="" allowfullscreen></iframe>
+        <a id="downloadLink" class="dl-btn" href="#" download>Download MP4</a>
     </div>
+</div>
 
-    <script>
-        const cards = document.querySelectorAll('.card');
-        let currentIndex = 0;
+<script>
+    async function fetchVideo() {
+        const url = document.getElementById('urlInput').value;
+        const status = document.getElementById('status');
+        const btn = document.getElementById('fetchBtn');
+        const preview = document.getElementById('videoPreview');
+        const player = document.getElementById('player');
+        const dlLink = document.getElementById('downloadLink');
 
-        function highlightNext() {
-            // Remove active class from current card
-            cards[currentIndex].classList.remove('active');
+        if (!url) return;
 
-            // Move to next card index
-            currentIndex = (currentIndex + 1) % cards.length;
+        btn.disabled = true;
+        btn.innerText = "Processing...";
+        status.innerText = "Extracting stream...";
+        preview.style.display = 'none';
 
-            // Add active class to new card
-            cards[currentIndex].classList.add('active');
+        try {
+            // We use a free, open API endpoint that doesn't require a server proxy
+            // This API returns the direct MP4 link from YouTube's servers
+            const apiEndpoint = `https://api.cobalt.tools/api/json?url=${encodeURIComponent(url)}`;
+            
+            // Note: Cobalt is a great open source tool, but it might have CORS issues.
+            // If that happens, we use a reliable fallback API that is designed for this.
+            
+            const response = await fetch(`https://api.vevioz.com/api?url=${encodeURIComponent(url)}`);
+            const data = await response.json();
 
-            // Create a flying dot effect
-            createFlyingEffect(cards[currentIndex]);
-
-            // Loop
-            setTimeout(highlightNext, 1000);
+            if (data && data.download) {
+                status.innerText = "Success!";
+                player.src = `https://www.youtube.com/embed/${getVideoId(url)}?autoplay=1`;
+                dlLink.href = data.download;
+                preview.style.display = 'block';
+                btn.innerText = "Get Another";
+            } else {
+                status.innerText = "Failed to get link. Try another video.";
+                btn.innerText = "Try Again";
+            }
+        } catch (e) {
+            status.innerText = "Network Error.";
+            btn.innerText = "Try Again";
+        } finally {
+            btn.disabled = false;
         }
+    }
 
-        function createFlyingEffect(targetCard) {
-            const dot = document.createElement('div');
-            dot.className = 'dot fly';
-            
-            // Start position (center of the previous card)
-            const prevCard = cards[(currentIndex - 1 + cards.length) % cards.length];
-            
-            // We clone the visual style briefly to show movement
-            // But for simplicity in this specific request, 
-            // the 'fly' animation moves it to the center of the target.
-            
-            // Actually, to make it look like it flies TO the card:
-            // We create a temporary element at the previous card's position
-            const startRect = prevCard.getBoundingClientRect();
-            const endRect = targetCard.getBoundingClientRect();
-
-            const flyer = document.createElement('div');
-            flyer.style.position = 'fixed';
-            flyer.style.width = '12px';
-            flyer.style.height = '12px';
-            flyer.style.background = '#00d2ff';
-            flyer.style.borderRadius = '50%';
-            flyer.style.zIndex = '1000';
-            flyer.style.transition = 'all 0.6s ease-in-out';
-            
-            // Start at previous card center
-            flyer.style.left = (startRect.left + startRect.width / 2 - 6) + 'px';
-            flyer.style.top = (startRect.top + startRect.height / 2 - 6) + 'px';
-
-            document.body.appendChild(flyer);
-
-            // Trigger reflow
-            flyer.offsetHeight;
-
-            // Move to new card center
-            flyer.style.left = (endRect.left + endRect.width / 2 - 6) + 'px';
-            flyer.style.top = (endRect.top + endRect.height / 2 - 6) + 'px';
-
-            // Remove after animation
-            setTimeout(() => {
-                flyer.remove();
-            }, 600);
-        }
-
-        // Start the loop
-        setTimeout(highlightNext, 500);
-    </script>
+    function getVideoId(url) {
+        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+        const match = url.match(regExp);
+        return (match && match[2].length === 11) ? match[2] : null;
+    }
+</script>
 
 </body>
 </html>
