@@ -3,15 +3,16 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <title>Mobile Web Minecraft</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Mobile Minecraft Pro</title>
     <style>
+        /* --- CSS Styles --- */
         body {
             margin: 0;
             overflow: hidden;
             background-color: #87CEEB;
             font-family: 'Courier New', Courier, monospace;
-            touch-action: none; /* Prevents browser scrolling/zooming */
+            touch-action: none; /* Critical for mobile games */
             user-select: none;
             -webkit-user-select: none;
         }
@@ -30,65 +31,87 @@
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 24px;
-            height: 24px;
+            width: 20px;
+            height: 20px;
             transform: translate(-50%, -50%);
             pointer-events: none;
+            z-index: 5;
         }
         
-        /* X Shape Crosshair */
+        /* White + Crosshair */
         #crosshair::before, #crosshair::after {
             content: '';
             position: absolute;
-            background: rgba(255, 255, 255, 0.9);
+            background: white;
+            box-shadow: 1px 1px 2px rgba(0,0,0,0.5);
         }
-        #crosshair::before {
-            top: 4px; left: 10px; width: 4px; height: 16px;
-        }
-        #crosshair::after {
-            top: 10px; left: 4px; width: 16px; height: 4px;
-        }
+        #crosshair::before { top: 8px; left: 8px; width: 4px; height: 12px; }
+        #crosshair::after { top: 8px; left: 8px; width: 12px; height: 4px; }
 
-        /* Controls Visuals */
-        .control-hint {
+        /* Controls Layout */
+        #controls-layer {
             position: absolute;
-            background: rgba(0,0,0,0.3);
-            color: white;
-            font-size: 12px;
-            padding: 5px;
-            border-radius: 4px;
-        }
-        #hint-move { bottom: 20%; left: 5%; }
-        #hint-look { top: 20%; right: 5%; }
-        #hint-jump { bottom: 20%; right: 5%; background: rgba(255,255,255,0.2); }
-
-        #instructions {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            height: 150px;
+            pointer-events: none;
             display: flex;
-            flex-direction: column;
+            justify-content: space-between;
+            padding: 0 20px;
+            box-sizing: border-box;
+        }
+
+        .control-zone {
+            pointer-events: auto;
+            position: relative;
+        }
+
+        /* Joystick Visual */
+        #joystick-base {
+            width: 100px;
+            height: 100px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            position: relative;
+        }
+
+        #joystick-knob {
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+        }
+
+        /* Action Buttons */
+        .action-btn {
+            width: 60px;
+            height: 60px;
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid white;
+            border-radius: 50%;
+            display: flex;
             justify-content: center;
             align-items: center;
             color: white;
-            text-align: center;
-            z-index: 20;
-            pointer-events: auto;
-        }
-        #instructions h1 { margin-bottom: 10px; text-shadow: 2px 2px 0 #000; }
-        #instructions p { font-size: 14px; line-height: 1.5; max-width: 80%; }
-        #start-btn {
-            margin-top: 20px;
-            padding: 15px 40px;
-            background: #555;
-            color: white;
-            border: 2px solid #fff;
-            font-size: 20px;
+            font-size: 24px;
             font-weight: bold;
-            border-radius: 8px;
+            margin-left: 10px;
+            user-select: none;
         }
+        .action-btn:active { background: rgba(255, 255, 255, 0.5); transform: scale(0.95); }
 
-        /* Inventory Bar */
+        #btn-jump { position: absolute; top: -20px; right: 0; width: 50px; height: 50px; font-size: 18px; }
+        #btn-break { position: absolute; bottom: -20px; left: 0; background: rgba(200, 50, 50, 0.4); }
+        #btn-place { position: absolute; bottom: -20px; right: 0; background: rgba(50, 200, 50, 0.4); }
+
+        /* Hotbar */
         #hotbar {
             position: absolute;
             bottom: 10px;
@@ -100,6 +123,7 @@
             padding: 5px;
             border-radius: 8px;
             pointer-events: auto;
+            z-index: 20;
         }
         .slot {
             width: 40px; height: 40px;
@@ -108,88 +132,105 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 24px;
+            font-size: 20px;
             cursor: pointer;
+            background: #888;
         }
-        .active { border-color: yellow; box-shadow: 0 0 10px yellow; transform: scale(1.1); }
+        .active { border-color: yellow; box-shadow: 0 0 10px yellow; transform: scale(1.1); background: #aaa;}
 
-        /* Jump Button */
-        #jump-btn {
+        /* Start Screen */
+        #start-screen {
             position: absolute;
-            bottom: 20px;
-            left: 20px;
-            width: 60px;
-            height: 60px;
-            background: rgba(255, 255, 255, 0.2);
-            border: 2px solid white;
-            border-radius: 50%;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             color: white;
-            font-weight: bold;
-            pointer-events: auto;
-            user-select: none;
+            z-index: 100;
         }
-        #jump-btn:active { background: rgba(255, 255, 255, 0.5); }
-
-        /* Stats */
-        #stats {
-            position: absolute;
-            top: 10px;
-            left: 10px;
+        #start-btn {
+            margin-top: 20px;
+            padding: 15px 40px;
+            background: #4CAF50;
             color: white;
+            border: none;
+            font-size: 20px;
+            border-radius: 8px;
+        }
+        h1 { text-shadow: 2px 2px 0 #000; margin-bottom: 5px; }
+        p { font-size: 14px; color: #ccc; text-align: center; max-width: 300px; }
+
+        #fps-counter {
+            position: absolute;
+            top: 10px; left: 10px;
+            color: #fff;
             font-size: 12px;
-            text-shadow: 1px 1px 0 black;
+            pointer-events: none;
         }
     </style>
 </head>
 <body>
 
-    <!-- UI Overlay -->
+    <!-- UI Elements -->
     <div id="ui-layer">
+        <div id="fps-counter">FPS: 60</div>
         <div id="crosshair"></div>
-        <div id="stats">FPS: <span id="fps">0</span></div>
         
-        <div id="hint-move">MOVE</div>
-        <div id="hint-look">LOOK</div>
-        
-        <div id="jump-btn">JUMP</div>
-
         <div id="hotbar">
             <div class="slot active" onclick="setBlockType(1)" style="background:#567d46">🌿</div>
             <div class="slot" onclick="setBlockType(2)" style="background:#594028">🟫</div>
             <div class="slot" onclick="setBlockType(3)" style="background:#555555">🪨</div>
             <div class="slot" onclick="setBlockType(4)" style="background:#8B4513">🪵</div>
-            <div class="slot" onclick="setBlockType(5)" style="background:#228B22">🍃</div>
+        </div>
+
+        <!-- Bottom Action Buttons -->
+        <div style="position:absolute; bottom: 80px; width: 100%; display:flex; justify-content:center;">
+            <div id="btn-jump" class="action-btn">⬆️</div>
+        </div>
+
+        <div id="controls-layer">
+            <!-- Left: Joystick -->
+            <div class="control-zone" id="zone-move">
+                <div id="joystick-base">
+                    <div id="joystick-knob"></div>
+                </div>
+            </div>
+
+            <!-- Right: Action Buttons -->
+            <div class="control-zone" id="zone-action" style="display:flex; align-items:flex-end;">
+                <div style="position: relative; width: 140px; height: 60px;">
+                    <div id="btn-break" class="action-btn" style="position:absolute; bottom:0; left:0;">❌</div>
+                    <div id="btn-place" class="action-btn" style="position:absolute; bottom:0; right:0;">➕</div>
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- Start Screen -->
-    <div id="instructions">
-        <h1>Web Minecraft Mobile</h1>
+    <div id="start-screen">
+        <h1>MC Mobile</h1>
         <p>
-            <b>Left Half:</b> Move (Drag)<br>
-            <b>Right Half:</b> Look (Swipe)<br>
-            <b>Tap Center:</b> Break Block<br>
-            <b>Long Press Block:</b> Place Block<br>
-            <b>Jump Button:</b> Jump
+            👈 <b>Left:</b> Move<br>
+            👉 <b>Right:</b> Swipe to Look<br>
+            <b>Buttons:</b> Break / Place / Jump
         </p>
-        <button id="start-btn">TAP TO START</button>
+        <button id="start-btn">PLAY</button>
     </div>
 
-    <!-- Three.js Library -->
+    <!-- Three.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
-        // --- Setup Scene ---
+        // --- 1. Setup Scene ---
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x87CEEB);
-        scene.fog = new THREE.Fog(0x87CEEB, 15, 60);
+        scene.fog = new THREE.Fog(0x87CEEB, 10, 40);
 
         const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
-        const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: "high-performance" });
+        const renderer = new THREE.WebGLRenderer({ antialias: false });
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // Cap pixel ratio for performance
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         document.body.appendChild(renderer.domElement);
 
         // Lighting
@@ -199,25 +240,24 @@
         dirLight.position.set(50, 100, 50);
         scene.add(dirLight);
 
-        // --- Assets ---
+        // --- 2. Assets ---
         const materials = [];
         const blockTypes = {
             1: { color: '#567d46' }, // Grass
             2: { color: '#594028' }, // Dirt
             3: { color: '#555555' }, // Stone
-            4: { color: '#8B4513' }, // Wood
-            5: { color: '#228B22' }  // Leaves
+            4: { color: '#8B4513' }  // Wood
         };
 
-        for (let i = 1; i <= 5; i++) {
+        for (let i = 1; i <= 4; i++) {
             materials.push(new THREE.MeshLambertMaterial({ color: blockTypes[i].color }));
         }
 
         const geometry = new THREE.BoxGeometry(1, 1, 1);
-        const blocks = new Map(); // Map for fast lookup
-        const objects = []; // Array for raycasting
+        const blocks = new Map();
+        const objects = [];
 
-        // --- World Generation ---
+        // --- 3. World Gen ---
         function createBlock(x, y, z, type) {
             const mat = materials[type-1];
             const mesh = new THREE.Mesh(geometry, mat);
@@ -228,282 +268,183 @@
         }
 
         function generateWorld() {
-            const size = 12; // Small world for mobile FPS
+            const size = 10;
             for (let x = -size; x <= size; x++) {
                 for (let z = -size; z <= size; z++) {
-                    // Simple terrain
-                    let y = Math.floor(Math.sin(x/4) * 2 + Math.cos(z/4) * 2);
-                    
-                    // Base layers
+                    let y = Math.floor(Math.sin(x/3) * 2 + Math.cos(z/3) * 2);
                     createBlock(x, y-1, z, 3); // Stone
                     createBlock(x, y, z, 1);   // Grass
                     
-                    // Random Tree
-                    if (Math.random() < 0.03 && Math.abs(x) < size-2 && Math.abs(z) < size-2) {
+                    // Simple Tree
+                    if(Math.random() < 0.05) {
                         createBlock(x, y+1, z, 4);
                         createBlock(x, y+2, z, 4);
-                        createBlock(x, y+3, z, 5);
-                        createBlock(x+1, y+3, z, 5);
-                        createBlock(x-1, y+3, z, 5);
-                        createBlock(x, y+3, z+1, 5);
-                        createBlock(x, y+3, z-1, 5);
-                        createBlock(x, y+4, z, 5);
+                        createBlock(x, y+3, z, 1);
+                        createBlock(x+1, y+3, z, 1);
+                        createBlock(x-1, y+3, z, 1);
+                        createBlock(x, y+3, z+1, 1);
+                        createBlock(x, y+3, z-1, 1);
                     }
                 }
             }
         }
         generateWorld();
 
-        // --- Player & Physics ---
+        // --- 4. Controls & Physics ---
         const player = {
             height: 1.8,
-            radius: 0.3,
             velocity: new THREE.Vector3(),
             direction: new THREE.Vector3(),
-            canJump: false
+            canJump: false,
+            speed: 0.15
         };
-        
+
         camera.position.set(0, 15, 0);
-
-        // --- Mobile Controls Logic ---
-        let moveForward = false;
-        let moveBackward = false;
-        let moveLeft = false;
-        let moveRight = false;
         
-        // Touch Zones
-        const width = window.innerWidth;
-        const midX = width / 2;
-
-        // Touch State
+        // Joystick Logic
+        let moveX = 0;
+        let moveY = 0;
+        const joystickBase = document.getElementById('joystick-base');
+        const joystickKnob = document.getElementById('joystick-knob');
         let touchIdMove = null;
-        let touchIdLook = null;
-        let lastTouchX = 0;
-        let lastTouchY = 0;
-        let lastLongPressBlock = null;
+        let startX = 0, startY = 0;
 
-        // UI Elements
-        const instructions = document.getElementById('instructions');
-        const startBtn = document.getElementById('start-btn');
-        const jumpBtn = document.getElementById('jump-btn');
-        const fpsEl = document.getElementById('fps');
+        joystickBase.addEventListener('touchstart', (e) => {
+            if(touchIdMove !== null) return;
+            const touch = e.changedTouches[0];
+            touchIdMove = touch.identifier;
+            startX = touch.clientX;
+            startY = touch.clientY;
+        }, {passive: false});
 
-        // Start Game
-        startBtn.addEventListener('click', () => {
-            instructions.style.display = 'none';
-            // Try to lock pointer for smoother mouse-like feel if possible, 
-            // but for mobile touch, we handle raw touch events.
-        });
-
-        // Raycaster for interaction
-        const raycaster = new THREE.Raycaster();
-        const center = new THREE.Vector2(0, 0); // Center of screen
-
-        // Input Handling
-        document.addEventListener('touchstart', (e) => {
-            e.preventDefault();
+        joystickBase.addEventListener('touchmove', (e) => {
+            if (touchIdMove === null) return;
             for (let i = 0; i < e.changedTouches.length; i++) {
-                const t = e.changedTouches[i];
-                
-                // Check if touching UI (Hotbar/Jump)
-                if (t.target.id === 'jump-btn') return;
-                if (t.target.classList.contains('slot')) return;
-
-                if (t.clientX < midX) {
-                    // Move Zone
-                    touchIdMove = t.identifier;
-                    lastTouchX = t.clientX;
-                    lastTouchY = t.clientY;
-                } else {
-                    // Look Zone
-                    touchIdLook = t.identifier;
-                    lastTouchX = t.clientX;
-                    lastTouchY = t.clientY;
+                if (e.changedTouches[i].identifier === touchIdMove) {
+                    const t = e.changedTouches[i];
+                    let dx = t.clientX - startX;
+                    let dy = t.clientY - startY;
                     
-                    // Start Long Press Timer for Placement
-                    lastLongPressBlock = null;
+                    // Clamp knob
+                    const dist = Math.sqrt(dx*dx + dy*dy);
+                    const maxDist = 35;
+                    if (dist > maxDist) {
+                        const ratio = maxDist / dist;
+                        dx *= ratio;
+                        dy *= ratio;
+                    }
+                    
+                    joystickKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+                    
+                    // Map to movement
+                    moveX = dx / maxDist;
+                    moveY = dy / maxDist;
                 }
             }
-        }, { passive: false });
+        }, {passive: false});
+
+        const resetJoystick = (e) => {
+            for (let i = 0; i < e.changedTouches.length; i++) {
+                if (e.changedTouches[i].identifier === touchIdMove) {
+                    touchIdMove = null;
+                    joystickKnob.style.transform = `translate(-50%, -50%)`;
+                    moveX = 0;
+                    moveY = 0;
+                }
+            }
+        };
+        joystickBase.addEventListener('touchend', resetJoystick);
+        joystickBase.addEventListener('touchcancel', resetJoystick);
+
+        // Look Logic (Right Side)
+        let touchIdLook = null;
+        let prevTouchX = 0, prevTouchY = 0;
+        const lookZone = document.getElementById('zone-action');
+        // Also allow look on empty right space if not touching buttons (simplified)
+        
+        document.addEventListener('touchstart', (e) => {
+            for(let i=0; i<e.changedTouches.length; i++) {
+                const t = e.changedTouches[i];
+                // If not on UI buttons or Joystick
+                if (t.clientX > window.innerWidth/2 && touchIdLook === null && touchIdMove === null) {
+                     touchIdLook = t.identifier;
+                     prevTouchX = t.clientX;
+                     prevTouchY = t.clientY;
+                }
+            }
+        });
 
         document.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-            for (let i = 0; i < e.changedTouches.length; i++) {
+            for(let i=0; i<e.changedTouches.length; i++) {
                 const t = e.changedTouches[i];
-
-                if (t.identifier === touchIdMove) {
-                    const dx = t.clientX - lastTouchX;
-                    const dy = t.clientY - lastTouchY;
-                    
-                    // Sensitivity
-                    moveRight = dx > 10;
-                    moveLeft = dx < -10;
-                    moveForward = dy < -10;
-                    moveBackward = dy > 10;
-                    
-                    // Reset after a bit to stop auto-repeat if finger stays
-                    // Simple logic: just map delta to flags. 
-                    // For smooth movement, we'd accumulate delta, but simple flags work for basic feel.
-                }
-
                 if (t.identifier === touchIdLook) {
-                    const dx = t.clientX - lastTouchX;
-                    const dy = t.clientY - lastTouchY;
+                    const dx = t.clientX - prevTouchX;
+                    const dy = t.clientY - prevTouchY;
                     
                     euler.y -= dx * 0.005;
                     euler.x -= dy * 0.005;
                     euler.x = Math.max(-Math.PI/2, Math.min(Math.PI/2, euler.x));
                     camera.quaternion.setFromEuler(euler);
-                }
-
-                lastTouchX = t.clientX;
-                lastTouchY = t.clientY;
-            }
-        }, { passive: false });
-
-        const handleTouchEnd = (e) => {
-            for (let i = 0; i < e.changedTouches.length; i++) {
-                const t = e.changedTouches[i];
-                if (t.identifier === touchIdMove) touchIdMove = null;
-                if (t.identifier === touchIdLook) {
-                    touchIdLook = null;
-                    // If it was a tap (didn't move much), check break/place
+                    
+                    prevTouchX = t.clientX;
+                    prevTouchY = t.clientY;
                 }
             }
-            // Reset movement flags if all fingers up
-            if (touchIdMove === null) {
-                moveForward = moveBackward = moveLeft = moveRight = false;
-            }
-        };
-        document.addEventListener('touchend', handleTouchEnd);
-        document.addEventListener('touchcancel', handleTouchEnd);
+        });
 
-        // Jump Logic
-        jumpBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            if (player.canJump) {
-                player.velocity.y = 0.25; // Jump force
-                player.canJump = false;
+        document.addEventListener('touchend', (e) => {
+            for(let i=0; i<e.changedTouches.length; i++) {
+                if (e.changedTouches[i].identifier === touchIdLook) touchIdLook = null;
             }
-        }, { passive: false });
+        });
 
-        // Break/Place Logic (Raycast)
-        function interact() {
+        // Interaction Buttons
+        const raycaster = new THREE.Raycaster();
+        const center = new THREE.Vector2(0, 0);
+        let selectedBlockType = 1;
+
+        function getIntersect() {
             raycaster.setFromCamera(center, camera);
             const intersects = raycaster.intersectObjects(objects);
+            if (intersects.length > 0 && intersects[0].distance < 4) {
+                return intersects[0];
+            }
+            return null;
+        }
 
-            if (intersects.length > 0) {
-                const intersect = intersects[0];
-                if (intersect.distance > 5) return; // Reach distance
+        document.getElementById('btn-break').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const hit = getIntersect();
+            if (hit) {
+                const obj = hit.object;
+                scene.remove(obj);
+                const idx = objects.indexOf(obj);
+                if (idx > -1) objects.splice(idx, 1);
+                blocks.delete(`${obj.position.x},${obj.position.y},${obj.position.z}`);
+            }
+        });
 
-                const point = intersect.point;
-                const normal = intersect.face.normal;
+        document.getElementById('btn-place').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const hit = getIntersect();
+            if (hit) {
+                const pos = hit.point.clone().add(hit.face.normal.clone().multiplyScalar(0.5)).floor().addScalar(0.5);
+                // Prevent placing inside player
+                if (camera.position.distanceTo(pos) < 1.5) return;
                 
-                // Check if we tapped or held
-                // Simplified: If we just touched right side, we check if it was a tap or hold
-                // But here we handle it in a separate timeout logic or just tap-to-break, hold-to-place
-                
-                // For this implementation: 
-                // Tap = Break
-                // Hold = Place (detected in touchstart/move logic or via a separate timer)
-            }
-        }
-        
-        // Helper to handle Tap vs Hold
-        let tapStart = 0;
-        let isHolding = false;
-        
-        document.addEventListener('touchstart', (e) => {
-             // Find the touch that triggered this if it's not move/look UI
-             // Actually, let's use the touchend to determine if it was a tap
-        });
-
-        document.addEventListener('touchend', (e) => {
-            // Find touches that were on the Right Side (Look zone)
-            for (let i=0; i<e.changedTouches.length; i++) {
-                const t = e.changedTouches[i];
-                if (t.clientX > midX && t.identifier === touchIdLook) {
-                    // It was a release of look touch. 
-                    // If we didn't move much, it's a tap/click.
-                    // We already handle look movement in touchmove.
-                    // If we are here, it means finger lifted.
-                    
-                    // To differentiate Tap vs Hold, we check duration.
-                    // But simpler: 
-                    // 1. If we just clicked (no move), Break.
-                    // 2. If we held (finger down for > 300ms), Place at last hovered block.
-                    
-                    // For this simple version: 
-                    // Click center of screen = Break
-                    // Click on a block = Break
-                    // If we want Place, we can use the "Long Press" logic.
-                    
-                    // Let's do: Tap = Break. To Place, user needs to select block type and... 
-                    // actually, let's add a specific "Place" logic on long press.
-                }
+                createBlock(pos.x, pos.y, pos.z, selectedBlockType);
             }
         });
 
-        // Better Interaction: 
-        // Tap anywhere = Break nearest block.
-        // Long Press on a block = Place block against it.
-        
-        let longPressTimer = null;
-        let lastIntersectedBlock = null;
-
-        document.addEventListener('touchstart', (e) => {
-            for(let i=0; i<e.changedTouches.length; i++) {
-                const t = e.changedTouches[i];
-                if(t.clientX > midX) { // Look zone touch
-                    // Raycast to find what we are touching
-                    raycaster.setFromCamera(center, camera);
-                    const intersects = raycaster.intersectObjects(objects);
-                    if(intersects.length > 0 && intersects[0].distance < 5) {
-                        lastIntersectedBlock = intersects[0];
-                        longPressTimer = setTimeout(() => {
-                            placeBlock(lastIntersectedBlock);
-                        }, 300); // 300ms hold to place
-                    }
-                }
+        document.getElementById('btn-jump').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (player.canJump) {
+                player.velocity.y = 0.25;
+                player.canJump = false;
             }
         });
 
-        document.addEventListener('touchend', (e) => {
-            // If timer is still running, it was a Tap, so Break
-            if(longPressTimer) {
-                clearTimeout(longPressTimer);
-                breakBlock(lastIntersectedBlock);
-                longPressTimer = null;
-            }
-        });
-
-        function breakBlock(intersect) {
-            if(!intersect) return;
-            const obj = intersect.object;
-            scene.remove(obj);
-            const idx = objects.indexOf(obj);
-            if (idx > -1) objects.splice(idx, 1);
-            blocks.delete(`${obj.position.x},${obj.position.y},${obj.position.z}`);
-        }
-
-        function placeBlock(intersect) {
-            if(!intersect) return;
-            const pos = intersect.point.clone().add(intersect.face.normal.clone().multiplyScalar(0.5)).floor().addScalar(0.5);
-            
-            // Don't place inside player
-            const pPos = camera.position;
-            if (Math.abs(pPos.x - pos.x) < 0.8 && Math.abs(pPos.z - pos.z) < 0.8 && 
-                (pPos.y - 1.5 < pos.y && pPos.y > pos.y)) return;
-
-            createBlock(pos.x, pos.y, pos.z, selectedBlockType);
-        }
-
-        // --- Game Loop ---
-        const euler = new THREE.Euler(0, 0, 0, 'YXZ');
-        let selectedBlockType = 1;
-        let lastTime = performance.now();
-        let frameCount = 0;
-
+        // UI Logic
         function setBlockType(id) {
             selectedBlockType = id;
             document.querySelectorAll('.slot').forEach((el, i) => {
@@ -511,52 +452,68 @@
             });
         }
 
-        function update() {
-            const dt = (performance.now() - lastTime) / 1000;
+        // --- 5. Game Loop ---
+        const euler = new THREE.Euler(0, 0, 0, 'YXZ');
+        let lastTime = performance.now();
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const dt = Math.min((performance.now() - lastTime) / 1000, 0.1);
             lastTime = performance.now();
-            fpsEl.innerText = Math.round(1/dt);
+            document.getElementById('fps-counter').innerText = Math.round(1/dt);
 
-            // Movement
+            // Physics
             player.velocity.x -= player.velocity.x * 10.0 * dt;
             player.velocity.z -= player.velocity.z * 10.0 * dt;
             player.velocity.y -= 9.8 * 2.0 * dt; // Gravity
 
-            player.direction.z = Number(moveForward) - Number(moveBackward);
-            player.direction.x = Number(moveRight) - Number(moveLeft);
-            player.direction.normalize();
+            // Apply Movement
+            // Forward/Back is relative to camera look direction
+            const forward = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+            forward.y = 0; forward.normalize();
+            const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+            right.y = 0; right.normalize();
 
-            if (moveForward || moveBackward) player.velocity.z -= player.direction.z * 100.0 * dt;
-            if (moveLeft || moveRight) player.velocity.x -= player.direction.x * 100.0 * dt;
+            const moveDir = new THREE.Vector3();
+            moveDir.add(forward.multiplyScalar(-moveY));
+            moveDir.add(right.multiplyScalar(moveX));
+            
+            player.velocity.x += moveDir.x * 50.0 * dt;
+            player.velocity.z += moveDir.z * 50.0 * dt;
 
-            // Collision Detection (Simplified)
-            // Check Y
-            const feetY = camera.position.y - player.height;
-            const blockX = Math.round(camera.position.x);
-            const blockY = Math.round(feetY);
-            const blockZ = Math.round(camera.position.z);
+            // Collision (Simple Grid Check)
+            camera.position.x += player.velocity.x * dt;
+            camera.position.z += player.velocity.z * dt;
+            camera.position.y += player.velocity.y * dt;
 
-            if (blocks.has(`${blockX},${blockY},${blockZ}`)) {
-                player.velocity.y = Math.max(0, player.velocity.y);
+            // Floor Collision
+ const p = Math.round(camera.position.x);            const p =.round.position
+            pY = Math.round.position -            
+ ifpX},${pYpZ
+               .y Math.max, player.velocity.y);
                 player.canJump = true;
-                camera.position.y = blockY + 1 + player.height/2;
+                camera.position.y = pY + 1 + player.height;
             } else {
-                camera.position.y += player.velocity.y * dt;
-                if(camera.position.y < -10) camera.position.y = 20; // Respawn
+                player.canJump = false;
+                if (camera.position.y < -20) camera.position.y = 30; // Respawn
             }
 
             renderer.render(scene, camera);
-            requestAnimationFrame(update);
         }
 
-        // Init
-        update();
-        
-        // Resize
+        // Start Game
+        document.getElementById('start-btn').addEventListener('click', () => {
+            document.getElementById('start-screen').style.display = 'none';
+            animate();
+        });
+
         window.addEventListener('resize', () => {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
+
     </script>
 </body>
 </html>
