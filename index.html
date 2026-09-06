@@ -1,176 +1,161 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instagram</title>
-    <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&display=swap" rel="stylesheet">
+    <title>Animated Cards</title>
     <style>
         body {
-            background-color: #121212; /* Dark Mode Background */
-            color: #ffffff;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff; /* Pure White Background */
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            margin: 0;
-            flex-direction: column;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
         }
 
-        .container {
-            background-color: #000000;
-            border: 1px solid #363636;
-            padding: 40px;
-            width: 320px;
-            text-align: center;
+        .card {
+            width: 180px;
+            height: 100px;
+            background-color: #1a1a1a; /* Dark Card */
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
             display: flex;
-            flex-direction: column;
-            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            border: 2px solid #333;
         }
 
-        .logo {
-            font-family: 'Grand Hotel', cursive;
-            font-size: 36px;
-            margin-bottom: 20px;
-            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-top: 10px;
+        /* The active card style */
+        .card.active {
+            border-color: #00d2ff;
+            box-shadow: 0 0 15px #00d2ff;
+            transform: scale(1.05);
         }
 
-        .input-field {
-            width: 100%;
-            padding: 12px 10px;
-            background: #121212;
-            border: 1px solid #363636;
-            border-radius: 3px;
-            color: #fafafa;
-            font-size: 12px;
-            box-sizing: border-box;
-            outline: none;
+        /* The moving dot */
+        .dot {
+            width: 12px;
+            height: 12px;
+            background-color: #00d2ff;
+            border-radius: 50%;
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.2s;
         }
 
-        .input-field:focus {
-            border: 1px solid #a8a8a8;
-        }
-
-        .login-btn {
-            background-color: #363636;
-            border: none;
-            color: #ffffff;
-            padding: 8px 16px;
-            border-radius: 8px;
-            width: 100%;
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-            margin-top: 10px;
-            opacity: 0.7;
-        }
-
-        .login-btn.active {
-            background-color: #4d4d4d;
+        .card.active .dot {
             opacity: 1;
         }
 
-        .forgot {
-            color: #c395e0; /* Instagram-ish purple link color */
-            font-size: 12px;
-            text-decoration: none;
-            margin-top: 10px;
-            display: block;
+        /* Animation class */
+        .fly {
+            animation: flyToNext 0.6s ease-in-out forwards;
         }
 
-        .divider {
-            height: 1px;
-            background-color: #363636;
-            margin: 10px 0;
-            width: 100%;
-        }
-
-        .signup-btn {
-            background-color: transparent;
-            border: 1px solid #363636;
-            color: #ffffff;
-            padding: 10px 16px;
-            border-radius: 8px;
-            width: 100%;
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-            margin-top: 10px;
-        }
-        
-        .meta-logo {
-            margin-top: 20px;
-            font-size: 14px;
-            color: #737373;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
+        @keyframes flyToNext {
+            0% {
+                left: 50%;
+                transform: translateX(-50%);
+            }
+            50% {
+                left: 50%;
+                transform: translateX(-50%) scale(1.5);
+            }
+            100% {
+                left: 50%;
+                transform: translateX(-50%);
+            }
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <div class="logo">Instagram</div>
-        
-        <form id="loginForm">
-            <input type="text" class="input-field" id="username" placeholder="Username, email or mobile number" required>
-            <input type="password" class="input-field" id="password" placeholder="Password" required>
-            
-            <button type="submit" class="login-btn" id="loginBtn">Log in</button>
-            
-            <a href="#" class="forgot">Forgot password?</a>
-        </form>
-        
-        <div class="divider"></div>
-        
-        <button class="signup-btn">Create new account</button>
-    </div>
-
-    <div class="meta-logo">
-        <span>&#8734;</span> Meta
+    <div id="game-container" style="display: flex; gap: 40px;">
+        <div class="card" id="card-0">Mohit</div>
+        <div class="card" id="card-1">Rohit</div>
+        <div class="card" id="card-2">Rahul</div>
+        <div class="card" id="card-3">Rohan</div>
     </div>
 
     <script>
-        const form = document.getElementById('loginForm');
-        const usernameInput = document.getElementById('username');
-        const passwordInput = document.getElementById('password');
-        const loginBtn = document.getElementById('loginBtn');
+        const cards = document.querySelectorAll('.card');
+        let currentIndex = 0;
 
-        // Enable button only if both fields are filled
-        function checkInputs() {
-            if (usernameInput.value.length > 0 && passwordInput.value.length > 0) {
-                loginBtn.classList.add('active');
-                loginBtn.style.backgroundColor = '#4d4d4d';
-            } else {
-                loginBtn.classList.remove('active');
-                loginBtn.style.backgroundColor = '#363636';
-            }
+        function highlightNext() {
+            // Remove active class from current card
+            cards[currentIndex].classList.remove('active');
+
+            // Move to next card index
+            currentIndex = (currentIndex + 1) % cards.length;
+
+            // Add active class to new card
+            cards[currentIndex].classList.add('active');
+
+            // Create a flying dot effect
+            createFlyingEffect(cards[currentIndex]);
+
+            // Loop
+            setTimeout(highlightNext, 1000);
         }
 
-        usernameInput.addEventListener('input', checkInputs);
-        passwordInput.addEventListener('input', checkInputs);
-
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
+        function createFlyingEffect(targetCard) {
+            const dot = document.createElement('div');
+            dot.className = 'dot fly';
             
-            const user = usernameInput.value;
-            const pass = passwordInput.value;
-
-            // Visual feedback
-            loginBtn.textContent = "Logging in...";
+            // Start position (center of the previous card)
+            const prevCard = cards[(currentIndex - 1 + cards.length) % cards.length];
             
+            // We clone the visual style briefly to show movement
+            // But for simplicity in this specific request, 
+            // the 'fly' animation moves it to the center of the target.
+            
+            // Actually, to make it look like it flies TO the card:
+            // We create a temporary element at the previous card's position
+            const startRect = prevCard.getBoundingClientRect();
+            const endRect = targetCard.getBoundingClientRect();
+
+            const flyer = document.createElement('div');
+            flyer.style.position = 'fixed';
+            flyer.style.width = '12px';
+            flyer.style.height = '12px';
+            flyer.style.background = '#00d2ff';
+            flyer.style.borderRadius = '50%';
+            flyer.style.zIndex = '1000';
+            flyer.style.transition = 'all 0.6s ease-in-out';
+            
+            // Start at previous card center
+            flyer.style.left = (startRect.left + startRect.width / 2 - 6) + 'px';
+            flyer.style.top = (startRect.top + startRect.height / 2 - 6) + 'px';
+
+            document.body.appendChild(flyer);
+
+            // Trigger reflow
+            flyer.offsetHeight;
+
+            // Move to new card center
+            flyer.style.left = (endRect.left + endRect.width / 2 - 6) + 'px';
+            flyer.style.top = (endRect.top + endRect.height / 2 - 6) + 'px';
+
+            // Remove after animation
             setTimeout(() => {
-                // Redirect to the actual Instagram login page
-                // Note: This uses the real Instagram login URL
-                window.location.href = "https://www.instagram.com/accounts/login/";
-            }, 1000); // 1 second delay to simulate "checking"
-        });
+                flyer.remove();
+            }, 600);
+        }
+
+        // Start the loop
+        setTimeout(highlightNext, 500);
     </script>
 
 </body>
