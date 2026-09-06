@@ -8,9 +8,9 @@
         body {
             margin: 0;
             overflow: hidden;
-            background-color: #87CEEB; /* Sky Blue */
+            background-color: #87CEEB;
             font-family: 'Arial', sans-serif;
-            touch-action: none; /* Prevents scrolling on mobile while playing */
+            touch-action: none;
         }
 
         canvas {
@@ -60,12 +60,7 @@
             border-radius: 5px;
             margin-top: 20px;
         }
-        
-        #game-over button:hover {
-            background: #45a049;
-        }
 
-        /* Mobile Controls Styling */
         .controls {
             position: absolute;
             bottom: 20px;
@@ -75,7 +70,7 @@
             padding: 0 20px;
             box-sizing: border-box;
             z-index: 10;
-            pointer-events: none; /* Let clicks pass through empty areas */
+            pointer-events: none;
         }
 
         .btn-group {
@@ -110,12 +105,11 @@
             background: rgba(255, 0, 0, 0.4);
             border-color: rgba(255, 0, 0, 0.6);
         }
-        
+
         .brake:active, .brake.active {
             background: rgba(255, 0, 0, 0.7);
         }
 
-        /* Hide controls on large screens if desired, but keeping them visible for all is safer for testing */
         @media (min-width: 1024px) {
             .controls {
                 opacity: 0.6;
@@ -135,16 +129,13 @@
         <button onclick="resetGame()">Try Again</button>
     </div>
 
-    <!-- Control Buttons -->
     <div class="controls">
         <div class="btn-group">
-            <!-- Brake / Reverse -->
             <div class="control-btn brake" id="btn-brake">
                 <span>🛑</span>
             </div>
         </div>
         <div class="btn-group">
-            <!-- Gas -->
             <div class="control-btn" id="btn-gas">
                 <span>🚀</span>
             </div>
@@ -159,7 +150,6 @@
         const distanceEl = document.getElementById('distance');
         const gameOverScreen = document.getElementById('game-over');
 
-        // Resize handling
         function resize() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
@@ -167,14 +157,12 @@
         window.addEventListener('resize', resize);
         resize();
 
-        // Input State
         const keys = {
             right: false,
             left: false,
             brake: false
         };
 
-        // Keyboard Events
         window.addEventListener('keydown', (e) => {
             if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = true;
             if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = true;
@@ -187,7 +175,6 @@
             if (e.code === 'Space') keys.brake = false;
         });
 
-        // Touch/Mouse Events for Buttons
         const btnGas = document.getElementById('btn-gas');
         const btnBrake = document.getElementById('btn-brake');
 
@@ -195,7 +182,6 @@
             elem.addEventListener('mousedown', (e) => { e.preventDefault(); keys[key] = true; elem.classList.add('active'); });
             elem.addEventListener('mouseup', (e) => { e.preventDefault(); keys[key] = false; elem.classList.remove('active'); });
             elem.addEventListener('mouseleave', (e) => { keys[key] = false; elem.classList.remove('active'); });
-            
             elem.addEventListener('touchstart', (e) => { e.preventDefault(); keys[key] = true; elem.classList.add('active'); }, {passive: false});
             elem.addEventListener('touchend', (e) => { e.preventDefault(); keys[key] = false; elem.classList.remove('active'); });
             elem.addEventListener('touchcancel', (e) => { keys[key] = false; elem.classList.remove('active'); });
@@ -204,20 +190,15 @@
         addTouch(btnGas, 'right');
         addTouch(btnBrake, 'brake');
 
-        // Game Constants
         const GRAVITY = 0.25;
-        const FRICTION = 0.98;
         const ENGINE_POWER = 0.4;
-        const BRAKE_POWER = 0.2;
         const MAX_SPEED = 15;
         const TERRAIN_BLOCK_SIZE = 40;
 
-        // Game State
         let cameraX = 0;
         let distanceTraveled = 0;
         let isGameOver = false;
 
-        // Car Object
         const car = {
             x: 200,
             y: 300,
@@ -235,10 +216,8 @@
             update: function() {
                 if (isGameOver) return;
 
-                // Apply Gravity
                 this.vy += GRAVITY;
 
-                // Input Handling
                 if (this.onGround) {
                     if (keys.right) {
                         this.vx += ENGINE_POWER;
@@ -247,23 +226,19 @@
                         this.vx -= ENGINE_POWER;
                     }
                     if (keys.brake) {
-                        this.vx *= 0.9; // Rapid deceleration
-                        this.angularVelocity *= 0.9; // Stabilize when braking
+                        this.vx *= 0.9;
+                        this.angularVelocity *= 0.9;
                     }
                 }
 
-                // Cap Speed
                 if (this.vx > MAX_SPEED) this.vx = MAX_SPEED;
                 if (this.vx < -MAX_SPEED) this.vx = -MAX_SPEED;
 
-                // Friction (Air resistance/Ground friction)
-                this.vx *= 0.99; 
+                this.vx *= 0.99;
 
-                // Update Position
                 this.x += this.vx;
                 this.y += this.vy;
 
-                // Calculate Terrain Height
                 const rearWheelX = this.x - this.wheelOffsetX * Math.cos(this.angle);
                 const frontWheelX = this.x + this.wheelOffsetX * Math.cos(this.angle);
                 
@@ -276,15 +251,13 @@
                 let hitBack = false;
                 let hitFront = false;
 
-                // Check Rear Wheel Collision
                 if (rearWheelBottom > rearTerrainY) {
                     hitBack = true;
                     const penetration = rearWheelBottom - rearTerrainY;
                     this.y -= penetration;
-                    this.vy *= 0.7; // Bounce
+                    this.vy *= 0.7;
                 }
 
-                // Check Front Wheel Collision
                 if (frontWheelBottom > frontTerrainY) {
                     hitFront = true;
                     const penetration = frontWheelBottom - frontTerrainY;
@@ -294,7 +267,6 @@
 
                 this.onGround = hitBack || hitFront;
 
-                // Calculate Target Angle based on terrain slope
                 let targetAngle = 0;
                 if (this.onGround) {
                     const dy = frontTerrainY - rearTerrainY;
@@ -302,18 +274,12 @@
                     targetAngle = Math.atan2(dy, dx);
                 }
 
-                // Spring Physics for Rotation
                 const angleDiff = targetAngle - this.angle;
                 this.angularVelocity += angleDiff * 0.15;
                 this.angularVelocity *= 0.85;
                 this.angle += this.angularVelocity;
 
-                // Game Over Logic (Head hitting ground)
-                // Check if the "roof" of the car hits the ground
                 const centerTerrainY = getTerrainHeight(this.x);
-                
-                // Calculate the position of the "roof" point relative to center
-                // Roof is at top center. Rotate the point (0, -height/2) by current angle
                 const roofX = this.x + (-this.height/2) * Math.sin(this.angle);
                 const roofY = this.y + (-this.height/2) * Math.cos(this.angle);
 
@@ -321,7 +287,6 @@
                     triggerGameOver();
                 }
                 
-                // Update Distance
                 if (this.x > distanceTraveled) {
                     distanceTraveled = this.x;
                 }
@@ -333,24 +298,20 @@
                 ctx.translate(this.x, this.y);
                 ctx.rotate(this.angle);
 
-                // Draw Car Body
                 ctx.fillStyle = '#FF4444'; 
                 ctx.fillRect(-30, -15, 60, 30);
                 
-                // Draw Driver
                 ctx.fillStyle = '#FFFF00';
                 ctx.beginPath();
                 ctx.arc(0, -5, 8, 0, Math.PI * 2);
                 ctx.fill();
                 
-                // Outline
                 ctx.strokeStyle = '#333';
                 ctx.lineWidth = 2;
                 ctx.strokeRect(-30, -15, 60, 30);
 
                 ctx.restore();
 
-                // Draw Wheels
                 this.drawWheel(this.x - this.wheelOffsetX, this.y + this.wheelYOffset, this.angle);
                 this.drawWheel(this.x + this.wheelOffsetX, this.y + this.wheelYOffset, this.angle);
             },
@@ -358,7 +319,6 @@
             drawWheel: function(x, y, bodyAngle) {
                 ctx.save();
                 ctx.translate(x, y);
-                // Spin wheel based on car speed
                 ctx.rotate(Date.now() / 50); 
                 
                 ctx.fillStyle = '#333';
@@ -366,13 +326,11 @@
                 ctx.arc(0, 0, this.wheelRadius, 0, Math.PI * 2);
                 ctx.fill();
                 
-                // Rim
                 ctx.fillStyle = '#888';
                 ctx.beginPath();
                 ctx.arc(0, 0, this.wheelRadius / 2, 0, Math.PI * 2);
                 ctx.fill();
                 
-                // Spokes
                 ctx.strokeStyle = '#555';
                 ctx.lineWidth = 2;
                 ctx.beginPath();
@@ -386,7 +344,6 @@
             }
         };
 
-        // Terrain Generation
         const terrainPoints = [];
         const pointCount = 2000;
 
@@ -475,7 +432,8 @@
         }
 
         function updateCamera() {
-            cameraX = car.x - canvas.width / 3;
+            // Vehicle hamesha center mein rahega
+            cameraX = car.x - canvas.width / 2;
         }
 
         function loop() {
@@ -491,7 +449,6 @@
             requestAnimationFrame(loop);
         }
 
-        // Init
         generateTerrain();
         loop();
 
