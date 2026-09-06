@@ -1,458 +1,272 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Hill Climb Adventure</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reverse Infinite Countdown</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@500;700&display=swap" rel="stylesheet">
     <style>
+        /* CSS is handled in the separate file as requested, but inline for preview */
         body {
             margin: 0;
-            overflow: hidden;
-            background-color: #87CEEB;
-            font-family: 'Arial', sans-serif;
-            touch-action: none;
-        }
-
-        canvas {
-            display: block;
-        }
-
-        #ui-layer {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            color: white;
-            font-size: 24px;
-            font-weight: bold;
-            text-shadow: 2px 2px 4px #000;
-            pointer-events: none;
-            z-index: 10;
-        }
-
-        #game-over {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            display: none;
-            background: rgba(0, 0, 0, 0.85);
-            padding: 40px;
-            border-radius: 10px;
-            color: white;
-            z-index: 20;
-            border: 2px solid #fff;
-        }
-
-        #game-over h1 {
-            margin-top: 0;
-            font-size: 48px;
-            color: #ff4444;
-        }
-
-        #game-over button {
-            padding: 15px 30px;
-            font-size: 24px;
-            cursor: pointer;
-            background: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            margin-top: 20px;
-        }
-
-        .controls {
-            position: absolute;
-            bottom: 20px;
-            width: 100%;
+            padding: 0;
+            background-color: #050505;
+            color: #00ffcc;
+            font-family: 'Orbitron', sans-serif;
             display: flex;
-            justify-content: space-between;
-            padding: 0 20px;
-            box-sizing: border-box;
-            z-index: 10;
-            pointer-events: none;
-        }
-
-        .btn-group {
-            display: flex;
-            gap: 15px;
-            pointer-events: auto;
-        }
-
-        .control-btn {
-            width: 80px;
-            height: 80px;
-            background: rgba(255, 255, 255, 0.3);
-            border: 2px solid rgba(255, 255, 255, 0.6);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
             justify-content: center;
-            font-size: 30px;
-            color: white;
-            user-select: none;
-            cursor: pointer;
-            backdrop-filter: blur(5px);
-            transition: background 0.1s;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
         }
 
-        .control-btn:active, .control-btn.active {
-            background: rgba(255, 255, 255, 0.6);
-            transform: scale(0.95);
+        .container {
+            text-align: center;
+            background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 0 50px rgba(0, 255, 204, 0.1);
+            border: 1px solid #333;
+            position: relative;
         }
 
-        .brake {
-            background: rgba(255, 0, 0, 0.4);
-            border-color: rgba(255, 0, 0, 0.6);
+        .title {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1.5rem;
+            letter-spacing: 5px;
+            color: #666;
+            margin-bottom: 30px;
+            text-transform: uppercase;
         }
 
-        .brake:active, .brake.active {
-            background: rgba(255, 0, 0, 0.7);
+        .timer-display {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            align-items: flex-end;
         }
 
-        @media (min-width: 1024px) {
-            .controls {
-                opacity: 0.6;
+        .time-unit {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .digit-box {
+            font-size: 4rem;
+            font-weight: 700;
+            color: #fff;
+            text-shadow: 0 0 20px #00ffcc, 0 0 10px #00ffcc;
+            min-width: 100px;
+            text-align: center;
+            background: #0a0a0a;
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid #333;
+            box-shadow: inset 0 0 20px rgba(0, 255, 204, 0.1);
+        }
+
+        .label {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1rem;
+            color: #888;
+            margin-top: 10px;
+            letter-spacing: 2px;
+        }
+
+        .separator {
+            font-size: 3rem;
+            color: #00ffcc;
+            animation: blink 1s infinite;
+            align-self: center;
+            margin-bottom: 20px;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.2; }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .digit-box {
+                font-size: 2rem;
+                min-width: 50px;
+            }
+            .separator {
+                font-size: 1.5rem;
+            }
+            .timer-display {
+                gap: 10px;
             }
         }
     </style>
 </head>
 <body>
 
-    <div id="ui-layer">
-        Distance: <span id="distance">0</span> m
-    </div>
+    <div class="container">
+        <div class="title">Reverse Countdown</div>
+        
+        <div class="timer-display">
+            <!-- Days -->
+            <div class="time-unit">
+                <div class="digit-box" id="days">00</div>
+                <div class="label">DAYS</div>
+            </div>
 
-    <div id="game-over">
-        <h1>CRASHED!</h1>
-        <p>You flipped over.</p>
-        <button onclick="resetGame()">Try Again</button>
-    </div>
+            <div class="separator">:</div>
 
-    <div class="controls">
-        <div class="btn-group">
-            <div class="control-btn brake" id="btn-brake">
-                <span>🛑</span>
+            <!-- Hours -->
+            <div class="time-unit">
+                <div class="digit-box" id="hours">00</div>
+                <div class="label">HOURS</div>
+            </div>
+
+            <div class="separator">:</div>
+
+            <!-- Minutes -->
+            <div class="time-unit">
+                <div class="digit-box" id="minutes">00</div>
+                <div class="label">MINUTES</div>
+            </div>
+
+            <div class="separator">:</div>
+
+            <!-- Seconds -->
+            <div class="time-unit">
+                <div class="digit-box" id="seconds">00</div>
+                <div class="label">SECONDS</div>
             </div>
         </div>
-        <div class="btn-group">
-            <div class="control-btn" id="btn-gas">
-                <span>🚀</span>
-            </div>
-        </div>
     </div>
-
-    <canvas id="gameCanvas"></canvas>
 
     <script>
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
-        const distanceEl = document.getElementById('distance');
-        const gameOverScreen = document.getElementById('game-over');
+        // Start time: 1 Day (86400 seconds)
+        let totalSeconds = 86400; 
 
-        function resize() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        window.addEventListener('resize', resize);
-        resize();
+        function updateTimer() {
+            // Calculate time units
+            const days = Math.floor(totalSeconds / 86400);
+            const hours = Math.floor((totalSeconds % 86400) / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            const seconds = totalSeconds % 60;
 
-        const keys = {
-            right: false,
-            left: false,
-            brake: false
-        };
+            // Update DOM
+            document.getElementById('days').innerText = String(days).padStart(2, '0');
+            document.getElementById('hours').innerText = String(hours).padStart(2, '0');
+            document.getElementById('minutes').innerText = String(minutes).padStart(2, '0');
+            document.getElementById('seconds').innerText = String(seconds).padStart(2, '0');
 
-        window.addEventListener('keydown', (e) => {
-            if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = true;
-            if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = true;
-            if (e.code === 'Space') keys.brake = true;
-        });
-
-        window.addEventListener('keyup', (e) => {
-            if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = false;
-            if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = false;
-            if (e.code === 'Space') keys.brake = false;
-        });
-
-        const btnGas = document.getElementById('btn-gas');
-        const btnBrake = document.getElementById('btn-brake');
-
-        const addTouch = (elem, key) => {
-            elem.addEventListener('mousedown', (e) => { e.preventDefault(); keys[key] = true; elem.classList.add('active'); });
-            elem.addEventListener('mouseup', (e) => { e.preventDefault(); keys[key] = false; elem.classList.remove('active'); });
-            elem.addEventListener('mouseleave', (e) => { keys[key] = false; elem.classList.remove('active'); });
-            elem.addEventListener('touchstart', (e) => { e.preventDefault(); keys[key] = true; elem.classList.add('active'); }, {passive: false});
-            elem.addEventListener('touchend', (e) => { e.preventDefault(); keys[key] = false; elem.classList.remove('active'); });
-            elem.addEventListener('touchcancel', (e) => { keys[key] = false; elem.classList.remove('active'); });
-        };
-
-        addTouch(btnGas, 'right');
-        addTouch(btnBrake, 'brake');
-
-        const GRAVITY = 0.25;
-        const ENGINE_POWER = 0.4;
-        const MAX_SPEED = 15;
-        const TERRAIN_BLOCK_SIZE = 40;
-
-        let cameraX = 0;
-        let distanceTraveled = 0;
-        let isGameOver = false;
-
-        const car = {
-            x: 200,
-            y: 300,
-            vx: 0,
-            vy: 0,
-            width: 60,
-            height: 30,
-            wheelRadius: 12,
-            wheelOffsetX: 25,
-            wheelYOffset: 15,
-            angle: 0,
-            angularVelocity: 0,
-            onGround: false,
-
-            update: function() {
-                if (isGameOver) return;
-
-                this.vy += GRAVITY;
-
-                if (this.onGround) {
-                    if (keys.right) {
-                        this.vx += ENGINE_POWER;
-                    }
-                    if (keys.left) {
-                        this.vx -= ENGINE_POWER;
-                    }
-                    if (keys.brake) {
-                        this.vx *= 0.9;
-                        this.angularVelocity *= 0.9;
-                    }
-                }
-
-                if (this.vx > MAX_SPEED) this.vx = MAX_SPEED;
-                if (this.vx < -MAX_SPEED) this.vx = -MAX_SPEED;
-
-                this.vx *= 0.99;
-
-                this.x += this.vx;
-                this.y += this.vy;
-
-                const rearWheelX = this.x - this.wheelOffsetX * Math.cos(this.angle);
-                const frontWheelX = this.x + this.wheelOffsetX * Math.cos(this.angle);
-                
-                const rearTerrainY = getTerrainHeight(rearWheelX);
-                const frontTerrainY = getTerrainHeight(frontWheelX);
-
-                const rearWheelBottom = this.y + this.wheelYOffset - this.wheelRadius;
-                const frontWheelBottom = this.y + this.wheelYOffset - this.wheelRadius;
-
-                let hitBack = false;
-                let hitFront = false;
-
-                if (rearWheelBottom > rearTerrainY) {
-                    hitBack = true;
-                    const penetration = rearWheelBottom - rearTerrainY;
-                    this.y -= penetration;
-                    this.vy *= 0.7;
-                }
-
-                if (frontWheelBottom > frontTerrainY) {
-                    hitFront = true;
-                    const penetration = frontWheelBottom - frontTerrainY;
-                    this.y -= penetration;
-                    this.vy *= 0.7;
-                }
-
-                this.onGround = hitBack || hitFront;
-
-                let targetAngle = 0;
-                if (this.onGround) {
-                    const dy = frontTerrainY - rearTerrainY;
-                    const dx = frontWheelX - rearWheelX;
-                    targetAngle = Math.atan2(dy, dx);
-                }
-
-                const angleDiff = targetAngle - this.angle;
-                this.angularVelocity += angleDiff * 0.15;
-                this.angularVelocity *= 0.85;
-                this.angle += this.angularVelocity;
-
-                const centerTerrainY = getTerrainHeight(this.x);
-                const roofX = this.x + (-this.height/2) * Math.sin(this.angle);
-                const roofY = this.y + (-this.height/2) * Math.cos(this.angle);
-
-                if (roofY > centerTerrainY) {
-                    triggerGameOver();
-                }
-                
-                if (this.x > distanceTraveled) {
-                    distanceTraveled = this.x;
-                }
-                distanceEl.innerText = Math.floor(distanceTraveled / 10);
-            },
-
-            draw: function() {
-                ctx.save();
-                ctx.translate(this.x, this.y);
-                ctx.rotate(this.angle);
-
-                ctx.fillStyle = '#FF4444'; 
-                ctx.fillRect(-30, -15, 60, 30);
-                
-                ctx.fillStyle = '#FFFF00';
-                ctx.beginPath();
-                ctx.arc(0, -5, 8, 0, Math.PI * 2);
-                ctx.fill();
-                
-                ctx.strokeStyle = '#333';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(-30, -15, 60, 30);
-
-                ctx.restore();
-
-                this.drawWheel(this.x - this.wheelOffsetX, this.y + this.wheelYOffset, this.angle);
-                this.drawWheel(this.x + this.wheelOffsetX, this.y + this.wheelYOffset, this.angle);
-            },
-
-            drawWheel: function(x, y, bodyAngle) {
-                ctx.save();
-                ctx.translate(x, y);
-                ctx.rotate(Date.now() / 50); 
-                
-                ctx.fillStyle = '#333';
-                ctx.beginPath();
-                ctx.arc(0, 0, this.wheelRadius, 0, Math.PI * 2);
-                ctx.fill();
-                
-                ctx.fillStyle = '#888';
-                ctx.beginPath();
-                ctx.arc(0, 0, this.wheelRadius / 2, 0, Math.PI * 2);
-                ctx.fill();
-                
-                ctx.strokeStyle = '#555';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(-this.wheelRadius, 0);
-                ctx.lineTo(this.wheelRadius, 0);
-                ctx.moveTo(0, -this.wheelRadius);
-                ctx.lineTo(0, this.wheelRadius);
-                ctx.stroke();
-
-                ctx.restore();
-            }
-        };
-
-        const terrainPoints = [];
-        const pointCount = 2000;
-
-        function generateTerrain() {
-            terrainPoints.length = 0;
-            let y = canvas.height / 2;
-            for (let i = 0; i < pointCount; i++) {
-                const frequency = 0.01 + (Math.random() * 0.005);
-                const amplitude = 50 + (Math.random() * 50);
-                
-                const noise = Math.sin(i * frequency) * amplitude + 
-                              Math.sin(i * frequency * 2.5) * (amplitude / 2);
-                
-                y = (canvas.height / 2 + 100) + noise;
-                terrainPoints.push({x: i * TERRAIN_BLOCK_SIZE, y: y});
+            // Decrement
+            if (totalSeconds > 0) {
+                totalSeconds--;
+            } else {
+                totalSeconds = 86400; // Reset for endless cycle
             }
         }
 
-        function getTerrainHeight(x) {
-            const index = Math.floor(x / TERRAIN_BLOCK_SIZE);
-            const nextIndex = index + 1;
-            
-            if (index < 0) return terrainPoints[0].y;
-            if (index >= terrainPoints.length - 1) return terrainPoints[terrainPoints.length - 1].y;
-
-            const p1 = terrainPoints[index];
-            const p2 = terrainPoints[nextIndex];
-
-            const t = (x - p1.x) / TERRAIN_BLOCK_SIZE;
-            return p1.y + (p2.y - p1.y) * t;
-        }
-
-        function drawTerrain() {
-            ctx.fillStyle = '#4CAF50'; 
-            ctx.strokeStyle = '#388E3C'; 
-            
-            ctx.beginPath();
-            const startX = Math.floor(cameraX / TERRAIN_BLOCK_SIZE) * TERRAIN_BLOCK_SIZE;
-            const endX = startX + canvas.width + TERRAIN_BLOCK_SIZE;
-
-            ctx.moveTo(cameraX, canvas.height);
-
-            for (let i = 0; i < terrainPoints.length; i++) {
-                if (terrainPoints[i].x > startX && terrainPoints[i].x < endX) {
-                    ctx.lineTo(terrainPoints[i].x, terrainPoints[i].y);
-                }
-            }
-
-            ctx.lineTo(endX, canvas.height);
-            ctx.closePath();
-            ctx.fill();
-            
-            ctx.lineWidth = 4;
-            ctx.stroke();
-        }
-
-        function drawBackground() {
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-            for(let i=0; i<5; i++) {
-                let cloudX = (cameraX * 0.1 + i * 300) % (canvas.width + 200);
-                let cloudY = 50 + i * 30;
-                ctx.beginPath();
-                ctx.arc(canvas.width - cloudX, cloudY, 40, 0, Math.PI*2);
-                ctx.arc(canvas.width - cloudX + 30, cloudY - 10, 50, 0, Math.PI*2);
-                ctx.arc(canvas.width - cloudX + 60, cloudY, 40, 0, Math.PI*2);
-                ctx.fill();
-            }
-        }
-
-        function triggerGameOver() {
-            isGameOver = true;
-            gameOverScreen.style.display = 'block';
-        }
-
-        function resetGame() {
-            isGameOver = false;
-            gameOverScreen.style.display = 'none';
-            car.x = 200;
-            car.y = 300;
-            car.vx = 0;
-            car.vy = 0;
-            car.angle = 0;
-            car.angularVelocity = 0;
-            distanceTraveled = 0;
-            generateTerrain();
-        }
-
-        function updateCamera() {
-            // Vehicle hamesha center mein rahega
-            cameraX = car.x - canvas.width / 2;
-        }
-
-        function loop() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            updateCamera();
-            car.update();
-            
-            drawBackground();
-            drawTerrain();
-            car.draw();
-
-            requestAnimationFrame(loop);
-        }
-
-        generateTerrain();
-        loop();
-
+        // Run every second
+        setInterval(updateTimer, 1000);
+        updateTimer(); // Initial call
     </script>
-
 </body>
 </html>
+```
+
+**CSS (css/styles.css):**
+
+```css
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #050505;
+    color: #00ffcc;
+    font-family: 'Orbitron', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    overflow: hidden;
+}
+
+.container {
+    text-align: center;
+    background: radial-gradient(circle at center, #1a1a1a 0%, #000000 100%);
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 0 50px rgba(0, 255, 204, 0.1);
+    border: 1px solid #333;
+    position: relative;
+}
+
+.title {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 1.5rem;
+    letter-spacing: 5px;
+    color: #666;
+    margin-bottom: 30px;
+    text-transform: uppercase;
+}
+
+.timer-display {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    align-items: flex-end;
+}
+
+.time-unit {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.digit-box {
+    font-size: 4rem;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 0 20px #00ffcc, 0 0 10px #00ffcc;
+    min-width: 100px;
+    text-align: center;
+    background: #0a0a0a;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid #333;
+    box-shadow: inset 0 0 20px rgba(0, 255, 204, 0.1);
+}
+
+.label {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 1rem;
+    color: #888;
+    margin-top: 10px;
+    letter-spacing: 2px;
+}
+
+.separator {
+    font-size: 3rem;
+    color: #00ffcc;
+    animation: blink 1s infinite;
+    align-self: center;
+    margin-bottom: 20px;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.2; }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .digit-box {
+        font-size: 2rem;
+        min-width: 50px;
+    }
+    .separator {
+        font-size: 1.5rem;
+    }
+    .timer-display {
+        gap: 10px;
+    }
+}
