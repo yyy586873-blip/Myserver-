@@ -4,21 +4,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Flat Racer 2D</title>
+    <title>Play Ludo</title>
     <style>
         body {
             margin: 0;
             padding: 0;
-            background-color: #87CEEB; /* Sky Blue */
+            background: #2c3e50;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
             overflow: hidden;
-            font-family: 'Arial', sans-serif;
-            touch-action: none;
         }
 
-        #gameCanvas {
+        #game-container {
+            position: relative;
+            width: 100vmin;
+            height: 100vmin;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        canvas {
             display: block;
-            width: 100%;
-            height: 100%;
         }
 
         #ui-layer {
@@ -30,336 +39,433 @@
             pointer-events: none;
         }
 
-        #score-board {
+        #dice-btn {
             position: absolute;
-            top: 10px;
-            left: 10px;
-            color: white;
-            font-size: 24px;
-            font-weight: bold;
-            text-shadow: 2px 2px 0 #000;
-        }
-
-        #game-over-screen {
-            display: none;
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            pointer-events: auto;
-            z-index: 10;
-        }
-
-        h1 {
-            color: #fff;
-            font-size: 40px;
-            margin: 0 0 20px 0;
-            text-shadow: 2px 2px 0 #000;
-        }
-
-        button {
-            background: #ff3333;
-            color: white;
-            border: none;
-            padding: 15px 30px;
-            font-size: 20px;
-            border-radius: 10px;
-            cursor: pointer;
-            box-shadow: 0 4px 0 #990000;
-        }
-
-        button:active {
-            transform: scale(0.95);
-            box-shadow: 0 2px 0 #990000;
-        }
-
-        /* Controls */
-        #controls {
-            position: absolute;
-            bottom: 0;
-            width: 100%;
-            height: 150px;
-            pointer-events: none;
-        }
-
-        .control-zone {
-            flex: 1;
-        }
-
-        .icon {
-            position: absolute;
-            bottom: 20px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             width: 60px;
             height: 60px;
-            background: rgba(255,255,255,0.3);
-            border-radius: 50%;
+            background: white;
+            border: 2px solid #333;
+            border-radius: 10px;
             display: flex;
             justify-content: center;
             align-items: center;
-            color: white;
             font-size: 24px;
             font-weight: bold;
+            cursor: pointer;
             pointer-events: auto;
+            box-shadow: 0 4px 0 #000;
+            z-index: 100;
         }
 
-        #btn-brake { left: 20px; border: 2px solid white; }
-        #btn-gas { right: 20px; border: 2px solid white; }
+        #dice-btn:active {
+            transform: translate(-50%, -48%);
+            box-shadow: 0 2px 0 #000;
+        }
+
+        #turn-indicator {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px black;
+        }
+
+        #message {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: yellow;
+            font-size: 14px;
+            text-shadow: 1px 1px 1px black;
+        }
 
     </style>
 </head>
 <body>
 
-    <canvas id="gameCanvas"></canvas>
-
-    <div id="ui-layer">
-        <div id="score-board">Speed: 0 km/h</div>
-        
-        <div id="controls">
-            <div class="control-zone">
-                <div id="btn-brake" class="icon">Brake</div>
-            </div>
-            <div class="control-zone">
-                <div id="btn-gas" class="icon">Gas</div>
-            </div>
-        </div>
-
-        <div id="game-over-screen">
-            <h1>GAME OVER</h1>
-            <div style="color:white; font-size: 20px; margin-bottom: 20px;">Distance: <span id="final-score">0</span>m</div>
-            <button id="restart-btn">PLAY AGAIN</button>
-        </div>
+    <div id="game-container">
+        <canvas id="ludoBoard"></canvas>
+        <div id="dice-btn">🎲</div>
+        <div id="turn-indicator">Red's Turn</div>
+        <div id="message"></div>
     </div>
 
     <script>
-        const canvas = document.getElementById('gameCanvas');
+        const canvas = document.getElementById('ludoBoard');
         const ctx = canvas.getContext('2d');
-        const scoreEl = document.getElementById('score-board');
-        const gameOverScreen = document.getElementById('game-over-screen');
-        const finalScoreEl = document.getElementById('final-score');
-        const restartBtn = document.getElementById('restart-btn');
-        const btnGas = document.getElementById('btn-gas');
-        const btnBrake = document.getElementById('btn-brake');
+        const diceBtn = document.getElementById('dice-btn');
+        const turnIndicator = document.getElementById('turn-indicator');
+        const msgEl = document.getElementById('message');
 
-        // Resize
-        function resize() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        window.addEventListener('resize', resize);
-        resize();
-
-        // Game State
-        let isRunning = false;
-        let distance = 0;
+        // Config
+        const BOARD_SIZE = 15;
+        let cellSize = 0;
         
-        // Input
-        let gasPressed = false;
-        let brakePressed = false;
+        // Game State
+        let currentPlayer = 0; // 0: Red, 1: Green, 2: Yellow, 3: Blue
+        let diceValue = 0;
+        let diceRolled = false;
+        let canMove = false;
+        let waitingForMove = false;
+        let selectedPiece = null;
+        let pieces = []; // All pieces
+        
+        // Colors
+        const COLORS = ['#e74c3c', '#2ecc71', '#f1c40f', '#3498db']; // R, G, Y, B
+        const BASES = [
+            {x: 0, y: 0}, {x: 9, y: 0}, 
+            {x: 9, y: 9}, {x: 0, y: 9}
+        ];
+        
+        // Path Definitions (0-51 steps)
+        // Each player has a different start index on the main loop
+        const MAIN_PATH = [
+            {x:1,y:6}, {x:2,y:6}, {x:3,y:6}, {x:4,y:6}, {x:5,y:6}, {x:6,y:5}, {x:6,y:4}, {x:6,y:3}, {x:6,y:2}, {x:6,y:1}, {x:7,y:1}, {x:8,y:1}, {x:8,y:2}, {x:8,y:3}, {x:8,y:4}, {x:8,y:5}, {x:9,y:6}, {x:10,y:6}, {x:11,y:6}, {x:12,y:6}, {x:13,y:6}, {x:14,y:6}, {x:14,y:7}, {x:14,y:8}, {x:13,y:8}, {x:12,y:8}, {x:11,y:8}, {x:10,y:8}, {x:9,y:9}, {x:8,y:9}, {x:8,y:10}, {x:8,y:11}, {x:8,y:12}, {x:8,y:13}, {x:8,y:14}, {x:7,y:14}, {x:6,y:14}, {x:6,y:13}, {x:6,y:12}, {x:6,y:11}, {x:6,y:10}, {x:6,y:9}, {x:5,y:8}, {x:4,y:8}, {x:3,y:8}, {x:2,y:8}, {x:1,y:8}, {x:1,y:7}, {x:1,y:6}
+        ];
 
-        // Physics
-        const ACCELERATION = 0.2;
-        const BRAKE_FORCE = 0.1;
-        const FRICTION = 0.98;
-        const MAX_SPEED = 20;
-        const ROAD_Y = 0; // Will be set in init
+        // Home Paths (5 steps into home)
+        const HOME_PATHS = [
+            [{x:1,y:7}, {x:2,y:7}, {x:3,y:7}, {x:4,y:7}, {x:5,y:7}], // Red
+            [{x:7,y:1}, {x:7,y:2}, {x:7,y:3}, {x:7,y:4}, {x:7,y:5}], // Green
+            [{x:13,y:7}, {x:12,y:7}, {x:11,y:7}, {x:10,y:7}, {x:9,y:7}], // Yellow
+            [{x:7,y:13}, {x:7,y:12}, {x:7,y:11}, {x:7,y:10}, {x:7,y:9}]  // Blue
+        ];
 
-        // Car
-        const car = {
-            x: 0, // World X
-            y: 0,
-            speed: 0,
-            wheelAngle: 0,
-            width: 80,
-            height: 30,
-            wheelRadius: 12,
+        // Safe Zones (Star positions indices on main path)
+        const SAFE_ZONES = [0, 8, 13, 21, 26, 34, 39, 47];
+
+        function init() {
+            resize();
+            window.addEventListener('resize', resize);
             
-            update: function() {
-                if (gasPressed) {
-                    this.speed += ACCELERATION;
+            // Create Pieces
+            for(let p=0; p<4; p++) {
+                for(let i=0; i<4; i++) {
+                    pieces.push({
+                        player: p,
+                        id: i,
+                        state: 'BASE', // BASE, BOARD, HOME
+                        pos: 0, // Index on path (0-51) or steps in home
+                        x: 0, y: 0
+                    });
                 }
-                if (brakePressed) {
-                    this.speed -= BRAKE_FORCE;
-                }
-
-                // Friction
-                this.speed *= FRICTION;
-
-                // Cap Speed
-                if (this.speed > MAX_SPEED) this.speed = MAX_SPEED;
-                if (this.speed < 0) this.speed = 0;
-
-                // Move
-                this.x += this.speed;
-                
-                // Wheel Rotation
-                this.wheelAngle += this.speed * 0.15;
-
-                // Update Score
-                distance = Math.floor(this.x / 10);
-                scoreEl.innerText = "Dist: " + distance + "m | Speed: " + Math.floor(this.speed * 10) + " km/h";
-            },
-
-            draw: function() {
-                // Draw Car relative to camera
-                const screenX = canvas.width / 2 - this.x; 
-                
-                ctx.save();
-                ctx.translate(screenX, canvas.height * 0.6); // Fixed Y position on screen
-
-                // Car Body
-                ctx.fillStyle = '#e74c3c';
-                ctx.fillRect(-40, -25, 80, 25);
-                
-                // Cabin
-                ctx.fillStyle = '#c0392b';
-                ctx.fillRect(-20, -45, 40, 20);
-
-                // Wheels
-                this.drawWheel(-25, 5);
-                this.drawWheel(25, 5);
-
-                ctx.restore();
-            },
-
-            drawWheel: function(x, y) {
-                ctx.save();
-                ctx.translate(x, y);
-                ctx.rotate(this.wheelAngle);
-                
-                // Tire
-                ctx.beginPath();
-                ctx.arc(0, 0, this.wheelRadius, 0, Math.PI * 2);
-                ctx.fillStyle = '#333';
-                ctx.fill();
-                
-                // Rim
-                ctx.beginPath();
-                ctx.arc(0, 0, this.wheelRadius * 0.6, 0, Math.PI * 2);
-                ctx.fillStyle = '#888';
-                ctx.fill();
-
-                // Spokes
-                ctx.strokeStyle = '#555';
-                ctx.lineWidth = 2;
-                ctx.beginPath();
-                ctx.moveTo(-this.wheelRadius, 0); ctx.lineTo(this.wheelRadius, 0);
-                ctx.moveTo(0, -this.wheelRadius); ctx.lineTo(0, this.wheelRadius);
-                ctx.stroke();
-
-                ctx.restore();
             }
-        };
 
-        // Background (Fixed)
-        let bgOffset = 0;
+            diceBtn.addEventListener('click', rollDice);
+            draw();
+        }
 
-        function drawBackground() {
-            // Sky
-            ctx.fillStyle = '#87CEEB';
+        function resize() {
+            const size = Math.min(window.innerWidth, window.innerHeight) * 0.95;
+            canvas.width = size;
+            canvas.height = size;
+            cellSize = size / BOARD_SIZE;
+            draw();
+        }
+
+        function drawBoard() {
+            // Draw Grid Background
+            ctx.fillStyle = '#fff';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            // Sun (Fixed)
-            ctx.fillStyle = '#FFD700';
-            ctx.beginPath();
-            ctx.arc(canvas.width - 50, 50, 30, 0, Math.PI * 2);
-            ctx.fill();
+            // Draw Bases
+            const drawBase = (x, y, color, rot) => {
+                ctx.fillStyle = color;
+                ctx.fillRect(x * cellSize, y * cellSize, 6 * cellSize, 6 * cellSize);
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc((x+3)*cellSize, (y+3)*cellSize, 2.5*cellSize, 0, Math.PI*2);
+                ctx.fill();
+            };
 
-            // Clouds (Slowly moving for effect, but mostly fixed relative to road)
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-            const cloudX = (car.x * 0.1) % canvas.width; // Very slow parallax
-            ctx.fillRect(100 - cloudX, 80, 100, 40);
-            ctx.fillRect(300 - cloudX, 40, 120, 50);
+            drawBase(0, 0, COLORS[0], 0); // Red Base
+            drawBase(9, 0, COLORS[1], 0); // Green Base
+            drawBase(9, 9, COLORS[2], 0); // Yellow Base
+            drawBase(0, 9, COLORS[3], 0); // Blue Base
+
+            // Draw Center
+            ctx.fillStyle = '#f39c12';
+            ctx.beginPath();
+            ctx.moveTo(6*cellSize, 6*cellSize);
+            ctx.lineTo(9*cellSize, 6*cellSize);
+            ctx.lineTo(9*cellSize, 9*cellSize);
+            ctx.lineTo(6*cellSize, 9*cellSize);
+            ctx.fill();
+            // Triangles
+            ctx.fillStyle = COLORS[0]; ctx.beginPath(); ctx.moveTo(6*cellSize,6*cellSize); ctx.lineTo(7.5*cellSize,7.5*cellSize); ctx.lineTo(6*cellSize,9*cellSize); ctx.fill();
+            ctx.fillStyle = COLORS[1]; ctx.beginPath(); ctx.moveTo(9*cellSize,6*cellSize); ctx.lineTo(7.5*cellSize,7.5*cellSize); ctx.lineTo(9*cellSize,9*cellSize); ctx.fill(); // Fix logic for triangle direction
+            ctx.fillStyle = COLORS[2]; ctx.beginPath(); ctx.moveTo(9*cellSize,9*cellSize); ctx.lineTo(7.5*cellSize,7.5*cellSize); ctx.lineTo(6*cellSize,9*cellSize); ctx.fill();
+            ctx.fillStyle = COLORS[3]; ctx.beginPath(); ctx.moveTo(6*cellSize,6*cellSize); ctx.lineTo(7.5*cellSize,7.5*cellSize); ctx.lineTo(6*cellSize,9*cellSize); ctx.fill(); // Simplified center
+
+            // Draw Paths
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 1;
+            
+            // Draw Cells
+            const drawCell = (x, y, color = '#fff') => {
+                ctx.fillStyle = color;
+                ctx.fillRect(x*cellSize, y*cellSize, cellSize, cellSize);
+                ctx.strokeRect(x*cellSize, y*cellSize, cellSize, cellSize);
+            };
+
+            // Main Path
+            MAIN_PATH.forEach((p, i) => {
+                let color = '#fff';
+                if (i===0) color = COLORS[0];
+                if (i===8) color = COLORS[1];
+                if (i===13) color = COLORS[2];
+                if (i===21) color = COLORS[3];
+                if (i===26) color = COLORS[0]; // Safe zone color? No, standard is white star
+                if (i===34) color = COLORS[1];
+                if (i===39) color = COLORS[2];
+                if (i===47) color = COLORS[3];
+                
+                drawCell(p.x, p.y, color);
+                
+                // Draw Star
+                if(SAFE_ZONES.includes(i)) {
+                    ctx.fillStyle = 'rgba(0,0,0,0.2)';
+                    ctx.beginPath();
+                    ctx.arc((p.x+0.5)*cellSize, (p.y+0.5)*cellSize, cellSize*0.2, 0, Math.PI*2);
+                    ctx.fill();
+                }
+            });
+
+            // Home Paths
+            HOME_PATHS.forEach((path, pIdx) => {
+                path.forEach((p, i) => {
+                    drawCell(p.x, p.y, COLORS[pIdx]);
+                });
+            });
         }
 
-        function drawRoad() {
-            const roadY = canvas.height * 0.65;
+        function drawPieces() {
+            pieces.forEach(p => {
+                let px, py;
+                
+                if (p.state === 'BASE') {
+                    const baseX = BASES[p.player].x * cellSize;
+                    const baseY = BASES[p.player].y * cellSize;
+                    // Positions in base
+                    const offsets = [{x:1,y:1},{x:4,y:1},{x:1,y:4},{x:4,y:4}];
+                    px = (baseX + offsets[p.id].x * cellSize) - cellSize/2;
+                    py = (baseY + offsets[p.id].y * cellSize) - cellSize/2;
+                } else {
+                    let posObj;
+                    if (p.state === 'HOME_PATH') {
+                        posObj = HOME_PATHS[p.player][p.pos];
+                    } else if (p.state === 'FINISHED') {
+                        // Center
+                        ctx.fillStyle = COLORS[p.player];
+                        ctx.beginPath();
+                        ctx.arc((7.5)*cellSize, (7.5)*cellSize, cellSize/3, 0, Math.PI*2);
+                        ctx.fill();
+                        return;
+                    } else {
+                        // Main Path
+                        const globalPos = (MAIN_PATH.indexOf(MAIN_PATH[p.pos]) + (p.player === 0 ? 0 : p.player === 1 ? 13 : p.player === 2 ? 26 : 39)) % 52;
+                        // Actually, simpler: pieces store their index on the main loop 0-51
+                        // But we need to map that to grid coordinates.
+                        // Let's just store the actual grid coord in state for simplicity during render
+                        posObj = {x: p.gridX, y: p.gridY};
+                    }
+                    
+                    px = posObj.x * cellSize;
+                    py = posObj.y * cellSize;
+                }
+
+                ctx.fillStyle = COLORS[p.player];
+                ctx.beginPath();
+                ctx.arc(px + cellSize/2, py + cellSize/2, cellSize * 0.35, 0, Math.PI*2);
+                ctx.fill();
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Highlight if selectable
+                if (canMove && p.player === currentPlayer && p.state !== 'BASE' && p.state !== 'FINISHED') {
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(px, py, cellSize, cellSize);
+                }
+            });
+        }
+
+        function draw() {
+            drawBoard();
+            drawPieces();
+        }
+
+        function rollDice() {
+            if (diceRolled) return;
             
-            // Grass
-            ctx.fillStyle = '#2ecc71';
-            ctx.fillRect(0, roadY, canvas.width, canvas.height - roadY);
-
-            // Road Surface
-            ctx.fillStyle = '#555';
-            ctx.fillRect(0, roadY, canvas.width, 60);
-
-            // Road Edge Lines
-            ctx.fillStyle = '#fff';
-            ctx.fillRect(0, roadY, canvas.width, 5);
-            ctx.fillRect(0, roadY + 55, canvas.width, 5);
-
-            // Moving Dashed Line
-            ctx.fillStyle = '#fff';
-            const dashWidth = 40;
-            const gapWidth = 40;
-            const totalDash = dashWidth + gapWidth;
+            diceValue = Math.floor(Math.random() * 6) + 1;
+            diceBtn.innerText = diceValue;
+            diceRolled = true;
             
-            // Calculate offset based on car position to make road move
-            const offset = car.x % totalDash;
-
-            for (let i = -1; i < canvas.width / totalDash + 2; i++) {
-                ctx.fillRect(
-                    (i * totalDash) - offset + canvas.width / 2, 
-                    roadY + 25, 
-                    dashWidth, 
-                    10
-                );
+            msgEl.innerText = "Roll: " + diceValue;
+            
+            // Check if any move is possible
+            if (!canMovePiece()) {
+                setTimeout(nextTurn, 1000);
+            } else {
+                canMove = true;
+                waitingForMove = true;
             }
         }
 
-        function loop() {
-            if (!isRunning) return;
+        function canMovePiece() {
+            // Check if any piece of current player can move
+            const playerPieces = pieces.filter(p => p.player === currentPlayer && p.state !== 'FINISHED');
+            return playerPieces.some(p => isValidMove(p, diceValue));
+        }
 
-            // Update
-            car.update();
+        function isValidMove(p, steps) {
+            if (p.state === 'BASE') return steps === 6;
+            if (p.state === 'HOME_PATH') {
+                return (p.pos + steps) <= 5;
+            }
+            // Main path logic needs to check if it enters home path
+            // Simplified: Just check if it can move 50 steps total before home
+            // This is a bit complex for simple JS, let's assume max 56 steps to finish
+            return true; 
+        }
 
-            // Draw
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        canvas.addEventListener('click', (e) => {
+            if (!waitingForMove) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
             
-            drawBackground();
-            drawRoad();
-            car.draw();
+            // Find clicked piece
+            const clickedPiece = pieces.find(p => {
+                if (p.player !== currentPlayer) return false;
+                let px, py;
+                if (p.state === 'BASE') {
+                    const baseX = BASES[p.player].x;
+                    const baseY = BASES[p.player].y;
+                    const offsets = [{x:1,y:1},{x:4,y:1},{x:1,y:4},{x:4,y:4}];
+                    px = (baseX + offsets[p.id].x) * cellSize;
+                    py = (baseY + offsets[p.id].y) * cellSize;
+                } else {
+                    px = (p.gridX || 0) * cellSize;
+                    py = (p.gridY || 0) * cellSize;
+                }
+                return Math.abs(x - (px + cellSize/2)) < cellSize/2 && Math.abs(y - (py + cellSize/2)) < cellSize/2;
+            });
 
-            requestAnimationFrame(loop);
+            if (clickedPiece && isValidMove(clickedPiece, diceValue)) {
+                movePiece(clickedPiece, diceValue);
+            }
+        });
+
+        function movePiece(p, steps) {
+            waitingForMove = false;
+            canMove = false;
+
+            if (p.state === 'BASE') {
+                if (steps === 6) {
+                    p.state = 'BOARD';
+                    p.pos = 0; // Start position index
+                    updateGridCoords(p);
+                    msgEl.innerText = "Out of Base!";
+                }
+            } else if (p.state === 'BOARD') {
+                p.pos += steps;
+                if (p.pos >= 51) { // Reached end of loop
+                    p.state = 'HOME_PATH';
+                    p.pos = 0;
+                }
+                updateGridCoords(p);
+                checkCapture(p);
+            } else if (p.state === 'HOME_PATH') {
+                p.pos += steps;
+                if (p.pos >= 5) {
+                    p.state = 'FINISHED';
+                    msgEl.innerText = "Home!";
+                }
+            }
+
+            draw();
+            
+            if (diceValue === 6 && p.state !== 'FINISHED') {
+                diceRolled = false;
+                diceBtn.innerText = "🎲";
+                msgEl.innerText = "Roll again!";
+            } else {
+                nextTurn();
+            }
         }
 
-        function startGame() {
-            car.x = 0;
-            car.speed = 0;
-            distance = 0;
-            isRunning = true;
-            gameOverScreen.style.display = 'none';
-            loop();
+        function updateGridCoords(p) {
+            if (p.state === 'BOARD') {
+                // Find index in MAIN_PATH
+                const startOffset = p.player === 0 ? 0 : p.player === 1 ? 13 : p.player === 2 ? 26 : 39;
+                const globalIndex = (startOffset + p.pos) % 52;
+                const coord = MAIN_PATH[globalIndex];
+                p.gridX = coord.x;
+                p.gridY = coord.y;
+            } else if (p.state === 'HOME_PATH') {
+                const coord = HOME_PATHS[p.player][p.pos];
+                p.gridX = coord.x;
+                p.gridY = coord.y;
+            }
         }
 
-        function endGame() {
-            isRunning = false;
-            finalScoreEl.innerText = distance;
-            gameOverScreen.style.display = 'flex';
+        function checkCapture(movedPiece) {
+            if (movedPiece.state !== 'BOARD') return;
+            
+            // Is this a safe zone?
+            const startOffset = movedPiece.player === 0 ? 0 : movedPiece.player === 1 ? 13 : movedPiece.player === 2 ? 26 : 39;
+            const globalIndex = (startOffset + movedPiece.pos) % 52;
+            
+            // Check if global index is safe
+            const isSafe = SAFE_ZONES.includes(globalIndex);
+            if (isSafe) return;
+
+            // Check if any opponent is here
+            const opponentPieces = pieces.filter(p => p.state === 'BOARD' && p.player !== movedPiece.player && p.gridX === movedPiece.gridX && p.gridY === movedPiece.gridY);
+            
+            if (opponentPieces.length > 0) {
+                opponentPieces.forEach(op => {
+                    op.state = 'BASE';
+                    op.pos = 0;
+                    op.gridX = 0; // Reset
+                    op.gridY = 0;
+                });
+                msgEl.innerText = "Captured! Roll again.";
+                diceValue = 6; // Bonus roll
+                diceRolled = false;
+                diceBtn.innerText = "🎲";
+                draw();
+                return;
+            }
         }
 
-        // Controls
-        function addTouch(elem, isGas) {
-            elem.addEventListener('touchstart', (e) => { e.preventDefault(); isGas ? gasPressed = true : brakePressed = true; });
-            elem.addEventListener('touchend', (e) => { e.preventDefault(); isGas ? gasPressed = false : brakePressed = false; });
-            elem.addEventListener('mousedown', () => isGas ? gasPressed = true : brakePressed = true);
-            elem.addEventListener('mouseup', () => isGas ? gasPressed = false : brakePressed = false);
+        function nextTurn() {
+            currentPlayer = (currentPlayer + 1) % 4;
+            diceRolled = false;
+            diceBtn.innerText = "🎲";
+            msgEl.innerText = "";
+            turnIndicator.innerText = [
+                "Red's Turn", "Green's Turn", "Yellow's Turn", "Blue's Turn"
+            ][currentPlayer];
+            turnIndicator.style.color = COLORS[currentPlayer];
+            
+            // Check if next player can move at all (if not, skip turn)
+            // Simple implementation: Just let them roll
         }
 
-        addTouch(btnGas, true);
-        addTouch(btnBrake, false);
-
-        restartBtn.addEventListener('click', startGame);
-
-        // Init
-        startGame();
+        init();
 
     </script>
 </body>
 </html>
-
