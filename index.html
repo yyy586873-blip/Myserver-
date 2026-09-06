@@ -3,304 +3,443 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Functional Calculator</title>
+    <title>Hill Climb Adventure</title>
 <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
         body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background-color: #121212;
+            margin: 0;
+            overflow: hidden;
+            background-color: #87CEEB; /* Sky Blue */
+            font-family: 'Arial', sans-serif;
         }
 
-        .calculator {
-            background-color: #1e1e1e;
-            padding: 20px;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            width: 320px;
+        canvas {
+            display: block;
         }
 
-        .display {
-            background-color: #000;
-            color: #fff;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: right;
-            margin-bottom: 20px;
-            min-height: 80px;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            word-wrap: break-word;
-            word-break: break-all;
-        }
-
-        .previous-operand {
-            font-size: 14px;
-            color: #aaa;
-            min-height: 20px;
-        }
-
-        .current-operand {
-            font-size: 32px;
+        #ui-layer {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 24px;
             font-weight: bold;
+            text-shadow: 2px 2px 4px #000;
+            pointer-events: none;
         }
 
-        .buttons {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-        }
-
-        button {
-            padding: 20px;
-            font-size: 18px;
-            border: none;
+        #game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            display: none;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 40px;
             border-radius: 10px;
+            color: white;
+        }
+
+        #game-over h1 {
+            margin-top: 0;
+            font-size: 48px;
+            color: #ff4444;
+        }
+
+        #game-over button {
+            padding: 15px 30px;
+            font-size: 24px;
             cursor: pointer;
-            background-color: #2d2d2d;
-            color: #fff;
-            transition: background-color 0.2s, transform 0.1s;
-            font-weight: 500;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin-top: 20px;
         }
-
-        button:hover {
-            background-color: #3d3d3d;
-        }
-
-        button:active {
-            transform: scale(0.95);
-        }
-
-        button.span-two {
-            grid-column: span 2;
-        }
-
-        .btn-operator {
-            background-color: #ff9500;
-            color: #fff;
-        }
-
-        .btn-operator:hover {
-            background-color: #ffaa33;
-        }
-
-        .btn-clear, .btn-delete {
-            background-color: #a5a5a5;
-            color: #000;
-        }
-
-        .btn-clear:hover, .btn-delete:hover {
-            background-color: #c5c5c5;
-        }
-
-        .btn-equals {
-            background-color: #007aff;
-        }
-
-        .btn-equals:hover {
-            background-color: #3395ff;
+        
+        #game-over button:hover {
+            background: #45a049;
         }
 </style>
   </head>
   <body>
 
-    <div class="calculator">
-	  <div class="display">
-		<div class="previous-operand" id="previous-operand"></div>
-		<div class="current-operand" id="current-operand">0</div>
-	  </div>
-	  <div class="buttons">
-		<button class="btn-clear span-two" id="clear">AC</button>
-		<button class="btn-delete" id="delete">DEL</button>
-		<button class="btn-operator" id="divide">÷</button>
-
-		<button id="7">7</button>
-		<button id="8">8</button>
-		<button id="9">9</button>
-		<button class="btn-operator" id="multiply">×</button>
-
-		<button id="4">4</button>
-		<button id="5">5</button>
-		<button id="6">6</button>
-		<button class="btn-operator" id="subtract">−</button>
-
-		<button id="1">1</button>
-		<button id="2">2</button>
-		<button id="3">3</button>
-		<button class="btn-operator" id="add">+</button>
-
-		<button id="0">0</button>
-		<button id="decimal">.</button>
-		<button class="btn-equals span-two" id="equals">=</button>
-	  </div>
+    <div id="ui-layer">
+	  Distance: <span id="distance">0</span> m
     </div>
 
+    <div id="game-over">
+	  <h1>CRASHED!</h1>
+	  <p>You flipped over.</p>
+	  <button onclick="resetGame()">Try Again</button>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
 <script>
-        class Calculator {
-            constructor(previousOperandTextElement, currentOperandTextElement) {
-                this.previousOperandTextElement = previousOperandTextElement;
-                this.currentOperandTextElement = currentOperandTextElement;
-                this.clear();
-            }
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const distanceEl = document.getElementById('distance');
+        const gameOverScreen = document.getElementById('game-over');
 
-            clear() {
-                this.currentOperand = '0';
-                this.previousOperand = '';
-                this.operation = undefined;
-                this.updateDisplay();
-            }
+        // Resize handling
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
 
-            delete() {
-                if (this.currentOperand === '0') return;
-                this.currentOperand = this.currentOperand.toString().slice(0, -1);
-                if (this.currentOperand === '' || this.currentOperand === '-') {
-                    this.currentOperand = '0';
+        // Input handling
+        const keys = {
+            right: false,
+            left: false
+        };
+
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = true;
+            if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = true;
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = false;
+            if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.left = false;
+        });
+
+        // Game Constants
+        const GRAVITY = 0.2;
+        const FRICTION = 0.98;
+        const ENGINE_POWER = 0.3;
+        const MAX_SPEED = 12;
+        const SUSPENSION_STIFFNESS = 0.15;
+        const SUSPENSION_DAMPING = 0.85;
+        const TERRAIN_BLOCK_SIZE = 40;
+
+        // Game State
+        let cameraX = 0;
+        let distanceTraveled = 0;
+        let isGameOver = false;
+
+        // Car Object
+        const car = {
+            x: 200,
+            y: 300,
+            vx: 0,
+            vy: 0,
+            width: 60,
+            height: 30,
+            wheelRadius: 12,
+            wheelOffsetX: 25, // Distance from center to wheel
+            wheelYOffset: 15,  // Distance from center to wheel Y
+            angle: 0,
+            angularVelocity: 0,
+            onGround: false,
+            
+            // Physics state for suspension
+            rearSuspension: {
+                extension: 0,
+                velocity: 0
+            },
+            frontSuspension: {
+                extension: 0,
+                velocity: 0
+            },
+
+            update: function() {
+                if (isGameOver) return;
+
+                // Apply Gravity
+                this.vy += GRAVITY;
+
+                // Input Handling
+                if (this.onGround) {
+                    if (keys.right) {
+                        this.vx += ENGINE_POWER;
+                    }
+                    if (keys.left) {
+                        this.vx -= ENGINE_POWER;
+                    }
                 }
-                this.updateDisplay();
-            }
 
-            appendNumber(number) {
-                if (number === '.' && this.currentOperand.includes('.')) return;
-                if (this.currentOperand === '0' && number !== '.') {
-                    this.currentOperand = number.toString();
-                } else {
-                    this.currentOperand = `${this.currentOperand}${number}`;
-                }
-                this.updateDisplay();
-            }
+                // Cap Speed
+                if (this.vx > MAX_SPEED) this.vx = MAX_SPEED;
+                if (this.vx < -MAX_SPEED) this.vx = -MAX_SPEED;
 
-            chooseOperation(operation) {
-                if (this.currentOperand === '') return;
-                if (this.previousOperand !== '') {
-                    this.compute();
-                }
-                this.operation = operation;
-                this.previousOperand = this.currentOperand;
-                this.currentOperand = '';
-                this.updateDisplay();
-            }
+                // Friction
+                this.vx *= FRICTION;
 
-            compute() {
-                let computation;
-                const prev = parseFloat(this.previousOperand);
-                const current = parseFloat(this.currentOperand);
-                if (isNaN(prev) || isNaN(current)) return;
+                // Update Position
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Calculate Terrain Height at car's X positions
+                const rearWheelX = this.x - this.wheelOffsetX * Math.cos(this.angle);
+                const frontWheelX = this.x + this.wheelOffsetX * Math.cos(this.angle);
                 
-                switch (this.operation) {
-                    case '+':
-                        computation = prev + current;
-                        break;
-                    case '−':
-                        computation = prev - current;
-                        break;
-                    case '×':
-                        computation = prev * current;
-                        break;
-                    case '÷':
-                        if (current === 0) {
-                            alert("Cannot divide by zero");
-                            this.clear();
-                            return;
-                        }
-                        computation = prev / current;
-                        break;
-                    default:
-                        return;
+                const rearTerrainY = getTerrainHeight(rearWheelX);
+                const frontTerrainY = getTerrainHeight(frontWheelX);
+
+                // Determine if wheels are touching ground
+                const rearWheelBottom = this.y + this.wheelYOffset - this.wheelRadius;
+                const frontWheelBottom = this.y + this.wheelYOffset - this.wheelRadius;
+
+                // Simple collision resolution
+                let hitBack = false;
+                let hitFront = false;
+
+                // Check Rear Wheel
+                if (rearWheelBottom > rearTerrainY) {
+                    hitBack = true;
+                    this.y -= (rearWheelBottom - rearTerrainY);
+                    this.vy *= 0.8; // Bounce dampening
+                }
+
+                // Check Front Wheel
+                if (frontWheelBottom > frontTerrainY) {
+                    hitFront = true;
+                    this.y -= (frontWheelBottom - frontTerrainY);
+                    this.vy *= 0.8;
+                }
+
+                this.onGround = hitBack || hitFront;
+
+                // Calculate Target Angle based on terrain slope
+                let targetAngle = 0;
+                if (this.onGround) {
+                    // Calculate angle between rear and front wheel contact points
+                    const dy = frontTerrainY - rearTerrainY;
+                    const dx = frontWheelX - rearWheelX;
+                    targetAngle = Math.atan2(dy, dx);
+                }
+
+                // Spring Physics for Rotation (Suspension)
+                // If the car body angle is different from the terrain angle, apply torque
+                const angleDiff = targetAngle - this.angle;
+                this.angularVelocity += angleDiff * 0.1; // Spring constant
+                this.angularVelocity *= 0.85; // Damping
+                this.angle += this.angularVelocity;
+
+                // Head Over Heels Detection (Game Over)
+                // If the car rotates too far (e.g., upside down)
+                if (Math.abs(this.angle) > Math.PI * 0.8) {
+                    // Check if the "roof" of the car hits the ground
+                    // Simple check: if angle is near PI and y is high enough relative to terrain
+                    // Or simpler: if angle > 100 degrees and we are moving
+                    if (Math.abs(this.angle) > Math.PI / 1.2) {
+                         // Check if the center of mass is below the wheels relative to the slope
+                         // Simplified: If angle is very high, crash.
+                         // Let's use a simpler heuristic: if angle > 90 deg and we have velocity
+                         // Or just check if the top of the car hits the ground
+                         
+                         // Get terrain height at center
+                         const centerTerrainY = getTerrainHeight(this.x);
+                         const carTopY = this.y - this.height / 2;
+                         
+                         if (carTopY > centerTerrainY - 10) {
+                             triggerGameOver();
+                         }
+                    }
                 }
                 
-                // Handle floating point precision issues roughly
-                this.currentOperand = Math.round(computation * 100000000) / 100000000;
-                this.operation = undefined;
-                this.previousOperand = '';
-                this.updateDisplay();
-            }
+                // Also crash if stuck in ground for too long (simplified)
+                if (hitBack && hitFront && Math.abs(this.angle) > 1) {
+                     // Check if top hits ground
+                     const centerTerrainY = getTerrainHeight(this.x);
+                     const carTopY = this.y - this.height / 2;
+                     if (carTopY > centerTerrainY - 5) {
+                         triggerGameOver();
+                     }
+                }
 
-            getDisplayNumber(number) {
-                const stringNumber = number.toString();
-                const integerDigits = parseFloat(stringNumber.split('.')[0]);
-                const decimalDigits = stringNumber.split('.')[1];
-                let integerDisplay;
-                if (isNaN(integerDigits)) {
-                    integerDisplay = '';
-                } else {
-                    integerDisplay = integerDigits.toLocaleString('en', { maximumFractionDigits: 0 });
+                // Update Distance
+                if (this.x > distanceTraveled) {
+                    distanceTraveled = this.x;
                 }
-                if (decimalDigits != null) {
-                    return `${integerDisplay}.${decimalDigits}`;
-                } else {
-                    return integerDisplay;
-                }
-            }
+                distanceEl.innerText = Math.floor(distanceTraveled / 10);
+            },
 
-            updateDisplay() {
-                this.currentOperandTextElement.innerText = this.getDisplayNumber(this.currentOperand);
-                if (this.operation != null) {
-                    this.previousOperandTextElement.innerText = 
-                        `${this.getDisplayNumber(this.previousOperand)} ${this.operation}`;
-                } else {
-                    this.previousOperandTextElement.innerText = '';
-                }
+            draw: function() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+
+                // Draw Car Body
+                ctx.fillStyle = '#FF4444'; // Red Car
+                ctx.fillRect(-30, -15, 60, 30);
+                
+                // Draw Driver
+                ctx.fillStyle = '#FFFF00'; // Yellow Helmet
+                ctx.beginPath();
+                ctx.arc(0, -5, 8, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Draw Car Frame/Chassis detail
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(-30, -15, 60, 30);
+
+                ctx.restore();
+
+                // Draw Wheels (Independent rotation, but follow body angle for suspension visualization)
+                // Rear Wheel
+                this.drawWheel(this.x - this.wheelOffsetX, this.y + this.wheelYOffset, this.angle);
+                // Front Wheel
+                this.drawWheel(this.x + this.wheelOffsetX, this.y + this.wheelYOffset, this.angle);
+            },
+
+            drawWheel: function(x, y, bodyAngle) {
+                ctx.save();
+                ctx.translate(x, y);
+                // Wheels rotate independently of the car body tilt, but stay attached to the chassis position
+                // For visual suspension, we don't rotate the wheel itself with the body, 
+                // we just draw it at the calculated position relative to the car center.
+                // However, to look good, let's add a little bounce based on terrain
+                ctx.rotate(Date.now() / 100); // Spin animation
+                
+                ctx.fillStyle = '#333';
+                ctx.beginPath();
+                ctx.arc(0, 0, this.wheelRadius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Rim
+                ctx.fillStyle = '#888';
+                ctx.beginPath();
+                ctx.arc(0, 0, this.wheelRadius / 2, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Spokes
+                ctx.strokeStyle = '#555';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(-this.wheelRadius, 0);
+                ctx.lineTo(this.wheelRadius, 0);
+                ctx.moveTo(0, -this.wheelRadius);
+                ctx.lineTo(0, this.wheelRadius);
+                ctx.stroke();
+
+                ctx.restore();
+            }
+        };
+
+        // Terrain Generation
+        const terrainPoints = [];
+        const pointCount = 2000; // Generate enough points for a long track
+
+        function generateTerrain() {
+            terrainPoints.length = 0;
+            let y = canvas.height / 2;
+            for (let i = 0; i < pointCount; i++) {
+                // Create hills
+                const frequency = 0.01 + (Math.random() * 0.005);
+                const amplitude = 50 + (Math.random() * 50);
+                
+                // Use sine waves for smooth hills
+                const noise = Math.sin(i * frequency) * amplitude + 
+                              Math.sin(i * frequency * 2.5) * (amplitude / 2);
+                
+                y = (canvas.height / 2 + 100) + noise;
+                terrainPoints.push({x: i * TERRAIN_BLOCK_SIZE, y: y});
             }
         }
 
-        const numberButtons = document.querySelectorAll('[id^="number"], [id^="0"], [id^="1"], [id^="2"], [id^="3"], [id^="4"], [id^="5"], [id^="6"], [id^="7"], [id^="8"], [id^="9"], [id="decimal"]');
-        const operationButtons = document.querySelectorAll('.btn-operator');
-        const equalsButton = document.getElementById('equals');
-        const deleteButton = document.getElementById('delete');
-        const allClearButton = document.getElementById('clear');
-        const previousOperandTextElement = document.getElementById('previous-operand');
-        const currentOperandTextElement = document.getElementById('current-operand');
+        function getTerrainHeight(x) {
+            // Find the segment
+            const index = Math.floor(x / TERRAIN_BLOCK_SIZE);
+            const nextIndex = index + 1;
+            
+            if (index < 0) return terrainPoints[0].y;
+            if (index >= terrainPoints.length - 1) return terrainPoints[terrainPoints.length - 1].y;
 
-        const calculator = new Calculator(previousOperandTextElement, currentOperandTextElement);
+            const p1 = terrainPoints[index];
+            const p2 = terrainPoints[nextIndex];
 
-        numberButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                calculator.appendNumber(button.innerText);
-            });
-        });
+            // Lerp
+            const t = (x - p1.x) / TERRAIN_BLOCK_SIZE;
+            return p1.y + (p2.y - p1.y) * t;
+        }
 
-        operationButtons.forEach(button => {
-            button.addEventListener('click', () => {
-                calculator.chooseOperation(button.innerText);
-            });
-        });
+        function drawTerrain() {
+            ctx.fillStyle = '#4CAF50'; // Grass Green
+            ctx.strokeStyle = '#388E3C'; // Darker Green
+            
+            ctx.beginPath();
+            // Start from bottom left of screen to bottom right
+            const startX = Math.floor(cameraX / TERRAIN_BLOCK_SIZE) * TERRAIN_BLOCK_SIZE;
+            const endX = startX + canvas.width + TERRAIN_BLOCK_SIZE;
 
-        equalsButton.addEventListener('click', () => {
-            calculator.compute();
-        });
+            ctx.moveTo(cameraX, canvas.height); // Bottom left corner
 
-        allClearButton.addEventListener('click', () => {
-            calculator.clear();
-        });
-
-        deleteButton.addEventListener('click', () => {
-            calculator.delete();
-        });
-
-        // Keyboard Support
-        document.addEventListener('keydown', (e) => {
-            if (e.key >= '0' && e.key <= '9') calculator.appendNumber(e.key);
-            if (e.key === '.') calculator.appendNumber('.');
-            if (e.key === '+') calculator.chooseOperation('+');
-            if (e.key === '-') calculator.chooseOperation('−');
-            if (e.key === '*') calculator.chooseOperation('×');
-            if (e.key === '/') {
-                e.preventDefault();
-                calculator.chooseOperation('÷');
+            // Draw only visible terrain to save performance
+            for (let i = 0; i < terrainPoints.length; i++) {
+                if (terrainPoints[i].x > startX && terrainPoints[i].x < endX) {
+                    ctx.lineTo(terrainPoints[i].x, terrainPoints[i].y);
+                }
             }
-            if (e.key === 'Enter' || e.key === '=') calculator.compute();
-            if (e.key === 'Backspace') calculator.delete();
-            if (e.key === 'Escape') calculator.clear();
-        });
+
+            ctx.lineTo(endX, canvas.height); // Bottom right corner
+            ctx.closePath();
+            ctx.fill();
+            
+            // Draw line on top
+            ctx.lineWidth = 4;
+            ctx.stroke();
+        }
+
+        function drawBackground() {
+            // Simple cloud effect
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+            for(let i=0; i<5; i++) {
+                let cloudX = (cameraX * 0.1 + i * 300) % (canvas.width + 200);
+                let cloudY = 50 + i * 30;
+                ctx.beginPath();
+                ctx.arc(canvas.width - cloudX, cloudY, 40, 0, Math.PI*2);
+                ctx.arc(canvas.width - cloudX + 30, cloudY - 10, 50, 0, Math.PI*2);
+                ctx.arc(canvas.width - cloudX + 60, cloudY, 40, 0, Math.PI*2);
+                ctx.fill();
+            }
+        }
+
+        function triggerGameOver() {
+            isGameOver = true;
+            gameOverScreen.style.display = 'block';
+        }
+
+        function resetGame() {
+            isGameOver = false;
+            gameOverScreen.style.display = 'none';
+            car.x = 200;
+            car.y = 300;
+            car.vx = 0;
+            car.vy = 0;
+            car.angle = 0;
+            car.angularVelocity = 0;
+            distanceTraveled = 0;
+            generateTerrain();
+        }
+
+        function updateCamera() {
+            // Camera follows car
+            cameraX = car.x - canvas.width / 3;
+        }
+
+        function loop() {
+            // Clear Canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            updateCamera();
+            car.update();
+            
+            drawBackground();
+            drawTerrain();
+            car.draw();
+
+            requestAnimationFrame(loop);
+        }
+
+        // Init
+        generateTerrain();
+        loop();
+
 </script>
 
   </body>
