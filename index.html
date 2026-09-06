@@ -4,405 +4,360 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Simple Chess</title>
+    <title>Neon 3D Runner</title>
     <style>
         body {
             margin: 0;
-            padding: 0;
-            background-color: #222;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
+            overflow: hidden;
+            background-color: #111;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        #canvas-container {
+            width: 100%;
             height: 100vh;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            color: white;
-        }
-
-        #game-container {
-            position: relative;
-            width: 95vmin;
-            height: 95vmin;
-            border: 5px solid #444;
-            box-shadow: 0 0 20px rgba(0,0,0,0.8);
-        }
-
-        canvas {
             display: block;
-            background: white;
-            cursor: pointer;
         }
-
-        #status {
-            margin-top: 10px;
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: #fff;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 0 0 5px #00ffff;
+            z-index: 10;
+        }
+        #game-over {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: white;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 30px;
+            border: 2px solid #ff00ff;
+            border-radius: 10px;
+            box-shadow: 0 0 20px #ff00ff;
+            z-index: 20;
+        }
+        h1 {
+            margin: 0 0 20px 0;
+            font-size: 40px;
+            color: #ff00ff;
+            text-shadow: 0 0 10px #ff00ff;
+        }
+        button {
+            background: #00ffff;
+            color: #000;
+            border: none;
+            padding: 15px 30px;
             font-size: 20px;
             font-weight: bold;
-        }
-
-        button {
-            margin-top: 10px;
-            padding: 10px 20px;
-            font-size: 16px;
-            background: #555;
-            color: white;
-            border: none;
-            border-radius: 5px;
             cursor: pointer;
+            border-radius: 5px;
+            box-shadow: 0 0 10px #00ffff;
         }
-        
         button:active {
-            background: #777;
+            transform: scale(0.95);
+        }
+        #instructions {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            color: rgba(255,255,255,0.5);
+            pointer-events: none;
         }
     </style>
 </head>
 <body>
 
-    <div id="game-container">
-        <canvas id="chessBoard"></canvas>
+    <div id="ui">Score: <span id="score">0</span></div>
+    
+    <div id="game-over">
+        <h1>CRASH!</h1>
+        <p>Final Score: <span id="final-score">0</span></p>
+        <button id="restart-btn">RETRY</button>
     </div>
-    <div id="status">White's Turn</div>
-    <button id="resetBtn">New Game</button>
+
+    <div id="instructions">Swipe Left/Right to Dodge</div>
+    <div id="canvas-container"></div>
+
+    <!-- Load Three.js from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
-        // --- Configuration ---
-        var canvas = document.getElementById('chessBoard');
-        var ctx = canvas.getContext('2d');
-        var statusEl = document.getElementById('status');
-        var resetBtn = document.getElementById('resetBtn');
-
-        var BOARD_SIZE = 8;
-        var cellSize = 0;
-        var pieces = {}; // Store piece data
-        var turn = 'white'; // 'white' or 'black'
-        var selectedPiece = null; // {x, y}
-        var validMoves = []; // Array of {x, y}
-
-        // Unicode Chess Pieces
-        var PIECE_SYMBOLS = {
-            'white': { 'p': '♟', 'r': '♜', 'n': '♞', 'b': '♝', 'q': '♛', 'k': '♚' },
-            'black': { 'p': '♟', 'r': '♜', 'n': '♞', 'b': '♝', 'q': '♛', 'k': '♚' }
-        };
+        // --- Variables ---
+        var scene, camera, renderer;
+        var player, floor, gridHelper;
+        var obstacles = [];
+        var particles = [];
+        var score = 0;
+        var gameSpeed = 0.5;
+        var isGameOver = false;
+        var animationId;
         
-        // Initial Board Setup
-        var initialBoard = {
-            'black': [
-                {x:0, y:0, type:'r'}, {x:1, y:0, type:'n'}, {x:2, y:0, type:'b'}, {x:3, y:0, type:'q'}, {x:4, y:0, type:'k'}, {x:5, y:0, type:'b'}, {x:6, y:0, type:'n'}, {x:7, y:0, type:'r'},
-                {x:0, y:1, type:'p'}, {x:1, y:1, type:'p'}, {x:2, y:1, type:'p'}, {x:3, y:1, type:'p'}, {x:4, y:1, type:'p'}, {x:5, y:1, type:'p'}, {x:6, y:1, type:'p'}, {x:7, y:1, type:'p'}
-            ],
-            'white': [
-                {x:0, y:7, type:'r'}, {x:1, y:7, type:'n'}, {x:2, y:7, type:'b'}, {x:3, y:7, type:'q'}, {x:4, y:7, type:'k'}, {x:5, y:7, type:'b'}, {x:6, y:7, type:'n'}, {x:7, y:7, type:'r'},
-                {x:0, y:6, type:'p'}, {x:1, y:6, type:'p'}, {x:2, y:6, type:'p'}, {x:3, y:6, type:'p'}, {x:4, y:6, type:'p'}, {x:5, y:6, type:'p'}, {x:6, y:6, type:'p'}, {x:7, y:6, type:'p'}
-            ]
-        };
-
+        // Lane positions: -3, 0, 3 (Left, Center, Right)
+        var lanes = [-3, 0, 3];
+        var currentLane = 1; // Start in center
+        var targetX = 0;
+        
         // --- Initialization ---
         function init() {
-            resize();
-            window.addEventListener('resize', resize);
-            canvas.addEventListener('click', handleCanvasClick);
-            resetBtn.addEventListener('click', startNewGame);
-            startNewGame();
-        }
+            // Scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x111111);
+            scene.fog = new THREE.Fog(0x111111, 10, 50);
 
-        function startNewGame() {
-            pieces = { 'white': [], 'black': [] };
-            turn = 'white';
-            selectedPiece = null;
-            validMoves = [];
+            // Camera
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+            camera.position.set(0, 5, 10);
+            camera.lookAt(0, 0, 0);
+
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+
+            // Lights
+            var ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+            scene.add(ambientLight);
+
+            var dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(5, 10, 5);
+            dirLight.castShadow = true;
+            scene.add(dirLight);
+
+            // Player (Neon Cube)
+            var playerGeo = new THREE.BoxGeometry(1, 1, 1);
+            var playerMat = new THREE.MeshStandardMaterial({ 
+                color: 0x00ffff, 
+                emissive: 0x0044aa,
+                emissiveIntensity: 0.5
+            });
+            player = new THREE.Mesh(playerGeo, playerMat);
+            player.castShadow = true;
+            player.position.y = 0.5;
+            scene.add(player);
+
+            // Floor (Grid)
+            var gridSize = 200;
+            var gridDivisions = 40;
+            gridHelper = new THREE.GridHelper(gridSize, gridDivisions, 0xff00ff, 0x222222);
+            gridHelper.position.y = 0;
+            scene.add(gridHelper);
+
+            // Floor Plane (for shadows)
+            var floorGeo = new THREE.PlaneGeometry(200, 200);
+            var floorMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
+            floor = new THREE.Mesh(floorGeo, floorMat);
+            floor.rotation.x = -Math.PI / 2;
+            floor.position.y = -0.01;
+            floor.receiveShadow = true;
+            scene.add(floor);
+
+            // Controls
+            window.addEventListener('resize', onResize, false);
+            document.addEventListener('touchstart', handleTouchStart, false);
+            document.addEventListener('touchmove', handleTouchMove, false);
+            document.addEventListener('keydown', handleKeyDown, false);
             
-            // Recreate pieces from initialBoard
-            for (var color in initialBoard) {
-                for (var i = 0; i < initialBoard[color].length; i++) {
-                    var p = initialBoard[color][i];
-                    pieces[color].push({
-                        x: p.x,
-                        y: p.y,
-                        type: p.type,
-                        color: color
-                    });
-                }
-            }
-            draw();
-            updateStatus();
+            document.getElementById('restart-btn').addEventListener('click', resetGame);
+
+            animate();
         }
 
-        function resize() {
-            var size = Math.min(window.innerWidth, window.innerHeight) * 0.9;
-            canvas.width = size;
-            canvas.height = size;
-            cellSize = size / BOARD_SIZE;
-            draw();
+        // --- Input Handling ---
+        var touchStartX = 0;
+        var touchEndX = 0;
+
+        function handleTouchStart(evt) {
+            touchStartX = evt.changedTouches[0].screenX;
         }
 
-        // --- Drawing ---
-        function draw() {
-            // Clear
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Draw Board Squares
-            for (var x = 0; x < BOARD_SIZE; x++) {
-                for (var y = 0; y < BOARD_SIZE; y++) {
-                    var isWhite = (x + y) % 2 === 0;
-                    ctx.fillStyle = isWhite ? '#f0d9b5' : '#b58863';
-                    
-                    // Highlight Selected
-                    if (selectedPiece && selectedPiece.x === x && selectedPiece.y === y) {
-                        ctx.fillStyle = '#769656'; // Green highlight
-                    }
-                    
-                    // Highlight Valid Moves
-                    var isValid = false;
-                    for(var m=0; m<validMoves.length; m++) {
-                        if(validMoves[m].x === x && validMoves[m].y === y) {
-                            isValid = true;
-                            break;
-                        }
-                    }
-                    if(isValid) {
-                        ctx.fillStyle = '#769656';
-                    }
-
-                    ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
-                    
-                    // Draw Piece
-                    drawPiece(x, y);
-                }
-            }
+        function handleTouchMove(evt) {
+            // Optional: Visual feedback or smooth follow if desired
         }
 
-        function drawPiece(x, y) {
-            // Find piece at x,y
-            var p = getPieceAt(x, y);
-            if (p) {
-                ctx.fillStyle = p.color === 'white' ? '#fff' : '#000';
-                
-                // Text shadow for visibility
-                ctx.shadowColor = "rgba(0,0,0,0.5)";
-                ctx.shadowBlur = 4;
-                ctx.shadowOffsetX = 2;
-                ctx.shadowOffsetY = 2;
+        function handleKeyDown(event) {
+            if (isGameOver) return;
+            if (event.key === 'ArrowLeft') changeLane(-1);
+            if (event.key === 'ArrowRight') changeLane(1);
+        }
 
-                ctx.font = (cellSize * 0.8) + "px Arial";
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-                
-                var symbol = PIECE_SYMBOLS[p.color][p.type];
-                ctx.fillText(symbol, x * cellSize + cellSize / 2, y * cellSize + cellSize / 2 + (cellSize * 0.1)); // +10px adjustment
-                
-                // Reset shadow
-                ctx.shadowColor = "transparent";
+        function handleTouchEnd(evt) {
+            touchEndX = evt.changedTouches[0].screenX;
+            handleSwipe();
+        }
+
+        function handleSwipe() {
+            if (touchEndX < touchStartX - 50) changeLane(-1); // Swipe Left
+            if (touchEndX > touchStartX + 50) changeLane(1);  // Swipe Right
+        }
+
+        function changeLane(direction) {
+            var newLaneIndex = currentLane + direction;
+            if (newLaneIndex >= 0 && newLaneIndex < lanes.length) {
+                currentLane = newLaneIndex;
+                targetX = lanes[currentLane];
             }
         }
 
         // --- Game Logic ---
-        function getPieceAt(x, y) {
-            for (var color in pieces) {
-                for (var i = 0; i < pieces[color].length; i++) {
-                    if (pieces[color][i].x === x && pieces[color][i].y === y) {
-                        return pieces[color][i];
-                    }
-                }
-            }
-            return null;
+        function spawnObstacle() {
+            var geometry = new THREE.BoxGeometry(1, 1, 1);
+            var material = new THREE.MeshStandardMaterial({ 
+                color: 0xff0000,
+                emissive: 0x550000,
+                emissiveIntensity: 0.5
+            });
+            var obstacle = new THREE.Mesh(geometry, material);
+            
+            // Pick random lane
+            var laneIndex = Math.floor(Math.random() * 3);
+            obstacle.position.x = lanes[laneIndex];
+            obstacle.position.y = 0.5;
+            obstacle.position.z = -50; // Start far away
+            obstacle.castShadow = true;
+            obstacle.receiveShadow = true;
+            
+            scene.add(obstacle);
+            obstacles.push(obstacle);
         }
 
-        function handleCanvasClick(e) {
-            var rect = canvas.getBoundingClientRect();
-            var clickX = e.clientX - rect.left;
-            var clickY = e.clientY - rect.top;
-
-            var gridX = Math.floor(clickX / cellSize);
-            var gridY = Math.floor(clickY / cellSize);
-
-            // Check if clicked inside board
-            if (gridX < 0 || gridX >= BOARD_SIZE || gridY < 0 || gridY >= BOARD_SIZE) return;
-
-            // If we have a selected piece
-            if (selectedPiece) {
-                // Check if clicked on a valid move
-                var moveFound = false;
-                for (var i = 0; i < validMoves.length; i++) {
-                    if (validMoves[i].x === gridX && validMoves[i].y === gridY) {
-                        movePiece(selectedPiece, gridX, gridY);
-                        moveFound = true;
-                        break;
-                    }
-                }
-
-                // If clicked on own piece, change selection
-                if (!moveFound) {
-                    var clickedPiece = getPieceAt(gridX, gridY);
-                    if (clickedPiece && clickedPiece.color === turn) {
-                        selectPiece(gridX, gridY);
-                    } else {
-                        // Clicked empty space or enemy not in range -> Deselect
-                        selectedPiece = null;
-                        validMoves = [];
-                        draw();
-                    }
-                }
-            } else {
-                // No piece selected, try to select
-                var clickedPiece = getPieceAt(gridX, gridY);
-                if (clickedPiece && clickedPiece.color === turn) {
-                    selectPiece(gridX, gridY);
-                }
+        function updateParticles() {
+            // Simple speed effect
+            if (Math.random() > 0.5) {
+                var geo = new THREE.BoxGeometry(0.1, 0.1, 0.1);
+                var mat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+                var p = new THREE.Mesh(geo, mat);
+                p.position.x = (Math.random() - 0.5) * 20;
+                p.position.y = Math.random() * 5;
+                p.position.z = -50;
+                scene.add(p);
+                particles.push({ mesh: p, speed: 1 });
             }
         }
 
-        function selectPiece(x, y) {
-            selectedPiece = { x: x, y: y };
-            validMoves = getValidMoves(x, y);
-            draw();
-        }
-
-        function movePiece(from, toX, toY) {
-            // Find piece object
-            var piece = getPieceAt(from.x, from.y);
-            var targetPiece = getPieceAt(toX, toY);
-
-            // Capture
-            if (targetPiece) {
-                // Remove captured piece
-                var idx = pieces[targetPiece.color].indexOf(targetPiece);
-                if (idx > -1) {
-                    pieces[targetPiece.color].splice(idx, 1);
-                }
+        function updateParticles() {
+             if (Math.random() > 0.8) {
+                var geo = new THREE.BoxGeometry(0.2, 0.2, 0.2);
+                var mat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
+                var p = new THREE.Mesh(geo, mat);
+                p.position.x = (Math.random() - 0.5) * 30;
+                p.position.y = Math.random() * 10;
+                p.position.z = -60;
+                scene.add(p);
+                particles.push({ mesh: p, life: 1.0 });
+            }
+            
+            for (var i = particles.length - 1; i >= 0; i--) {
+                var p = particles[i];
+                p.mesh.position.z += 2;
+                p.life -= 0.02;
+                p.mesh.material.opacity = p.life;
+                p.mesh.material.transparent = true;
                 
-                // Check King Capture (Simple Win Condition)
-                if (targetPiece.type === 'k') {
-                    alert(turn.charAt(0).toUpperCase() + turn.slice(1) + " Wins!");
-                    startNewGame();
-                    return;
+                if (p.life <= 0 || p.mesh.position.z > 10) {
+                    scene.remove(p.mesh);
+                    particles.splice(i, 1);
                 }
             }
+        }
 
-            // Update position
-            piece.x = toX;
-            piece.y = toY;
+        function animate() {
+            if (!isGameOver) {
+                requestAnimationFrame(animate);
+            }
+            
+            // Smooth Player Movement
+            player.position.x += (targetX - player.position.x) * 0.1;
+            
+            // Rotate player slightly for effect
+            player.rotation.z = (player.position.x - targetX) * -0.1;
+            player.rotation.x += 0.05; // Rolling effect
 
-            // Pawn Promotion (Simple: Auto Queen)
-            if (piece.type === 'p') {
-                if ((piece.color === 'white' && piece.y === 0) || (piece.color === 'black' && piece.y === 7)) {
-                    piece.type = 'q';
-                }
+            // Move Grid to simulate speed
+            gridHelper.position.z += gameSpeed;
+            if (gridHelper.position.z > 10) {
+                gridHelper.position.z = 0;
             }
 
-            // Switch Turn
-            turn = turn === 'white' ? 'black' : 'white';
-            selectedPiece = null;
-            validMoves = [];
-            
-            draw();
-            updateStatus();
-        }
+            // Spawn Obstacles
+            if (Math.random() < 0.02 + (score * 0.0001)) {
+                spawnObstacle();
+            }
 
-        function updateStatus() {
-            statusEl.innerText = turn.charAt(0).toUpperCase() + turn.slice(1) + "'s Turn";
-            statusEl.style.color = turn === 'white' ? '#fff' : '#aaa';
-        }
+            // Update Obstacles
+            for (var i = obstacles.length - 1; i >= 0; i--) {
+                var obs = obstacles[i];
+                obs.position.z += gameSpeed;
 
-        function getValidMoves(x, y) {
-            var piece = getPieceAt(x, y);
-            if (!piece) return [];
-            
-            var moves = [];
-            var directions = [];
-
-            // Logic based on type
-            if (piece.type === 'p') { // Pawn
-                var direction = piece.color === 'white' ? -1 : 1;
-                var startRow = piece.color === 'white' ? 6 : 1;
+                // Collision Detection
+                var playerBox = new THREE.Box3().setFromObject(player);
+                var obsBox = new THREE.Box3().setFromObject(obs);
                 
-                // Move forward 1
-                if (!getPieceAt(x, y + direction)) {
-                    moves.push({x: x, y: y + direction});
-                    // Move forward 2 (if start)
-                    if (y === startRow && !getPieceAt(x, y + direction * 2)) {
-                        moves.push({x: x, y: y + direction * 2});
-                    }
-                }
-                // Capture
-                if (x - 1 >= 0 && y + direction >= 0 && y + direction < 8) {
-                    var target = getPieceAt(x - 1, y + direction);
-                    if (target && target.color !== piece.color) moves.push({x: x - 1, y: y + direction});
-                }
-                if (x + 1 < 8 && y + direction >= 0 && y + direction < 8) {
-                    var target2 = getPieceAt(x + 1, y + direction);
-                    if (target2 && target2.color !== piece.color) moves.push({x: x + 1, y: y + direction});
-                }
-            }
-            
-            else if (piece.type === 'r') { // Rook
-                directions = [[0,1], [0,-1], [1,0], [-1,0]];
-            }
-            else if (piece.type === 'b') { // Bishop
-                directions = [[1,1], [1,-1], [-1,1], [-1,-1]];
-            }
-            else if (piece.type === 'q') { // Queen
-                directions = [[0,1], [0,-1], [1,0], [-1,0], [1,1], [1,-1], [-1,1], [-1,-1]];
-            }
-            else if (piece.type === 'k') { // King
-                directions = [[0,1], [0,-1], [1,0], [-1,0], [1,1], [1,-1], [-1,1], [-1,-1]];
-            }
-            else if (piece.type === 'n') { // Knight
-                // L-shape
-                var knightMoves = [[2,1], [2,-1], [-2,1], [-2,-1], [1,2], [1,-2], [-1,2], [-1,-2]];
-                for(var i=0; i<knightMoves.length; i++) {
-                    var nx = x + knightMoves[i][0];
-                    var ny = y + knightMoves[i][1];
-                    if (nx >= 0 && nx < 8 && ny >= 0 && ny < 8) {
-                        var target = getPieceAt(nx, ny);
-                        if (!target || target.color !== piece.color) {
-                            moves.push({x: nx, y: ny});
-                        }
-                    }
-                }
-                return moves; // Return early for Knight
-            }
+                // Shrink boxes slightly for forgiving gameplay
+                playerBox.expandByScalar(-0.2);
+                obsBox.expandByScalar(-0.2);
 
-            // Sliding Pieces (Rook, Bishop, Queen)
-            if (piece.type === 'r' || piece.type === 'b' || piece.type === 'q') {
-                for (var i = 0; i < directions.length; i++) {
-                    var dx = directions[i][0];
-                    var dy = directions[i][1];
-                    var nx = x + dx;
-                    var ny = y + dy;
+                if (playerBox.intersectsBox(obsBox)) {
+                    gameOver();
+                }
+
+                // Remove if passed camera
+                if (obs.position.z > 10) {
+                    scene.remove(obs);
+                    obstacles.splice(i, 1);
+                    score += 10;
+                    document.getElementById('score').innerText = score;
                     
-                    while (nx >= 0 && nx < 8 && ny >= 0 && ny < 8) {
-                        var target = getPieceAt(nx, ny);
-                        if (!target) {
-                            moves.push({x: nx, y: ny});
-                        } else {
-                            if (target.color !== piece.color) {
-                                moves.push({x: nx, y: ny});
-                            }
-                            break; // Hit a piece
-                        }
-                        nx += dx;
-                        ny += dy;
+                    // Increase speed gradually
+                    if (gameSpeed < 1.0) {
+                        gameSpeed += 0.001;
                     }
                 }
             }
             
-            // King moves (1 step)
-            if (piece.type === 'k') {
-                for (var i = 0; i < directions.length; i++) {
-                    var nx = x + directions[i][0];
-                    var ny = y + directions[i][1];
-                    if (nx >= 0 && nx < 8 && ny >= 0 && ny < 8) {
-                        var target = getPieceAt(nx, ny);
-                        if (!target || target.color !== piece.color) {
-                            moves.push({x: nx, y: ny});
-                        }
-                    }
-                }
-            }
+            updateParticles();
 
-            // Filter out moves that leave King in check (Basic)
-            // For this simple version, we just return all pseudo-legal moves.
-            // A full check would simulate the move and see if King is attacked.
-            return moves;
+            renderer.render(scene, camera);
+        }
+
+        function gameOver() {
+            isGameOver = true;
+            document.getElementById('game-over').style.display = 'block';
+            document.getElementById('final-score').innerText = score;
+        }
+
+        function resetGame() {
+            // Clear obstacles
+            for (var i = obstacles.length - 1; i >= 0; i--) {
+                scene.remove(obstacles[i]);
+            }
+            obstacles = [];
+            
+            score = 0;
+            gameSpeed = 0.5;
+            currentLane = 1;
+            targetX = 0;
+            player.position.x = 0;
+            player.rotation.set(0,0,0);
+            
+            document.getElementById('score').innerText = '0';
+            document.getElementById('game-over').style.display = 'none';
+            
+            isGameOver = false;
+            animate();
+        }
+
+        function onResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
         }
 
         // Start
@@ -410,4 +365,4 @@
 
     </script>
 </body>
-</html>
+</html> 
