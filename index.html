@@ -4,466 +4,408 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Play Ludo</title>
+    <title>Simple Chess</title>
     <style>
         body {
             margin: 0;
             padding: 0;
-            background: #2c3e50;
+            background-color: #222;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
+            justify-content: center;
             height: 100vh;
-            font-family: Arial, sans-serif;
-            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
         }
 
         #game-container {
             position: relative;
-            width: 100vmin;
-            height: 100vmin;
-            background: white;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            width: 95vmin;
+            height: 95vmin;
+            border: 5px solid #444;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
         }
 
         canvas {
             display: block;
-        }
-
-        #ui-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
-
-        #dice-btn {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 60px;
-            height: 60px;
             background: white;
-            border: 2px solid #333;
-            border-radius: 10px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 24px;
-            font-weight: bold;
             cursor: pointer;
-            pointer-events: auto;
-            box-shadow: 0 4px 0 #000;
-            z-index: 100;
         }
 
-        #dice-btn:active {
-            transform: translate(-50%, -48%);
-            box-shadow: 0 2px 0 #000;
-        }
-
-        #turn-indicator {
-            position: absolute;
-            bottom: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: white;
-            font-size: 18px;
+        #status {
+            margin-top: 10px;
+            font-size: 20px;
             font-weight: bold;
-            text-shadow: 1px 1px 2px black;
         }
 
-        #message {
-            position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: yellow;
-            font-size: 14px;
-            text-shadow: 1px 1px 1px black;
+        button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background: #555;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
         }
-
+        
+        button:active {
+            background: #777;
+        }
     </style>
 </head>
 <body>
 
     <div id="game-container">
-        <canvas id="ludoBoard"></canvas>
-        <div id="dice-btn">🎲</div>
-        <div id="turn-indicator">Red's Turn</div>
-        <div id="message"></div>
+        <canvas id="chessBoard"></canvas>
     </div>
+    <div id="status">White's Turn</div>
+    <button id="resetBtn">New Game</button>
 
     <script>
-        const canvas = document.getElementById('ludoBoard');
-        const ctx = canvas.getContext('2d');
-        const diceBtn = document.getElementById('dice-btn');
-        const turnIndicator = document.getElementById('turn-indicator');
-        const msgEl = document.getElementById('message');
+        // --- Configuration ---
+        var canvas = document.getElementById('chessBoard');
+        var ctx = canvas.getContext('2d');
+        var statusEl = document.getElementById('status');
+        var resetBtn = document.getElementById('resetBtn');
 
-        // Config
-        const BOARD_SIZE = 15;
-        let cellSize = 0;
+        var BOARD_SIZE = 8;
+        var cellSize = 0;
+        var pieces = {}; // Store piece data
+        var turn = 'white'; // 'white' or 'black'
+        var selectedPiece = null; // {x, y}
+        var validMoves = []; // Array of {x, y}
+
+        // Unicode Chess Pieces
+        var PIECE_SYMBOLS = {
+            'white': { 'p': '♟', 'r': '♜', 'n': '♞', 'b': '♝', 'q': '♛', 'k': '♚' },
+            'black': { 'p': '♟', 'r': '♜', 'n': '♞', 'b': '♝', 'q': '♛', 'k': '♚' }
+        };
         
-        // Game State
-        let currentPlayer = 0; // 0: Red, 1: Green, 2: Yellow, 3: Blue
-        let diceValue = 0;
-        let diceRolled = false;
-        let canMove = false;
-        let waitingForMove = false;
-        let selectedPiece = null;
-        let pieces = []; // All pieces
-        
-        // Colors
-        const COLORS = ['#e74c3c', '#2ecc71', '#f1c40f', '#3498db']; // R, G, Y, B
-        const BASES = [
-            {x: 0, y: 0}, {x: 9, y: 0}, 
-            {x: 9, y: 9}, {x: 0, y: 9}
-        ];
-        
-        // Path Definitions (0-51 steps)
-        // Each player has a different start index on the main loop
-        const MAIN_PATH = [
-            {x:1,y:6}, {x:2,y:6}, {x:3,y:6}, {x:4,y:6}, {x:5,y:6}, {x:6,y:5}, {x:6,y:4}, {x:6,y:3}, {x:6,y:2}, {x:6,y:1}, {x:7,y:1}, {x:8,y:1}, {x:8,y:2}, {x:8,y:3}, {x:8,y:4}, {x:8,y:5}, {x:9,y:6}, {x:10,y:6}, {x:11,y:6}, {x:12,y:6}, {x:13,y:6}, {x:14,y:6}, {x:14,y:7}, {x:14,y:8}, {x:13,y:8}, {x:12,y:8}, {x:11,y:8}, {x:10,y:8}, {x:9,y:9}, {x:8,y:9}, {x:8,y:10}, {x:8,y:11}, {x:8,y:12}, {x:8,y:13}, {x:8,y:14}, {x:7,y:14}, {x:6,y:14}, {x:6,y:13}, {x:6,y:12}, {x:6,y:11}, {x:6,y:10}, {x:6,y:9}, {x:5,y:8}, {x:4,y:8}, {x:3,y:8}, {x:2,y:8}, {x:1,y:8}, {x:1,y:7}, {x:1,y:6}
-        ];
+        // Initial Board Setup
+        var initialBoard = {
+            'black': [
+                {x:0, y:0, type:'r'}, {x:1, y:0, type:'n'}, {x:2, y:0, type:'b'}, {x:3, y:0, type:'q'}, {x:4, y:0, type:'k'}, {x:5, y:0, type:'b'}, {x:6, y:0, type:'n'}, {x:7, y:0, type:'r'},
+                {x:0, y:1, type:'p'}, {x:1, y:1, type:'p'}, {x:2, y:1, type:'p'}, {x:3, y:1, type:'p'}, {x:4, y:1, type:'p'}, {x:5, y:1, type:'p'}, {x:6, y:1, type:'p'}, {x:7, y:1, type:'p'}
+            ],
+            'white': [
+                {x:0, y:7, type:'r'}, {x:1, y:7, type:'n'}, {x:2, y:7, type:'b'}, {x:3, y:7, type:'q'}, {x:4, y:7, type:'k'}, {x:5, y:7, type:'b'}, {x:6, y:7, type:'n'}, {x:7, y:7, type:'r'},
+                {x:0, y:6, type:'p'}, {x:1, y:6, type:'p'}, {x:2, y:6, type:'p'}, {x:3, y:6, type:'p'}, {x:4, y:6, type:'p'}, {x:5, y:6, type:'p'}, {x:6, y:6, type:'p'}, {x:7, y:6, type:'p'}
+            ]
+        };
 
-        // Home Paths (5 steps into home)
-        const HOME_PATHS = [
-            [{x:1,y:7}, {x:2,y:7}, {x:3,y:7}, {x:4,y:7}, {x:5,y:7}], // Red
-            [{x:7,y:1}, {x:7,y:2}, {x:7,y:3}, {x:7,y:4}, {x:7,y:5}], // Green
-            [{x:13,y:7}, {x:12,y:7}, {x:11,y:7}, {x:10,y:7}, {x:9,y:7}], // Yellow
-            [{x:7,y:13}, {x:7,y:12}, {x:7,y:11}, {x:7,y:10}, {x:7,y:9}]  // Blue
-        ];
-
-        // Safe Zones (Star positions indices on main path)
-        const SAFE_ZONES = [0, 8, 13, 21, 26, 34, 39, 47];
-
+        // --- Initialization ---
         function init() {
             resize();
             window.addEventListener('resize', resize);
+            canvas.addEventListener('click', handleCanvasClick);
+            resetBtn.addEventListener('click', startNewGame);
+            startNewGame();
+        }
+
+        function startNewGame() {
+            pieces = { 'white': [], 'black': [] };
+            turn = 'white';
+            selectedPiece = null;
+            validMoves = [];
             
-            // Create Pieces
-            for(let p=0; p<4; p++) {
-                for(let i=0; i<4; i++) {
-                    pieces.push({
-                        player: p,
-                        id: i,
-                        state: 'BASE', // BASE, BOARD, HOME
-                        pos: 0, // Index on path (0-51) or steps in home
-                        x: 0, y: 0
+            // Recreate pieces from initialBoard
+            for (var color in initialBoard) {
+                for (var i = 0; i < initialBoard[color].length; i++) {
+                    var p = initialBoard[color][i];
+                    pieces[color].push({
+                        x: p.x,
+                        y: p.y,
+                        type: p.type,
+                        color: color
                     });
                 }
             }
-
-            diceBtn.addEventListener('click', rollDice);
             draw();
+            updateStatus();
         }
 
         function resize() {
-            const size = Math.min(window.innerWidth, window.innerHeight) * 0.95;
+            var size = Math.min(window.innerWidth, window.innerHeight) * 0.9;
             canvas.width = size;
             canvas.height = size;
             cellSize = size / BOARD_SIZE;
             draw();
         }
 
-        function drawBoard() {
-            // Draw Grid Background
-            ctx.fillStyle = '#fff';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // --- Drawing ---
+        function draw() {
+            // Clear
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Draw Bases
-            const drawBase = (x, y, color, rot) => {
-                ctx.fillStyle = color;
-                ctx.fillRect(x * cellSize, y * cellSize, 6 * cellSize, 6 * cellSize);
-                ctx.fillStyle = '#fff';
-                ctx.beginPath();
-                ctx.arc((x+3)*cellSize, (y+3)*cellSize, 2.5*cellSize, 0, Math.PI*2);
-                ctx.fill();
-            };
-
-            drawBase(0, 0, COLORS[0], 0); // Red Base
-            drawBase(9, 0, COLORS[1], 0); // Green Base
-            drawBase(9, 9, COLORS[2], 0); // Yellow Base
-            drawBase(0, 9, COLORS[3], 0); // Blue Base
-
-            // Draw Center
-            ctx.fillStyle = '#f39c12';
-            ctx.beginPath();
-            ctx.moveTo(6*cellSize, 6*cellSize);
-            ctx.lineTo(9*cellSize, 6*cellSize);
-            ctx.lineTo(9*cellSize, 9*cellSize);
-            ctx.lineTo(6*cellSize, 9*cellSize);
-            ctx.fill();
-            // Triangles
-            ctx.fillStyle = COLORS[0]; ctx.beginPath(); ctx.moveTo(6*cellSize,6*cellSize); ctx.lineTo(7.5*cellSize,7.5*cellSize); ctx.lineTo(6*cellSize,9*cellSize); ctx.fill();
-            ctx.fillStyle = COLORS[1]; ctx.beginPath(); ctx.moveTo(9*cellSize,6*cellSize); ctx.lineTo(7.5*cellSize,7.5*cellSize); ctx.lineTo(9*cellSize,9*cellSize); ctx.fill(); // Fix logic for triangle direction
-            ctx.fillStyle = COLORS[2]; ctx.beginPath(); ctx.moveTo(9*cellSize,9*cellSize); ctx.lineTo(7.5*cellSize,7.5*cellSize); ctx.lineTo(6*cellSize,9*cellSize); ctx.fill();
-            ctx.fillStyle = COLORS[3]; ctx.beginPath(); ctx.moveTo(6*cellSize,6*cellSize); ctx.lineTo(7.5*cellSize,7.5*cellSize); ctx.lineTo(6*cellSize,9*cellSize); ctx.fill(); // Simplified center
-
-            // Draw Paths
-            ctx.strokeStyle = '#333';
-            ctx.lineWidth = 1;
-            
-            // Draw Cells
-            const drawCell = (x, y, color = '#fff') => {
-                ctx.fillStyle = color;
-                ctx.fillRect(x*cellSize, y*cellSize, cellSize, cellSize);
-                ctx.strokeRect(x*cellSize, y*cellSize, cellSize, cellSize);
-            };
-
-            // Main Path
-            MAIN_PATH.forEach((p, i) => {
-                let color = '#fff';
-                if (i===0) color = COLORS[0];
-                if (i===8) color = COLORS[1];
-                if (i===13) color = COLORS[2];
-                if (i===21) color = COLORS[3];
-                if (i===26) color = COLORS[0]; // Safe zone color? No, standard is white star
-                if (i===34) color = COLORS[1];
-                if (i===39) color = COLORS[2];
-                if (i===47) color = COLORS[3];
-                
-                drawCell(p.x, p.y, color);
-                
-                // Draw Star
-                if(SAFE_ZONES.includes(i)) {
-                    ctx.fillStyle = 'rgba(0,0,0,0.2)';
-                    ctx.beginPath();
-                    ctx.arc((p.x+0.5)*cellSize, (p.y+0.5)*cellSize, cellSize*0.2, 0, Math.PI*2);
-                    ctx.fill();
-                }
-            });
-
-            // Home Paths
-            HOME_PATHS.forEach((path, pIdx) => {
-                path.forEach((p, i) => {
-                    drawCell(p.x, p.y, COLORS[pIdx]);
-                });
-            });
-        }
-
-        function drawPieces() {
-            pieces.forEach(p => {
-                let px, py;
-                
-                if (p.state === 'BASE') {
-                    const baseX = BASES[p.player].x * cellSize;
-                    const baseY = BASES[p.player].y * cellSize;
-                    // Positions in base
-                    const offsets = [{x:1,y:1},{x:4,y:1},{x:1,y:4},{x:4,y:4}];
-                    px = (baseX + offsets[p.id].x * cellSize) - cellSize/2;
-                    py = (baseY + offsets[p.id].y * cellSize) - cellSize/2;
-                } else {
-                    let posObj;
-                    if (p.state === 'HOME_PATH') {
-                        posObj = HOME_PATHS[p.player][p.pos];
-                    } else if (p.state === 'FINISHED') {
-                        // Center
-                        ctx.fillStyle = COLORS[p.player];
-                        ctx.beginPath();
-                        ctx.arc((7.5)*cellSize, (7.5)*cellSize, cellSize/3, 0, Math.PI*2);
-                        ctx.fill();
-                        return;
-                    } else {
-                        // Main Path
-                        const globalPos = (MAIN_PATH.indexOf(MAIN_PATH[p.pos]) + (p.player === 0 ? 0 : p.player === 1 ? 13 : p.player === 2 ? 26 : 39)) % 52;
-                        // Actually, simpler: pieces store their index on the main loop 0-51
-                        // But we need to map that to grid coordinates.
-                        // Let's just store the actual grid coord in state for simplicity during render
-                        posObj = {x: p.gridX, y: p.gridY};
+            // Draw Board Squares
+            for (var x = 0; x < BOARD_SIZE; x++) {
+                for (var y = 0; y < BOARD_SIZE; y++) {
+                    var isWhite = (x + y) % 2 === 0;
+                    ctx.fillStyle = isWhite ? '#f0d9b5' : '#b58863';
+                    
+                    // Highlight Selected
+                    if (selectedPiece && selectedPiece.x === x && selectedPiece.y === y) {
+                        ctx.fillStyle = '#769656'; // Green highlight
                     }
                     
-                    px = posObj.x * cellSize;
-                    py = posObj.y * cellSize;
-                }
+                    // Highlight Valid Moves
+                    var isValid = false;
+                    for(var m=0; m<validMoves.length; m++) {
+                        if(validMoves[m].x === x && validMoves[m].y === y) {
+                            isValid = true;
+                            break;
+                        }
+                    }
+                    if(isValid) {
+                        ctx.fillStyle = '#769656';
+                    }
 
-                ctx.fillStyle = COLORS[p.player];
-                ctx.beginPath();
-                ctx.arc(px + cellSize/2, py + cellSize/2, cellSize * 0.35, 0, Math.PI*2);
-                ctx.fill();
-                ctx.strokeStyle = '#fff';
-                ctx.lineWidth = 2;
-                ctx.stroke();
+                    ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+                    
+                    // Draw Piece
+                    drawPiece(x, y);
+                }
+            }
+        }
+
+        function drawPiece(x, y) {
+            // Find piece at x,y
+            var p = getPieceAt(x, y);
+            if (p) {
+                ctx.fillStyle = p.color === 'white' ? '#fff' : '#000';
                 
-                // Highlight if selectable
-                if (canMove && p.player === currentPlayer && p.state !== 'BASE' && p.state !== 'FINISHED') {
-                    ctx.strokeStyle = '#fff';
-                    ctx.lineWidth = 3;
-                    ctx.strokeRect(px, py, cellSize, cellSize);
+                // Text shadow for visibility
+                ctx.shadowColor = "rgba(0,0,0,0.5)";
+                ctx.shadowBlur = 4;
+                ctx.shadowOffsetX = 2;
+                ctx.shadowOffsetY = 2;
+
+                ctx.font = (cellSize * 0.8) + "px Arial";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                
+                var symbol = PIECE_SYMBOLS[p.color][p.type];
+                ctx.fillText(symbol, x * cellSize + cellSize / 2, y * cellSize + cellSize / 2 + (cellSize * 0.1)); // +10px adjustment
+                
+                // Reset shadow
+                ctx.shadowColor = "transparent";
+            }
+        }
+
+        // --- Game Logic ---
+        function getPieceAt(x, y) {
+            for (var color in pieces) {
+                for (var i = 0; i < pieces[color].length; i++) {
+                    if (pieces[color][i].x === x && pieces[color][i].y === y) {
+                        return pieces[color][i];
+                    }
                 }
-            });
+            }
+            return null;
         }
 
-        function draw() {
-            drawBoard();
-            drawPieces();
-        }
+        function handleCanvasClick(e) {
+            var rect = canvas.getBoundingClientRect();
+            var clickX = e.clientX - rect.left;
+            var clickY = e.clientY - rect.top;
 
-        function rollDice() {
-            if (diceRolled) return;
-            
-            diceValue = Math.floor(Math.random() * 6) + 1;
-            diceBtn.innerText = diceValue;
-            diceRolled = true;
-            
-            msgEl.innerText = "Roll: " + diceValue;
-            
-            // Check if any move is possible
-            if (!canMovePiece()) {
-                setTimeout(nextTurn, 1000);
+            var gridX = Math.floor(clickX / cellSize);
+            var gridY = Math.floor(clickY / cellSize);
+
+            // Check if clicked inside board
+            if (gridX < 0 || gridX >= BOARD_SIZE || gridY < 0 || gridY >= BOARD_SIZE) return;
+
+            // If we have a selected piece
+            if (selectedPiece) {
+                // Check if clicked on a valid move
+                var moveFound = false;
+                for (var i = 0; i < validMoves.length; i++) {
+                    if (validMoves[i].x === gridX && validMoves[i].y === gridY) {
+                        movePiece(selectedPiece, gridX, gridY);
+                        moveFound = true;
+                        break;
+                    }
+                }
+
+                // If clicked on own piece, change selection
+                if (!moveFound) {
+                    var clickedPiece = getPieceAt(gridX, gridY);
+                    if (clickedPiece && clickedPiece.color === turn) {
+                        selectPiece(gridX, gridY);
+                    } else {
+                        // Clicked empty space or enemy not in range -> Deselect
+                        selectedPiece = null;
+                        validMoves = [];
+                        draw();
+                    }
+                }
             } else {
-                canMove = true;
-                waitingForMove = true;
+                // No piece selected, try to select
+                var clickedPiece = getPieceAt(gridX, gridY);
+                if (clickedPiece && clickedPiece.color === turn) {
+                    selectPiece(gridX, gridY);
+                }
             }
         }
 
-        function canMovePiece() {
-            // Check if any piece of current player can move
-            const playerPieces = pieces.filter(p => p.player === currentPlayer && p.state !== 'FINISHED');
-            return playerPieces.some(p => isValidMove(p, diceValue));
-        }
-
-        function isValidMove(p, steps) {
-            if (p.state === 'BASE') return steps === 6;
-            if (p.state === 'HOME_PATH') {
-                return (p.pos + steps) <= 5;
-            }
-            // Main path logic needs to check if it enters home path
-            // Simplified: Just check if it can move 50 steps total before home
-            // This is a bit complex for simple JS, let's assume max 56 steps to finish
-            return true; 
-        }
-
-        canvas.addEventListener('click', (e) => {
-            if (!waitingForMove) return;
-
-            const rect = canvas.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-            
-            // Find clicked piece
-            const clickedPiece = pieces.find(p => {
-                if (p.player !== currentPlayer) return false;
-                let px, py;
-                if (p.state === 'BASE') {
-                    const baseX = BASES[p.player].x;
-                    const baseY = BASES[p.player].y;
-                    const offsets = [{x:1,y:1},{x:4,y:1},{x:1,y:4},{x:4,y:4}];
-                    px = (baseX + offsets[p.id].x) * cellSize;
-                    py = (baseY + offsets[p.id].y) * cellSize;
-                } else {
-                    px = (p.gridX || 0) * cellSize;
-                    py = (p.gridY || 0) * cellSize;
-                }
-                return Math.abs(x - (px + cellSize/2)) < cellSize/2 && Math.abs(y - (py + cellSize/2)) < cellSize/2;
-            });
-
-            if (clickedPiece && isValidMove(clickedPiece, diceValue)) {
-                movePiece(clickedPiece, diceValue);
-            }
-        });
-
-        function movePiece(p, steps) {
-            waitingForMove = false;
-            canMove = false;
-
-            if (p.state === 'BASE') {
-                if (steps === 6) {
-                    p.state = 'BOARD';
-                    p.pos = 0; // Start position index
-                    updateGridCoords(p);
-                    msgEl.innerText = "Out of Base!";
-                }
-            } else if (p.state === 'BOARD') {
-                p.pos += steps;
-                if (p.pos >= 51) { // Reached end of loop
-                    p.state = 'HOME_PATH';
-                    p.pos = 0;
-                }
-                updateGridCoords(p);
-                checkCapture(p);
-            } else if (p.state === 'HOME_PATH') {
-                p.pos += steps;
-                if (p.pos >= 5) {
-                    p.state = 'FINISHED';
-                    msgEl.innerText = "Home!";
-                }
-            }
-
+        function selectPiece(x, y) {
+            selectedPiece = { x: x, y: y };
+            validMoves = getValidMoves(x, y);
             draw();
-            
-            if (diceValue === 6 && p.state !== 'FINISHED') {
-                diceRolled = false;
-                diceBtn.innerText = "🎲";
-                msgEl.innerText = "Roll again!";
-            } else {
-                nextTurn();
+        }
+
+        function movePiece(from, toX, toY) {
+            // Find piece object
+            var piece = getPieceAt(from.x, from.y);
+            var targetPiece = getPieceAt(toX, toY);
+
+            // Capture
+            if (targetPiece) {
+                // Remove captured piece
+                var idx = pieces[targetPiece.color].indexOf(targetPiece);
+                if (idx > -1) {
+                    pieces[targetPiece.color].splice(idx, 1);
+                }
+                
+                // Check King Capture (Simple Win Condition)
+                if (targetPiece.type === 'k') {
+                    alert(turn.charAt(0).toUpperCase() + turn.slice(1) + " Wins!");
+                    startNewGame();
+                    return;
+                }
             }
-        }
 
-        function updateGridCoords(p) {
-            if (p.state === 'BOARD') {
-                // Find index in MAIN_PATH
-                const startOffset = p.player === 0 ? 0 : p.player === 1 ? 13 : p.player === 2 ? 26 : 39;
-                const globalIndex = (startOffset + p.pos) % 52;
-                const coord = MAIN_PATH[globalIndex];
-                p.gridX = coord.x;
-                p.gridY = coord.y;
-            } else if (p.state === 'HOME_PATH') {
-                const coord = HOME_PATHS[p.player][p.pos];
-                p.gridX = coord.x;
-                p.gridY = coord.y;
+            // Update position
+            piece.x = toX;
+            piece.y = toY;
+
+            // Pawn Promotion (Simple: Auto Queen)
+            if (piece.type === 'p') {
+                if ((piece.color === 'white' && piece.y === 0) || (piece.color === 'black' && piece.y === 7)) {
+                    piece.type = 'q';
+                }
             }
+
+            // Switch Turn
+            turn = turn === 'white' ? 'black' : 'white';
+            selectedPiece = null;
+            validMoves = [];
+            
+            draw();
+            updateStatus();
         }
 
-        function checkCapture(movedPiece) {
-            if (movedPiece.state !== 'BOARD') return;
-            
-            // Is this a safe zone?
-            const startOffset = movedPiece.player === 0 ? 0 : movedPiece.player === 1 ? 13 : movedPiece.player === 2 ? 26 : 39;
-            const globalIndex = (startOffset + movedPiece.pos) % 52;
-            
-            // Check if global index is safe
-            const isSafe = SAFE_ZONES.includes(globalIndex);
-            if (isSafe) return;
+        function updateStatus() {
+            statusEl.innerText = turn.charAt(0).toUpperCase() + turn.slice(1) + "'s Turn";
+            statusEl.style.color = turn === 'white' ? '#fff' : '#aaa';
+        }
 
-            // Check if any opponent is here
-            const opponentPieces = pieces.filter(p => p.state === 'BOARD' && p.player !== movedPiece.player && p.gridX === movedPiece.gridX && p.gridY === movedPiece.gridY);
+        function getValidMoves(x, y) {
+            var piece = getPieceAt(x, y);
+            if (!piece) return [];
             
-            if (opponentPieces.length > 0) {
-                opponentPieces.forEach(op => {
-                    op.state = 'BASE';
-                    op.pos = 0;
-                    op.gridX = 0; // Reset
-                    op.gridY = 0;
-                });
-                msgEl.innerText = "Captured! Roll again.";
-                diceValue = 6; // Bonus roll
-                diceRolled = false;
-                diceBtn.innerText = "🎲";
-                draw();
-                return;
+            var moves = [];
+            var directions = [];
+
+            // Logic based on type
+            if (piece.type === 'p') { // Pawn
+                var direction = piece.color === 'white' ? -1 : 1;
+                var startRow = piece.color === 'white' ? 6 : 1;
+                
+                // Move forward 1
+                if (!getPieceAt(x, y + direction)) {
+                    moves.push({x: x, y: y + direction});
+                    // Move forward 2 (if start)
+                    if (y === startRow && !getPieceAt(x, y + direction * 2)) {
+                        moves.push({x: x, y: y + direction * 2});
+                    }
+                }
+                // Capture
+                if (x - 1 >= 0 && y + direction >= 0 && y + direction < 8) {
+                    var target = getPieceAt(x - 1, y + direction);
+                    if (target && target.color !== piece.color) moves.push({x: x - 1, y: y + direction});
+                }
+                if (x + 1 < 8 && y + direction >= 0 && y + direction < 8) {
+                    var target2 = getPieceAt(x + 1, y + direction);
+                    if (target2 && target2.color !== piece.color) moves.push({x: x + 1, y: y + direction});
+                }
             }
-        }
-
-        function nextTurn() {
-            currentPlayer = (currentPlayer + 1) % 4;
-            diceRolled = false;
-            diceBtn.innerText = "🎲";
-            msgEl.innerText = "";
-            turnIndicator.innerText = [
-                "Red's Turn", "Green's Turn", "Yellow's Turn", "Blue's Turn"
-            ][currentPlayer];
-            turnIndicator.style.color = COLORS[currentPlayer];
             
-            // Check if next player can move at all (if not, skip turn)
-            // Simple implementation: Just let them roll
+            else if (piece.type === 'r') { // Rook
+                directions = [[0,1], [0,-1], [1,0], [-1,0]];
+            }
+            else if (piece.type === 'b') { // Bishop
+                directions = [[1,1], [1,-1], [-1,1], [-1,-1]];
+            }
+            else if (piece.type === 'q') { // Queen
+                directions = [[0,1], [0,-1], [1,0], [-1,0], [1,1], [1,-1], [-1,1], [-1,-1]];
+            }
+            else if (piece.type === 'k') { // King
+                directions = [[0,1], [0,-1], [1,0], [-1,0], [1,1], [1,-1], [-1,1], [-1,-1]];
+            }
+            else if (piece.type === 'n') { // Knight
+                // L-shape
+                var knightMoves = [[2,1], [2,-1], [-2,1], [-2,-1], [1,2], [1,-2], [-1,2], [-1,-2]];
+                for(var i=0; i<knightMoves.length; i++) {
+                    var nx = x + knightMoves[i][0];
+                    var ny = y + knightMoves[i][1];
+                    if (nx >= 0 && nx < 8 && ny >= 0 && ny < 8) {
+                        var target = getPieceAt(nx, ny);
+                        if (!target || target.color !== piece.color) {
+                            moves.push({x: nx, y: ny});
+                        }
+                    }
+                }
+                return moves; // Return early for Knight
+            }
+
+            // Sliding Pieces (Rook, Bishop, Queen)
+            if (piece.type === 'r' || piece.type === 'b' || piece.type === 'q') {
+                for (var i = 0; i < directions.length; i++) {
+                    var dx = directions[i][0];
+                    var dy = directions[i][1];
+                    var nx = x + dx;
+                    var ny = y + dy;
+                    
+                    while (nx >= 0 && nx < 8 && ny >= 0 && ny < 8) {
+                        var target = getPieceAt(nx, ny);
+                        if (!target) {
+                            moves.push({x: nx, y: ny});
+                        } else {
+                            if (target.color !== piece.color) {
+                                moves.push({x: nx, y: ny});
+                            }
+                            break; // Hit a piece
+                        }
+                        nx += dx;
+                        ny += dy;
+                    }
+                }
+            }
+            
+            // King moves (1 step)
+            if (piece.type === 'k') {
+                for (var i = 0; i < directions.length; i++) {
+                    var nx = x + directions[i][0];
+                    var ny = y + directions[i][1];
+                    if (nx >= 0 && nx < 8 && ny >= 0 && ny < 8) {
+                        var target = getPieceAt(nx, ny);
+                        if (!target || target.color !== piece.color) {
+                            moves.push({x: nx, y: ny});
+                        }
+                    }
+                }
+            }
+
+            // Filter out moves that leave King in check (Basic)
+            // For this simple version, we just return all pseudo-legal moves.
+            // A full check would simulate the move and see if King is attacked.
+            return moves;
         }
 
+        // Start
         init();
 
     </script>
