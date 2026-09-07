@@ -1,19 +1,16 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
-    <title>3D Mobile Car Shooter</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>3D Mobile Car Game</title>
     <style>
         body {
             margin: 0;
             overflow: hidden;
-            background-color: #87CEEB; /* Sky blue */
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            touch-action: none; /* Prevent browser scrolling/zooming */
-            user-select: none;
-            -webkit-user-select: none;
+            background-color: #87CEEB;
+            font-family: 'Arial', sans-serif;
+            touch-action: none; /* Mobile scrolling band karne ke liye */
         }
 
         #game-container {
@@ -46,13 +43,14 @@
             font-size: 24px;
             font-weight: bold;
             text-shadow: 2px 2px 4px #000;
+            z-index: 20;
         }
 
         #controls {
             position: absolute;
             bottom: 20px;
             width: 100%;
-            height: 150px;
+            height: 180px;
             pointer-events: auto;
             display: flex;
             justify-content: space-between;
@@ -60,14 +58,14 @@
             box-sizing: border-box;
         }
 
-        /* Joystick Area */
+        /* Joystick Styles */
         #joystick-area {
             width: 120px;
             height: 120px;
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.1);
             border-radius: 50%;
             position: relative;
-            border: 2px solid rgba(255, 255, 255, 0.5);
+            border: 2px solid rgba(255, 255, 255, 0.3);
         }
 
         #joystick-knob {
@@ -82,11 +80,12 @@
             box-shadow: 0 0 10px rgba(0,0,0,0.5);
         }
 
-        /* Button Area */
+        /* Pedal Styles */
         #pedals {
             display: flex;
             gap: 20px;
             align-items: flex-end;
+            margin-bottom: 10px;
         }
 
         .pedal {
@@ -95,11 +94,13 @@
             border-radius: 10px;
             display: flex;
             justify-content: center;
-            font-size: 20px;
+            align-items: center;
+            font-size: 18px;
             font-weight: bold;
             color: white;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
             user-select: none;
+            -webkit-user-select: none;
         }
 
         #brake {
@@ -112,68 +113,59 @@
             border: 2px solid #00cc00;
         }
 
-        .pedal:active {
-            transform: scale(0.95);
-            filter: brightness(0.9);
+        /* Start Screen */
+        #start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            pointer-events: auto;
         }
 
-        #instructions {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.8);
+        #start-screen h1 {
             color: white;
-            padding: 20px;
-            border-radius: 10px;
+            font-size: 40px;
+            margin-bottom: 10px;
             text-align: center;
-            pointer-events: auto;
-            border: 2px solid #ff3333;
         }
-        
-        #instructions h2 { margin-top: 0; }
-        
-        button#start-btn {
+
+        #start-screen p {
+            color: #ccc;
+            margin-bottom: 30px;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        #start-btn {
             background: #ff3333;
             color: white;
             border: none;
-            padding: 15px 30px;
-            font-size: 18px;
-            border-radius: 5px;
+            padding: 15px 40px;
+            font-size: 22px;
+            border-radius: 50px;
             cursor: pointer;
-            margin-top: 10px;
+            box-shadow: 0 5px 15px rgba(255, 51, 51, 0.4);
         }
 
-        #loading {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: white;
-            font-size: 20px;
-            z-index: 20;
-            background: rgba(0,0,0,0.7);
-            padding: 20px;
-            border-radius: 10px;
+        #start-btn:active {
+            transform: scale(0.95);
         }
     </style>
 </head>
 <body>
-
-    <div id="loading">Loading 3D Engine...</div>
 
     <div id="game-container"></div>
 
     <div id="ui-layer">
         <div id="score-board">Score: 0</div>
         
-        <div id="instructions">
-            <h2>3D Car Shooter</h2>
-            <p>Use Left Stick to Steer</p>
-            <p>Green Button = Go<br>Red Button = Brake</p>
-            <button id="start-btn">START ENGINE</button>
-        </div>
-
         <div id="controls">
             <div id="joystick-area">
                 <div id="joystick-knob"></div>
@@ -185,80 +177,103 @@
         </div>
     </div>
 
-    <!-- Three.js Library -->
+    <!-- Start Screen Overlay -->
+    <div id="start-screen">
+        <h1>3D CITY RACER</h1>
+        <p>Left Joystick: Steer<br>Green: Gas | Red: Brake</p>
+        <button id="start-btn">START ENGINE</button>
+    </div>
+
+    <!-- Three.js Library (WebGL) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    
+
     <script>
         // --- Game Variables ---
-        let scene, camera, renderer;
-        let car;
-        let targets = [];
-        let score = 0;
-        let gameActive = false;
-        let clock = new THREE.Clock();
-        
+        var scene, camera, renderer;
+        var car;
+        var targets = [];
+        var score = 0;
+        var gameActive = false;
+        var clock = new THREE.Clock();
+
         // Car Physics
-        let speed = 0;
-        let steering = 0;
-        const maxSpeed = 0.8;
-        const acceleration = 0.02;
-        const friction = 0.98;
-        const turnSpeed = 0.04;
+        var speed = 0;
+        var steering = 0;
+        var maxSpeed = 0.8;
+        var acceleration = 0.02;
+        var friction = 0.98;
+        var turnSpeed = 0.04;
 
         // Input State
-        let joystickData = { x: 0, y: 0, active: false };
-        let gasPressed = false;
-        let brakePressed = false;
+        var joystickData = { x: 0, y: 0, active: false };
+        var gasPressed = false;
+        var brakePressed = false;
 
         // DOM Elements
-        const joystickArea = document.getElementById('joystick-area');
-        const joystickKnob = document.getElementById('joystick-knob');
-        const gasBtn = document.getElementById('gas');
-        const brakeBtn = document.getElementById('brake');
-        const startBtn = document.getElementById('start-btn');
-        const instructions =instructions
- score =.getElementById('-board
-El document('');        // --- Initialization ---
+        var joystickArea = document.getElementById('joystick-area');
+        var joystickKnob = document.getElementById('joystick-knob');
+        var gasBtn = document.getElementById('gas');
+        var brakeBtn = document.getElementById('brake');
+        var startBtn = document.getElementById('start-btn');
+        var startScreen = document.getElementById('start-screen');
+        var scoreEl = document.getElementById('score-board');
+
+        // --- Initialization ---
         function init() {
             // Scene Setup
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x87EB);
-            =x87CEEB, 20, 100);
+            scene.background = new THREE.Color(0x87CEEB); // Sky Blue
+            scene.fog = new THREE.Fog(0x87CEEB, 20, 100);
 
             // Camera
             camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
             camera.position.set(0, 10, -15);
-            camera.lookAt(0, 0, );            // =Renderer true(window);Map
-            renderer.typeShadow document').
 
-            const ambient,
-ambient const.D00           50, 50, 50);
+            // Renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.getElementById('game-container').appendChild(renderer.domElement);
+
+            // Lights
+            var ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            var dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            dirLight.position.set(50, 50, 50);
             dirLight.castShadow = true;
             dirLight.shadow.mapSize.width = 1024;
             dirLight.shadow.mapSize.height = 1024;
-            dirLight.shadow.camera.near = 0.5;
-            dirLight.shadow.camera.far = 200;
-            dirLight.shadow.camera.left = -50;
-            dirLight.shadow.camera.right = 50;
-            dirLight.shadow.camera.top = 50;
-            = -Math.PI / 2;
+            scene.add(dirLight);
+
+            // Ground
+            var groundGeo = new THREE.PlaneGeometry(500, 500);
+            var groundMat = new THREE.MeshStandardMaterial({ 
+                color: 0x333333,
+                roughness: 0.8 
+            });
+            var ground = new THREE.Mesh(groundGeo, groundMat);
+            ground.rotation.x = -Math.PI / 2;
             ground.receiveShadow = true;
             scene.add(ground);
 
-            // Grid Helper for reference
-            const gridHelper = new THREE.GridHelper(500, 50, 0x555555, 0x444444);
+            // Grid
+            var gridHelper = new THREE.GridHelper(500, 50, 0x555555, 0x444444);
             scene.add(gridHelper);
 
-            // Car create           
-0 i();
+            // Car
+            createCar();
+
+            // Initial Targets
+            for (var i = 0; i < 10; i++) {
+                spawnTarget();
+            }
 
             // Event Listeners
             window.addEventListener('resize', onWindowResize);
             setupControls();
             startBtn.addEventListener('click', startGame);
-
-            // Hide loading
-            loadingEl.style.display = 'none';
 
             // Start Loop
             animate();
@@ -267,97 +282,128 @@ ambient const.D00           50, 50, 50);
         function createCar() {
             car = new THREE.Group();
 
- 0(body
- = body; =.add Cabin =1.
- THREEStandard 3 }); constabin
- =8;
+            // Body
+            var bodyGeo = new THREE.BoxGeometry(2, 1, 4);
+            var bodyMat = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+            var body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.position.y = 1;
+            body.castShadow = true;
+            car.add(body);
+
+            // Cabin
+            var cabinGeo = new THREE.BoxGeometry(1.8, 0.8, 2);
+            var cabinMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
+            var cabin = new THREE.Mesh(cabinGeo, cabinMat);
+            cabin.position.y = 1.8;
             cabin.position.z = -0.2;
             cabin.castShadow = true;
             car.add(cabin);
 
             // Wheels
-            const wheelGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.4, 16);
-            const wheelMat = new THREE.Mesh color { : }, - -1.2 }, { x: 1, z: -1.2 }
+            var wheelGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.4, 16);
+            var wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
+            
+            var positions = [
+                { x: -1, z: 1.2 }, { x: 1, z: 1.2 },
+                { x: -1, z: -1.2 }, { x: 1, z: -1.2 }
             ];
 
-            positions.forEach(pos => {
-                const wheel = new THREE.Mesh(wheelGeo, wheelMat);
+            for (var i = 0; i < positions.length; i++) {
+                var wheel = new THREE.Mesh(wheelGeo, wheelMat);
                 wheel.rotation.z = Math.PI / 2;
-                wheel.position.set(pos.x, 0.4, pos.z);
-               .cast.add); });lights const light.Box(,,0.);
- const light new({00            left new THREE, lightMat left0.6,, 2 car            new, right.,
-.add            scene); functionTarget() {
-            const geometry = new THREE.BoxGeometry(2, 2, 2);
-            const material = new THREE.MeshStandardMaterial({ 
+                wheel.position.set(positions[i].x, 0.4, positions[i].z);
+                wheel.castShadow = true;
+                car.add(wheel);
+            }
+
+            scene.add(car);
+        }
+
+        function spawnTarget() {
+            var geometry = new THREE.BoxGeometry(2, 2, 2);
+            var material = new THREE.MeshStandardMaterial({ 
                 color: 0xffaa00,
                 emissive: 0xff4400,
-                emissiveIntensity: 0..Mesh(geometry, material);
+                emissiveIntensity: 0.5
+            });
+            var target = new THREE.Mesh(geometry, material);
             
             // Random Position
-            const x = (Math.random() - 0.5) * 200;
-            const z = (Math.random() - 0.5) * 200;
+            var x = (Math.random() - 0.5) * 200;
+            var z = (Math.random() - 0.5) * 200;
             
             target.position.set(x, 1, z);
             target.castShadow = true;
-            target.receiveShadow = true;
-            
-            scene.add(target);(target
- setup //           ystick => (!ystickData return
- const joystickArea
-                rect.left /; rect
+            scene.add(target);
+            targets.push(target);
+        }
+
+        function setupControls() {
+            // Joystick Logic
+            var handleJoystick = function(e) {
+                if (!joystickData.active) return;
                 
- clientY
-                if.touches
-X = e[client
-Y = e.touches].;                else
-                   X = e                    clientY = e.clientY;
+                var rect = joystickArea.getBoundingClientRect();
+                var centerX = rect.left + rect.width / 2;
+                var centerY = rect.top + rect.height / 2;
+                
+                var clientX, clientY;
+                if (e.touches) {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                } else {
+                    clientX = e.clientX;
+                    clientY = e.clientY;
                 }
 
-                let dx = clientX - centerX;
-                let dy = clientY - centerY;
+                var dx = clientX - centerX;
+                var dy = clientY - centerY;
                 
-                const distance = Math.sqrt(dx*dx + dy*dy);
-                const maxDist = rect.width / 2 - 25; // 25 is knob radius approx
+                var distance = Math.sqrt(dx*dx + dy*dy);
+                var maxDist = rect.width / 2 - 25;
                 
                 if (distance > maxDist) {
-                    const angle =.atan                   )Dist;
+                    var angle = Math.atan2(dy, dx);
+                    dx = Math.cos(angle) * maxDist;
                     dy = Math.sin(angle) * maxDist;
                 }
 
-                joystickKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+                joystickKnob.style.transform = 'translate(calc(-50% + ' + dx + 'px), calc(-50% + ' + dy + 'px))';
                 
-                // Normalize -1 to 1
                 joystickData.x = dx / maxDist;
                 joystickData.y = dy / maxDist;
             };
 
-            const endJoystick = () => {
+            var endJoystick = function() {
                 joystickData.active = false;
-                joystickData
-0Kntranslate -
+                joystickData.x = 0;
+                joystickData.y = 0;
+                joystickKnob.style.transform = 'translate(-50%, -50%)';
+            };
 
-
-.addEventListenertouch =>();.active
- handleJo);pass           touch).preventDefault();Jo },});touch); Mouse testing.addEventListenere joystickData.active = true;
+            joystickArea.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                joystickData.active = true;
                 handleJoystick(e);
-                const move = (ev) => handleJoystick(ev);
-                const up = () => {
-                    joystickData.active = false;
-                    joystickData.x = 0;
-                    joystickData.y = 0;
-                    joystickKnob.style.transform = `translate(-50%, -50%)`;
-                    document.removeEventListener('mousemove', move);
-                    document.removeEventListener('mouseup', up);
-                };
-                document.addEventListener('mousemove', move);
-                document.addEventListener('mouseup', up);
-            });
+            }, {passive: false});
 
-            // Pedals const,
-',                    if gas else }); btn)();(type = = });                { '; = true;
+            joystickArea.addEventListener('touchmove', function(e) {
+                e.preventDefault();
+                handleJoystick(e);
+            }, {passive: false});
+
+            joystickArea.addEventListener('touchend', endJoystick);
+
+            // Pedals
+            var bindPedal = function(btn, type) {
+                btn.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    if (type === 'gas') gasPressed = true;
+                    else brakePressed = true;
                 });
-                btn.addEventListener('mouseup', () => {
-                    if(type === 'gas') gasPressed = false;
+                btn.addEventListener('touchend', function(e) {
+                    e.preventDefault();
+                    if (type === 'gas') gasPressed = false;
                     else brakePressed = false;
                 });
             };
@@ -367,13 +413,16 @@ Y = e.touches].;                else
         }
 
         function startGame() {
-.style
+            startScreen.style.display = 'none';
+            gameActive = true;
+            score = 0;
+            scoreEl.innerText = 'Score: 0';
+            speed = 0;
+            car.position.set(0, 0, 0);
+            car.rotation.set(0, 0, 0);
+        }
 
- =.innerText: =
-.set0(,
-
-
-Physics() {
+        function updatePhysics() {
             if (!gameActive) return;
 
             // Steering
@@ -381,35 +430,53 @@ Physics() {
                 car.rotation.y -= joystickData.x * turnSpeed * (speed * 2);
             }
 
-            // Acceleration / Braking
+            // Acceleration
             if (gasPressed) {
                 speed += acceleration;
-            } elsePressed speed; { *= deceler //           .min),  Apply
- const = car.rotation.y;
+            } else if (brakePressed) {
+                speed -= acceleration * 2;
+            } else {
+                speed *= friction;
+            }
+
+            // Cap Speed
+            if (speed > maxSpeed) speed = maxSpeed;
+            if (speed < -maxSpeed / 2) speed = -maxSpeed / 2;
+
+            // Apply Movement
+            var direction = car.rotation.y;
             car.position.x += Math.sin(direction) * speed;
             car.position.z += Math.cos(direction) * speed;
 
             // Camera Follow
-            const relativeCameraOffset = new THREE.Vector3(0, 8, -12);
-            const cameraOffset = relativeCameraOffset.applyMatrix4(car.matrixWorld);
+            var relativeCameraOffset = new THREE.Vector3(0, 8, -12);
+            var cameraOffset = relativeCameraOffset.applyMatrix4(car.matrixWorld);
             
-           .position.(car  }
+            // Smooth Lerp
+            camera.position.x += (cameraOffset.x - camera.position.x) * 0.1;
+            camera.position.y += (cameraOffset.y - camera.position.y) * 0.1;
+            camera.position.z += (cameraOffset.z - camera.position.z) * 0.1;
+            camera.lookAt(car.position.x, car.position.y + 2, car.position.z);
+        }
 
         function updateTargets() {
-            // Check collisions and respawn
-            for (let i = targets.length - 1; i >= 0; i--) {
-                const target = targets[i];
+            for (var i = targets.length - 1; i >= 0; i--) {
+                var target = targets[i];
                 
-                // Rotation animation
+                // Rotate target
                 target.rotation.x += 0.01;
                 target.rotation.y += 0.01;
 
-                // Distance check
-                const dist.distance if< 
-,10;
-                    scoreEl.innerText = "Score: " + score;
+                // Collision Check
+                var dist = car.position.distanceTo(target.position);
+                
+                if (dist < 3) {
+                    // Hit
+                    scene.remove(target);
+                    targets.splice(i, 1);
+                    score += 10;
+                    scoreEl.innerText = 'Score: ' + score;
                     
-                    // Spawn new target
                     spawnTarget();
                 }
             }
@@ -432,7 +499,7 @@ Physics() {
             renderer.render(scene, camera);
         }
 
-        // Initialize
+        // Run Init
         init();
 
     </script>
