@@ -1,524 +1,417 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Robot Car Racer</title>
-<style>
-body {
-    margin: 0;
-    padding: 0;
-    background-color: #222;
-    overflow: hidden;
-    font-family: 'Arial', sans-serif;
-    touch-action: none; /* Prevents scrolling on mobile */
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Robot Car Racer</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            touch-action: none;
+        }
 
-#game-container {
-    position: relative;
-    width: 100%;
-    height: 100vh;
-    background: linear-gradient(to bottom, #000033, #000066);
-}
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
 
-canvas {
-    display: block;
-    width: 100%;
-    height: 100%;
-}
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
 
-/* UI Controls */
-#ui-layer {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none; /* Let touches pass through to buttons */
-}
+        #score-board {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 2px 2px 0 #000;
+            z-index: 10;
+        }
 
-#score {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    color: #fff;
-    font-size: 24px;
-    font-weight: bold;
-    text-shadow: 2px 2px 0 #000;
-    z-index: 10;
-}
+        #controls {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            height: 120px;
+            pointer-events: auto;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 20px;
+            box-sizing: border-box;
+            align-items: flex-end;
+        }
 
-#controls {
-    position: absolute;
-    bottom: 20px;
-    width: 100%;
-    height: 150px;
-    pointer-events: auto;
-    display: flex;
-    justify-content: space-between;
-    padding: 0 20px;
-    box-sizing: border-box;
-}
+        .btn {
+            width: 70px;
+            height: 70px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            color: white;
+            font-size: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            user-select: none;
+        }
 
-/* Buttons */
-.btn {
-    width: 70px;
-    height: 70px;
-    background: rgba(255, 255, 255, 0.2);
-    border: 2px solid rgba(255, 255, 255, 0.5);
-    border-radius: 50%;
-    color: white;
-    font-size: 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    user-select: none;
-    touch-action: manipulation;
-}
+        .btn:active {
+            background: rgba(0, 255, 255, 0.5);
+        }
 
-.btn:active {
-    background: rgba(0, 255, 200, 0.5);
-    transform: scale(0.95);
-}
+        .action-btn {
+            width: 80px;
+            height: 50px;
+            border-radius: 10px;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
 
-/* Action Buttons */
-#action-btns {
-    display: flex;
-    gap: 15px;
-    margin-bottom: 10px;
-}
+        #btn-trans {
+            background: #ff0055;
+            border-color: #cc0044;
+        }
 
-#btn-trans {
-    background: #ff0055;
-    border-color: #cc0044;
-    font-size: 14px;
-    font-weight: bold;
-    width: 80px;
-    height: 50px;
-    border-radius: 10px;
-}
+        #btn-gas {
+            background: #ffcc00;
+            border-color: #cc9900;
+            color: black;
+            font-weight: bold;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+        }
 
-#btn-gas {
-    background: #ffcc00;
-    border-color: #cc9900;
-    color: black;
-    font-weight: bold;
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    font-size: 18px;
-}
+        #game-over {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
 
-#btn-shoot {
-    background: #ff3333;
-    border-color: #cc0000;
-    display: none; /* Hidden unless transformed */
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    font-weight: bold;
-    font-size: 16px;
-}
+        #game-over h1 {
+            color: #ff0000;
+            font-size: 40px;
+        }
 
-/* Game Over Screen */
-#game-over {
-    display: none;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.85);
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    z-index: 100;
-    pointer-events: auto;
-}
-
-#game-over h1 {
-    color: #ff0000;
-    font-size: 40px;
-    margin-bottom: 10px;
-}
-
-#restart-btn {
-    padding: 15px 30px;
-    font-size: 20px;
-    background: #00ff88;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    font-weight: bold;
-}
-</style>
+        #restart-btn {
+            padding: 15px 30px;
+            font-size: 20px;
+            background: #00ff88;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
 
-<div id="game-container">
-    <canvas id="gameCanvas"></canvas>
-    <div id="ui-layer">
-        <div id="score">Score: 0</div>
-        
-        <div id="controls">
-            <!-- Steering Buttons -->
+<canvas id="gameCanvas"></canvas>
+
+<div id="ui-layer">
+    <div id="score-board">Score: 0</div>
+
+    <div id="controls">
+        <div style="display:flex; gap: 20px; align-items:flex-end;">
             <button id="btn-left" class="btn">◄</button>
             <button id="btn-right" class="btn">►</button>
-            
-            <!-- Action Buttons -->
-            <div id="action-btns">
-                <button id="btn-trans" class="btn">TRANS</button>
-                <button id="btn-gas" class="btn">GAS</button>
-                <button id="btn-shoot" class="btn">BANG</button>
-            </div>
         </div>
-    </div>
 
-    <div id="game-over">
-        <h1>CRASHED!</h1>
-        <button id="restart-btn">RESTART</button>
+        <div style="display:flex; align-items:flex-end; gap: 15px;">
+            <button id="btn-trans" class="btn action-btn">TRANS</button>
+            <button id="btn-gas" class="btn">GAS</button>
+        </div>
     </div>
 </div>
 
+<div id="game-over">
+    <h1>CRASHED!</h1>
+    <button id="restart-btn">RESTART</button>
+</div>
+
 <script>
-// --- Variables ---
-var canvas = document.getElementById('gameCanvas');
-var ctx = canvas.getContext('2d');
+    var canvas = document.getElementById('gameCanvas');
+    var ctx = canvas.getContext('2d');
+    var w, h;
 
-var w, h;
-var isRunning = false;
-var score = 0;
-var speed = 0;
-var maxSpeed = 10;
-var frameCount = 0;
+    // Game State
+    var isRunning = false;
+    var score = 0;
+    var speed = 0;
+    var maxSpeed = 12;
+    var frameCount = 0;
 
-// Player State
-var player = {
-    x: 0,
-    y: 0,
-    width: 40,
-    height: 70,
-    isRobot: false,
-    transformAnim: 0, // 0 = Car, 1 = Robot
-    isTransforming: false
-};
-
-// Controls State
-var moveLeft = false;
-var moveRight = false;
-var gasPressed = false;
-
-// Game Objects
-var bullets = [];
-var enemies = [];
-var roadLines = [];
-
-// --- Setup ---
-function resize() {
-    w = window.innerWidth;
-    h = window.innerHeight;
-    canvas.width = w;
-    canvas.height = h;
-    player.y = h - 150;
-}
-window.addEventListener('resize', resize);
-resize();
-
-// --- Event Listeners (No Arrow Functions) ---
-
-// Start/Restart
-document.getElementById('restart-btn').addEventListener('click', startGame);
-
-// Steering
-var btnLeft = document.getElementById('btn-left');
-var btnRight = document.getElementById('btn-right');
-var gasBtn = document.getElementById('btn-gas');
-var transBtn = document.getElementById('btn-trans');
-var shootBtn = document.getElementById('btn-shoot');
-
-btnLeft.addEventListener('touchstart', function(e) { e.preventDefault(); moveLeft = true; });
-btnLeft.addEventListener('touchend', function(e) { e.preventDefault(); moveLeft = false; });
-btnLeft.addEventListener('mousedown', function() { moveLeft = true; });
-btnLeft.addEventListener('mouseup', function() { moveLeft = false; });
-
-btnRight.addEventListener('touchstart', function(e) { e.preventDefault(); moveRight = true; });
-btnRight.addEventListener('touchend', function(e) { e.preventDefault(); moveRight = false; });
-btnRight.addEventListener('mousedown', function() { moveRight = true; });
-btnRight.addEventListener('mouseup', function() { moveRight = false; });
-
-// Gas
-gasBtn.addEventListener('touchstart', function(e) { e.preventDefault(); gasPressed = true; });
-gasBtn.addEventListener('touchend', function(e) { e.preventDefault(); gasPressed = false; });
-
-// Transform
-transBtn.addEventListener('click', function() {
-    if (player.isTransforming) return;
-    player.isRobot = !player.isRobot;
-    player.isTransforming = true;
-    
-    if (player.isRobot) {
-        shootBtn.style.display = 'flex';
-    } else {
-        shootBtn.style.display = 'none';
-        bullets = [];
-    }
-});
-
-// Shoot
-shootBtn.addEventListener('touchstart', function(e) { 
-    e.preventDefault(); 
-    if (player.isRobot) fireBullet();
-});
-shootBtn.addEventListener('click', function() { 
-    if (player.isRobot) fireBullet();
-});
-
-// --- Game Logic ---
-
-function startGame() {
-    document.getElementById('game-over').style.display = 'none';
-    isRunning = true;
-    score = 0;
-    speed = 0;
-    frameCount = 0;
-    player.x = w / 2;
-    player.isRobot = false;
-    player.isTransforming = false;
-    player.transformAnim = 0;
-    shootBtn.style.display = 'none';
-    bullets = [];
-    enemies = [];
-    roadLines = [];
-    animate();
-}
-
-function fireBullet() {
-    bullets.push({
-        x: player.x,
-        y: player.y - 20,
-        speed: 15
-    });
-}
-
-function spawnEnemy() {
-    var lane = Math.random() * (w * 0.6) - (w * 0.3); // Random X relative to center
-    enemies.push({
-        x: player.x + lane,
-        y: -100,
-        speed: 5 + Math.random() * 5,
+    // Player
+    var player = {
+        x: 0,
+        y: 0,
         width: 40,
         height: 70,
-        color: '#ff0000'
+        isRobot: false,
+        transformAnim: 0
+    };
+
+    // Arrays
+    var bullets = [];
+    var enemies = [];
+    var roadLines = [];
+
+    // Controls State
+    var moveLeft = false;
+    var moveRight = false;
+    var gasPressed = false;
+
+    function resize() {
+        w = window.innerWidth;
+        h = window.innerHeight;
+        canvas.width = w;
+        canvas.height = h;
+        player.y = h - 180;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // Buttons
+    var btnLeft = document.getElementById('btn-left');
+    var btnRight = document.getElementById('btn-right');
+    var gasBtn = document.getElementById('btn-gas');
+    var transBtn = document.getElementById('btn-trans');
+    var restartBtn = document.getElementById('restart-btn');
+
+    function addTouch(elem, startFn, endFn) {
+        elem.addEventListener('touchstart', function(e) { e.preventDefault(); startFn(); });
+        elem.addEventListener('touchend', function(e) { e.preventDefault(); endFn(); });
+        elem.addEventListener('mousedown', function() { startFn(); });
+        elem.addEventListener('mouseup', function() { endFn(); });
+    }
+
+    addTouch(btnLeft, function() { moveLeft = true; }, function() { moveLeft = false; });
+    addTouch(btnRight, function() { moveRight = true; }, function() { moveRight = false; });
+    addTouch(gasBtn, function() { gasPressed = true; }, function() { gasPressed = false; });
+
+    transBtn.addEventListener('click', function() {
+        player.isRobot = !player.isRobot;
+        player.transformAnim = 0;
+        bullets = []; // Clear bullets on transform
     });
-}
 
-function update() {
-    // Speed Control
-    if (gasPressed) {
-        if (speed < maxSpeed) speed += 0.2;
-    } else {
-        if (speed > 2) speed -= 0.1;
-        else speed = 0;
+    restartBtn.addEventListener('click', startGame);
+
+    function startGame() {
+        document.getElementById('game-over').style.display = 'none';
+        isRunning = true;
+        score = 0;
+        speed = 0;
+        frameCount = 0;
+        player.x = w / 2;
+        player.isRobot = false;
+        bullets = [];
+        enemies = [];
+        roadLines = [];
+        animate();
     }
 
-    // Player Movement
-    if (moveLeft && player.x > 50) player.x -= 8;
-    if (moveRight && player.x < w - 50) player.x += 8;
+    function fireBullet() {
+        bullets.push({
+            x: player.x,
+            y: player.y - 20,
+            speed: 15
+        });
+    }
 
-    // Transform Animation
-    if (player.isTransforming) {
-        player.transformAnim += 0.1;
-        if (player.transformAnim >= 1) {
-            player.transformAnim = 1;
-            player.isTransforming = false;
+    function spawnEnemy() {
+        var lane = Math.random() * (w * 0.6) - (w * 0.3);
+        enemies.push({
+            x: player.x + lane,
+            y: -100,
+            speed: 5 + Math.random() * 3,
+            color: '#00ccff'
+        });
+    }
+
+    function update() {
+        // Speed
+        if (gasPressed) {
+            if (speed < maxSpeed) speed += 0.2;
+        } else {
+            if (speed > 1) speed -= 0.1;
+            else speed = 0;
         }
-    }
 
-    // Road Lines
-    roadLines.push({y: -20});
-    if (roadLines.length < 10) roadLines.push({y: -20 + (h/10)*2});
-    
-    for (var i = roadLines.length - 1; i >= 0; i--) {
-        roadLines[i].y += speed;
-        if (roadLines[i].y > h) {
-            roadLines.splice(i, 1);
+        // Player Move
+        if (moveLeft && player.x > 50) player.x -= 6;
+        if (moveRight && player.x < w - 50) player.x += 6;
+
+        // Transform Effect
+        if (player.transformAnim < 1) {
+            player.transformAnim += 0.05;
         }
-    }
 
-    // Enemies
-    if (frameCount % 60 === 0) spawnEnemy();
-    
-    for (var i = enemies.length - 1; i >= 0; i--) {
-        var e = enemies[i];
-        e.y += speed + e.speed;
+        // Road
+        roadLines.push({y: -20});
+        if (roadLines.length < 10) roadLines.push({y: -20 + (h/10)*2});
         
-        // Collision
-        if (
-            player.x + 20 > e.x - 20 && 
-            player.x - 20 < e.x + 20 && 
-            player.y + 35 > e.y - 35 && 
-            player.y - 35 < e.y + 35
-        ) {
-            gameOver();
-        }
-        
-        if (e.y > h + 100) {
-            enemies.splice(i, 1);
-            score += 10;
-            document.getElementById('score').innerText = "Score: " + score;
-        }
-    }
-
-    // Bullets
-    for (var i = bullets.length - 1; i >= 0; i--) {
-        var b = bullets[i];
-        b.y -= b.speed;
-        
-        // Bullet Collision
-        for (var j = enemies.length - 1; j >= 0; j--) {
-            var enemy = enemies[j];
-            if (b.x > enemy.x - 20 && b.x < enemy.x + 20 && b.y > enemy.y - 35 && b.y < enemy.y + 35) {
-                enemies.splice(j, 1);
-                bullets.splice(i, 1);
-                score += 20;
-                document.getElementById('score').innerText = "Score: " + score;
-                break;
+        for (var i = roadLines.length - 1; i >= 0; i--) {
+            roadLines[i].y += speed * 2;
+            if (roadLines[i].y > h) {
+                roadLines.splice(i, 1);
             }
         }
-        
-        if (b.y < -50) bullets.splice(i, 1);
-    }
-}
 
-function draw() {
-    // Clear
-    ctx.fillStyle = '#111';
-    ctx.fillRect(0, 0, w, h);
-    
-    // Draw Road
-    ctx.fillStyle = '#333';
-    ctx.fillRect(w/2 - 200, 0, 400, h);
-    
-    // Draw Road Lines
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(w/2 - 2, 0, 4, h);
-    
-    for (var i = 0; i < roadLines.length; i++) {
+        // Enemies
+        if (frameCount % 60 === 0) spawnEnemy();
+
+        for (var i = enemies.length - 1; i >= 0; i--) {
+            var e = enemies[i];
+            e.y += speed + e.speed;
+
+            // Collision
+            if (
+                player.x + 20 > e.x - 20 &&
+                player.x - 20 < e.x + 20 &&
+                player.y + 35 > e.y - 35 &&
+                player.y - 35 < e.y + 35
+            ) {
+                gameOver();
+            }
+
+            if (e.y > h + 100) {
+                enemies.splice(i, 1);
+                score += 10;
+                document.getElementById('score-board').innerText = "Score: " + score;
+            }
+        }
+
+        // Bullets
+        for (var i = bullets.length - 1; i >= 0; i--) {
+            var b = bullets[i];
+            b.y -= b.speed;
+
+            for (var j = enemies.length - 1; j >= 0; j--) {
+                var enemy = enemies[j];
+                if (b.x > enemy.x - 20 && b.x < enemy.x + 20 && b.y > enemy.y - 35 && b.y < enemy.y + 35) {
+                    enemies.splice(j, 1);
+                    bullets.splice(i, 1);
+                    score += 20;
+                    document.getElementById('score-board').innerText = "Score: " + score;
+                    break;
+                }
+            }
+
+            if (b.y < -50) bullets.splice(i, 1);
+        }
+    }
+
+    function draw() {
+        // BG
+        ctx.fillStyle = '#222';
+        ctx.fillRect(0, 0, w, h);
+
+        // Road
+        ctx.fillStyle = '#444';
+        ctx.fillRect(w/2 - 200, 0, 400, h);
+        
+        // Lane
         ctx.fillStyle = '#fff';
-        ctx.fillRect(w/2 - 10, roadLines[i].y, 20, 40);
-    }
+        ctx.fillRect(w/2 - 2, 0, 4, h);
 
-    // Draw Player
-    drawPlayer(player.x, player.y);
-
-    // Draw Enemies
-    for (var i = 0; i < enemies.length; i++) {
-        drawCar(enemies[i].x, enemies[i].y, enemies[i].color);
-    }
-
-    // Draw Bullets
-    ctx.fillStyle = '#ffff00';
-    for (var i = 0; i < bullets.length; i++) {
-        ctx.fillRect(bullets[i].x - 2, bullets[i].y, 4, 10);
-    }
-}
-
-function drawPlayer(x, y) {
-    var anim = player.transformAnim;
-    
-    if (player.isRobot) {
-        // Robot Mode
-        // If animating, scale effect
-        var scaleX = 1;
-        var scaleY = 1;
-        if (player.isTransforming) {
-            scaleY = 1 + Math.sin(anim * 10) * 0.2;
-            scaleX = 1 + Math.sin(anim * 10) * 0.1;
+        // Lines
+        for (var i = 0; i < roadLines.length; i++) {
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(w/2 - 10, roadLines[i].y, 20, 40);
         }
-        
+
+        drawPlayer(player.x, player.y);
+
+        for (var i = 0; i < enemies.length; i++) {
+            drawCar(enemies[i].x, enemies[i].y, enemies[i].color);
+        }
+
+        for (var i = 0; i < bullets.length; i++) {
+            ctx.fillStyle = '#ffff00';
+            ctx.fillRect(bullets[i].x - 2, bullets[i].y, 4, 10);
+        }
+    }
+
+    function drawPlayer(x, y) {
         ctx.save();
         ctx.translate(x, y);
-        ctx.scale(scaleX, scaleY);
-        
-        // Body
-        ctx.fillStyle = '#0055aa';
-        ctx.fillRect(-15, -30, 30, 40);
-        
-        // Head
-        ctx.fillStyle = '#ffff00';
-        ctx.fillRect(-10, -50, 20, 20);
-        
-        // Arms/Guns
-        ctx.fillStyle = '#555';
-        ctx.fillRect(-25, -20, 10, 30);
-        ctx.fillRect(15, -20, 10, 30);
-        
-        // Gun barrels
-        ctx.fillStyle = '#ff0000';
-        ctx.fillRect(-22, 10, 4, 10);
-        ctx.fillRect(18, 10, 4, 10);
-        
+
+        var scale = 1;
+        if (player.transformAnim < 1) {
+            scale = 1 + Math.sin(player.transformAnim * 10) * 0.2;
+        }
+        ctx.scale(1, scale);
+
+        if (player.isRobot) {
+            // Robot
+            ctx.fillStyle = '#0055aa';
+            ctx.fillRect(-15, -30, 30, 40);
+            ctx.fillStyle = '#ffff00';
+            ctx.fillRect(-10, -50, 20, 20);
+            ctx.fillStyle = '#555';
+            ctx.fillRect(-25, -20, 10, 30);
+            ctx.fillRect(15, -20, 10, 30);
+        } else {
+            // Car
+            ctx.fillStyle = '#ff0000';
+            ctx.fillRect(-20, -35, 40, 70);
+            ctx.fillStyle = '#aa0000';
+            ctx.fillRect(-18, -15, 36, 30);
+            ctx.fillStyle = '#88ccff';
+            ctx.fillRect(-15, -10, 30, 15);
+            ctx.fillStyle = '#000';
+            ctx.fillRect(-22, -30, 5, 15);
+            ctx.fillRect(17, -30, 5, 15);
+            ctx.fillRect(-22, 15, 5, 15);
+            ctx.fillRect(17, 15, 5, 15);
+        }
         ctx.restore();
-    } else {
-        // Car Mode
-        // Animation effect
-        var scaleY = 1;
-        if (player.isTransforming) {
-            scaleY = 1 + Math.sin(anim * 10) * 0.1;
-        }
-        
-        ctx.save();
-        ctx.translate(x, y);
-        ctx.scale(1, scaleY);
-        
-        // Car Body
-        ctx.fillStyle = '#ff0000';
-        ctx.fillRect(-20, -35, 40, 70);
-        
-        // Roof
-        ctx.fillStyle = '#aa0000';
-        ctx.fillRect(-18, -15, 36, 30);
-        
-        // Windows
-        ctx.fillStyle = '#88ccff';
-        ctx.fillRect(-15, -10, 30, 15);
-        
-        // Wheels
+    }
+
+    function drawCar(x, y, color) {
+        ctx.fillStyle = color;
+        ctx.fillRect(x - 20, y - 35, 40, 70);
+        ctx.fillStyle = '#333';
+        ctx.fillRect(x - 18, y - 15, 36, 30);
         ctx.fillStyle = '#000';
-        ctx.fillRect(-22, -30, 5, 15);
-        ctx.fillRect(17, -30, 5, 15);
-        ctx.fillRect(-22, 15, 5, 15);
-        ctx.fillRect(17, 15, 5, 15);
-        
-        ctx.restore();
+        ctx.fillRect(x - 22, y - 30, 5, 15);
+        ctx.fillRect(x + 17, y - 30, 5, 15);
+        ctx.fillRect(x - 22, y + 15, 5, 15);
+        ctx.fillRect(x + 17, y + 15, 5, 15);
     }
-}
 
-function drawCar(x, y, color) {
-    ctx.fillStyle = color;
-    ctx.fillRect(x - 20, y - 35, 40, 70);
-    ctx.fillStyle = '#333';
-    ctx.fillRect(x - 18, y - 15, 36, 30);
-    
-    ctx.fillStyle = '#000';
-    ctx.fillRect(x - 22, y - 30, 5, 15);
-    ctx.fillRect(x + 17, y - 30, 5, 15);
-    ctx.fillRect(x - 22, y + 15, 5, 15);
-    ctx.fillRect(x + 17, y + 15, 5, 15);
-}
+    function gameOver() {
+        isRunning = false;
+        document.getElementById('game-over').style.display = 'flex';
+    }
 
-function gameOver() {
-    isRunning = false;
-    document.getElementById('game-over').style.display = 'flex';
-}
-
-function animate() {
-    if (!isRunning) return;
-    update();
-    draw();
-    requestAnimationFrame(animate);
-}
-
+    function animate() {
+        if (!isRunning) return;
+        update();
+        draw();
+        requestAnimationFrame(animate);
+    }
 </script>
 </body>
 </html>
