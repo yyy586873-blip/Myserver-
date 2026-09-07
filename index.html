@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>3D Mobile Car Game</title>
+    <title>Robo-Car Infinite Racer</title>
     <style>
         body {
             margin: 0;
             overflow: hidden;
-            background-color: #87CEEB;
+            background-color: #1a1a1a;
             font-family: 'Arial', sans-serif;
-            touch-action: none; /* Mobile scrolling band karne ke liye */
+            touch-action: none;
         }
 
         #game-container {
@@ -30,20 +30,16 @@
             height: 100%;
             z-index: 10;
             pointer-events: none;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
         }
 
         #score-board {
             position: absolute;
             top: 20px;
             left: 20px;
-            color: white;
-            font-size: 24px;
+            color: #00ffcc;
+            font-size: 20px;
             font-weight: bold;
-            text-shadow: 2px 2px 4px #000;
-            z-index: 20;
+            text-shadow: 2px 2px 0 #000;
         }
 
         #controls {
@@ -58,7 +54,7 @@
             box-sizing: border-box;
         }
 
-        /* Joystick Styles */
+        /* Joystick */
         #joystick-area {
             width: 120px;
             height: 120px;
@@ -71,7 +67,7 @@
         #joystick-knob {
             width: 50px;
             height: 50px;
-            background: rgba(255, 255, 255, 0.8);
+            background: #fff;
             border-radius: 50%;
             position: absolute;
             top: 50%;
@@ -80,7 +76,7 @@
             box-shadow: 0 0 10px rgba(0,0,0,0.5);
         }
 
-        /* Pedal Styles */
+        /* Pedals */
         #pedals {
             display: flex;
             gap: 20px;
@@ -95,22 +91,32 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
             color: white;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
             user-select: none;
             -webkit-user-select: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
 
-        #brake {
-            background: #ff4444;
-            border: 2px solid #cc0000;
-        }
+        #brake { background: #ff4444; border: 2px solid #cc0000; }
+        #gas { background: #44ff44; border: 2px solid #00cc00; }
 
-        #gas {
-            background: #44ff44;
-            border: 2px solid #00cc00;
+        /* Transform Button */
+        #transform-btn {
+            position: absolute;
+            bottom: 220px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #ff00ff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
+            box-shadow: 0 0 10px #ff00ff;
+            pointer-events: auto;
+            display: none; /* Shown only if needed or always visible for style */
         }
 
         /* Start Screen */
@@ -120,7 +126,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.8);
+            background: rgba(0, 0, 0, 0.9);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -130,32 +136,22 @@
         }
 
         #start-screen h1 {
-            color: white;
+            color: #00ffcc;
             font-size: 40px;
             margin-bottom: 10px;
             text-align: center;
-        }
-
-        #start-screen p {
-            color: #ccc;
-            margin-bottom: 30px;
-            text-align: center;
-            padding: 0 20px;
+            text-transform: uppercase;
         }
 
         #start-btn {
-            background: #ff3333;
-            color: white;
+            background: #00ffcc;
+            color: #000;
             border: none;
             padding: 15px 40px;
             font-size: 22px;
             border-radius: 50px;
             cursor: pointer;
-            box-shadow: 0 5px 15px rgba(255, 51, 51, 0.4);
-        }
-
-        #start-btn:active {
-            transform: scale(0.95);
+            font-weight: bold;
         }
     </style>
 </head>
@@ -175,65 +171,74 @@
                 <div class="pedal" id="gas">GAS</div>
             </div>
         </div>
+        
+        <button id="transform-btn">TRANSFORM (T)</button>
     </div>
 
-    <!-- Start Screen Overlay -->
     <div id="start-screen">
-        <h1>3D CITY RACER</h1>
-        <p>Left Joystick: Steer<br>Green: Gas | Red: Brake</p>
-        <button id="start-btn">START ENGINE</button>
+        <h1>Robo-Car<br>Infinite Racer</h1>
+        <p style="color:#ccc; text-align:center; max-width: 300px;">
+            Steering: Joystick<br>
+            Move: Gas/Brake<br>
+            Transform: T Button<br>
+            Shoot: Tap Transform Button Fast
+        </p>
+        <button id="start-btn">START</button>
     </div>
 
-    <!-- Three.js Library (WebGL) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <script>
-        // --- Game Variables ---
+        // --- Variables ---
         var scene, camera, renderer;
-        var car;
-        var targets = [];
+        var carGroup, carBody, carChassis;
+        var robotGroup, robotBody, robotHead, robotArm;
+        var isRobot = false;
+        var groundTexture;
+        var trafficCars = [];
+        var bullets = [];
         var score = 0;
         var gameActive = false;
         var clock = new THREE.Clock();
 
-        // Car Physics
+        // Physics
         var speed = 0;
-        var steering = 0;
-        var maxSpeed = 0.8;
-        var acceleration = 0.02;
+        var maxSpeed = 1.0;
+        var acceleration = 0.03;
         var friction = 0.98;
         var turnSpeed = 0.04;
-
-        // Input State
+        
+        // Input
         var joystickData = { x: 0, y: 0, active: false };
         var gasPressed = false;
         var brakePressed = false;
+        var transformPressed = false;
+        var lastTapTime = 0;
 
-        // DOM Elements
+        // DOM
         var joystickArea = document.getElementById('joystick-area');
         var joystickKnob = document.getElementById('joystick-knob');
         var gasBtn = document.getElementById('gas');
         var brakeBtn = document.getElementById('brake');
-        var startBtn = document.getElementById('start-btn');
+        var transformBtn = document.getElementById('transform-btn');
         var startScreen = document.getElementById('start-screen');
+        var startBtn = document.getElementById('start-btn');
         var scoreEl = document.getElementById('score-board');
 
-        // --- Initialization ---
+        init();
+
         function init() {
             // Scene Setup
             scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x87CEEB); // Sky Blue
-            scene.fog = new THREE.Fog(0x87CEEB, 20, 100);
+            scene.background = new THREE.Color(0x111122);
+            scene.fog = new THREE.Fog(0x111122, 20, 100);
 
-            // Camera
             camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
             camera.position.set(0, 10, -15);
 
-            // Renderer
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             renderer.shadowMap.enabled = true;
-            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
             document.getElementById('game-container').appendChild(renderer.domElement);
 
             // Lights
@@ -243,52 +248,67 @@
             var dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
             dirLight.position.set(50, 50, 50);
             dirLight.castShadow = true;
-            dirLight.shadow.mapSize.width = 1024;
-            dirLight.shadow.mapSize.height = 1024;
             scene.add(dirLight);
 
-            // Ground
-            var groundGeo = new THREE.PlaneGeometry(500, 500);
-            var groundMat = new THREE.MeshStandardMaterial({ 
-                color: 0x333333,
-                roughness: 0.8 
-            });
-            var ground = new THREE.Mesh(groundGeo, groundMat);
-            ground.rotation.x = -Math.PI / 2;
-            ground.receiveShadow = true;
-            scene.add(ground);
+            // Infinite Ground Logic
+            createInfiniteGround();
 
-            // Grid
-            var gridHelper = new THREE.GridHelper(500, 50, 0x555555, 0x444444);
-            scene.add(gridHelper);
-
-            // Car
-            createCar();
-
-            // Initial Targets
-            for (var i = 0; i < 10; i++) {
-                spawnTarget();
-            }
+            // Create Car
+            createCarParts();
 
             // Event Listeners
-            window.addEventListener('resize', onWindowResize);
+            window.addEventListener('resize', onResize);
             setupControls();
             startBtn.addEventListener('click', startGame);
-
-            // Start Loop
+            
             animate();
         }
 
-        function createCar() {
-            car = new THREE.Group();
+        function createInfiniteGround() {
+            // Create a grid texture that scrolls
+            var canvas = document.createElement('canvas');
+            canvas.width = 512;
+            canvas.height = 512;
+            var context = canvas.getContext('2d');
+            context.fillStyle = '#222';
+            context.fillRect(0, 0, 512, 512);
+            context.strokeStyle = '#00ffcc';
+            context.lineWidth = 4;
+            context.beginPath();
+            context.moveTo(0, 0);
+            context.lineTo(512, 0);
+            context.moveTo(0, 0);
+            context.lineTo(0, 512);
+            context.stroke();
+            
+            var texture = new THREE.CanvasTexture(canvas);
+            texture.wrapS = THREE.RepeatWrapping;
+            texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(10, 10);
+            
+            groundTexture = texture;
 
-            // Body
+            var geo = new THREE.PlaneGeometry(500, 500);
+            var mat = new THREE.MeshStandardMaterial({ 
+                map: texture,
+                roughness: 0.8 
+            });
+            var ground = new THREE.Mesh(geo, mat);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+        }
+
+        function createCarParts() {
+            carGroup = new THREE.Group();
+            
+            // Car Body
             var bodyGeo = new THREE.BoxGeometry(2, 1, 4);
-            var bodyMat = new THREE.MeshStandardMaterial({ color: 0xff0000 });
-            var body = new THREE.Mesh(bodyGeo, bodyMat);
-            body.position.y = 1;
-            body.castShadow = true;
-            car.add(body);
+            var bodyMat = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+            carBody = new THREE.Mesh(bodyGeo, bodyMat);
+            carBody.position.y = 1;
+            carBody.castShadow = true;
+            carGroup.add(carBody);
 
             // Cabin
             var cabinGeo = new THREE.BoxGeometry(1.8, 0.8, 2);
@@ -296,69 +316,73 @@
             var cabin = new THREE.Mesh(cabinGeo, cabinMat);
             cabin.position.y = 1.8;
             cabin.position.z = -0.2;
-            cabin.castShadow = true;
-            car.add(cabin);
+            carGroup.add(cabin);
 
             // Wheels
             var wheelGeo = new THREE.CylinderGeometry(0.4, 0.4, 0.4, 16);
             var wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
-            
-            var positions = [
+            var wheelPositions = [
                 { x: -1, z: 1.2 }, { x: 1, z: 1.2 },
                 { x: -1, z: -1.2 }, { x: 1, z: -1.2 }
             ];
+            
+            carGroup.userData.wheels = []; // Store for animation
 
-            for (var i = 0; i < positions.length; i++) {
+            for (var i = 0; i < wheelPositions.length; i++) {
                 var wheel = new THREE.Mesh(wheelGeo, wheelMat);
                 wheel.rotation.z = Math.PI / 2;
-                wheel.position.set(positions[i].x, 0.4, positions[i].z);
+                wheel.position.set(wheelPositions[i].x, 0.4, wheelPositions[i].z);
                 wheel.castShadow = true;
-                car.add(wheel);
+                carGroup.add(wheel);
+                carGroup.userData.wheels.push(wheel);
             }
 
-            scene.add(car);
-        }
+            // Robot Parts (Hidden initially)
+            robotGroup = new THREE.Group();
+            robotGroup.visible = false;
 
-        function spawnTarget() {
-            var geometry = new THREE.BoxGeometry(2, 2, 2);
-            var material = new THREE.MeshStandardMaterial({ 
-                color: 0xffaa00,
-                emissive: 0xff4400,
-                emissiveIntensity: 0.5
-            });
-            var target = new THREE.Mesh(geometry, material);
+            // Robot Body
+            var rBodyGeo = new THREE.BoxGeometry(2, 1.5, 1);
+            var rBodyMat = new THREE.MeshStandardMaterial({ color: 0x0000aa });
+            robotBody = new THREE.Mesh(rBodyGeo, rBodyMat);
+            robotBody.position.y = 1.5;
+            robotGroup.add(robotBody);
+
+            // Robot Head
+            var rHeadGeo = new THREE.BoxGeometry(1, 1, 1);
+            var rHeadMat = new THREE.MeshStandardMaterial({ color: 0xffff00 });
+            robotHead = new THREE.Mesh(rHeadGeo, rHeadMat);
+            robotHead.position.y = 3;
+            robotHead.position.z = -0.5;
+            robotGroup.add(robotHead);
+
+            // Robot Arm (Gun)
+            var rArmGeo = new THREE.BoxGeometry(0.5, 0.5, 2);
+            var rArmMat = new THREE.MeshStandardMaterial({ color: 0x888888 });
+            robotArm = new THREE.Mesh(rArmGeo, rArmMat);
+            robotArm.position.set(0, 2, 1); // Holding gun forward
+            robotGroup.add(robotArm);
+
+            scene.add(carGroup);
+            scene.add(robotGroup);
             
-            // Random Position
-            var x = (Math.random() - 0.5) * 200;
-            var z = (Math.random() - 0.5) * 200;
-            
-            target.position.set(x, 1, z);
-            target.castShadow = true;
-            scene.add(target);
-            targets.push(target);
+            // Initialize Car
+            carGroup.position.set(0, 0, 0);
         }
 
         function setupControls() {
-            // Joystick Logic
+            // Joystick
             var handleJoystick = function(e) {
                 if (!joystickData.active) return;
-                
                 var rect = joystickArea.getBoundingClientRect();
                 var centerX = rect.left + rect.width / 2;
                 var centerY = rect.top + rect.height / 2;
                 
-                var clientX, clientY;
-                if (e.touches) {
-                    clientX = e.touches[0].clientX;
-                    clientY = e.touches[0].clientY;
-                } else {
-                    clientX = e.clientX;
-                    clientY = e.clientY;
-                }
-
+                var clientX = e.touches[0].clientX;
+                var clientY = e.touches[0].clientY;
+                
                 var dx = clientX - centerX;
                 var dy = clientY - centerY;
-                
                 var distance = Math.sqrt(dx*dx + dy*dy);
                 var maxDist = rect.width / 2 - 25;
                 
@@ -369,7 +393,6 @@
                 }
 
                 joystickKnob.style.transform = 'translate(calc(-50% + ' + dx + 'px), calc(-50% + ' + dy + 'px))';
-                
                 joystickData.x = dx / maxDist;
                 joystickData.y = dy / maxDist;
             };
@@ -410,16 +433,101 @@
 
             bindPedal(gasBtn, 'gas');
             bindPedal(brakeBtn, 'brake');
+
+            // Transform Button
+            transformBtn.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                var now = new Date().getTime();
+                if (now - lastTapTime < 300) {
+                    // Double tap for shoot
+                    shootGun();
+                } else {
+                    toggleTransform();
+                }
+                lastTapTime = now;
+            });
+            
+            // Keyboard Support for testing
+            document.addEventListener('keydown', function(e) {
+                if(e.key === 't') toggleTransform();
+                if(e.key === ' ') shootGun();
+                if(e.key === 'ArrowLeft') joystickData.x = -1;
+                if(e.key === 'ArrowRight') joystickData.x = 1;
+            });
+            document.addEventListener('keyup', function(e) {
+                if(e.key === 'ArrowLeft' || e.key === 'ArrowRight') joystickData.x = 0;
+            });
+        }
+
+        function toggleTransform() {
+            if (!gameActive) return;
+            isRobot = !isRobot;
+            
+            if (isRobot) {
+                carGroup.visible = false;
+                robotGroup.visible = true;
+                robotGroup.rotation.set(0, carGroup.rotation.y, 0);
+                robotGroup.position.copy(carGroup.position);
+                robotGroup.position.y += 0.5; // Lift up slightly
+            } else {
+                robotGroup.visible = false;
+                carGroup.visible = true;
+                carGroup.rotation.set(0, robotGroup.rotation.y, 0);
+                carGroup.position.copy(robotGroup.position);
+                carGroup.position.y -= 0.5;
+            }
+        }
+
+        function shootGun() {
+            if (!isRobot) return;
+            
+            var bulletGeo = new THREE.SphereGeometry(0.3);
+            var bulletMat = new THREE.MeshBasicMaterial({ color: 0xff0000 });
+            var bullet = new THREE.Mesh(bulletGeo, bulletMat);
+            
+            // Position gun tip
+            var gunWorldPos = new THREE.Vector3();
+            robotArm.getWorldPosition(gunWorldPos);
+            
+            bullet.position.copy(gunWorldPos);
+            bullet.position.y += 0.5; // Adjust height
+            
+            // Direction
+            var direction = new THREE.Vector3(0, 0, 1);
+            direction.applyAxisAngle(new THREE.Vector3(0, 1, 0), robotGroup.rotation.y);
+            
+            bullets.push({ mesh: bullet, dir: direction, life: 100 });
+            scene.add(bullet);
         }
 
         function startGame() {
             startScreen.style.display = 'none';
             gameActive = true;
             score = 0;
-            scoreEl.innerText = 'Score: 0';
             speed = 0;
-            car.position.set(0, 0, 0);
-            car.rotation.set(0, 0, 0);
+            carGroup.position.set(0, 0, 0);
+            carGroup.rotation.set(0, 0, 0);
+            toggleTransform(); // Start as robot? No, start as car.
+            isRobot = true; 
+            toggleTransform(); // Switch to car mode visually but keep logic clean
+            
+            // Spawn Traffic
+            for(var i=0; i<5; i++) spawnTraffic();
+        }
+
+        function spawnTraffic() {
+            var geo = new THREE.BoxGeometry(2, 2, 4);
+            var mat = new THREE.MeshStandardMaterial({ color: Math.random() * 0xffffff });
+            var car = new THREE.Mesh(geo, mat);
+            
+            // Random X, Far Z
+            var x = (Math.random() - 0.5) * 40;
+            var z = 100 + Math.random() * 100; // Spawn ahead
+            
+            car.position.set(x, 1, z);
+            car.castShadow = true;
+            scene.add(car);
+            trafficCars.push({ mesh: car, speed: 0.5 + Math.random() * 0.5 });
         }
 
         function updatePhysics() {
@@ -427,62 +535,93 @@
 
             // Steering
             if (speed > 0.01) {
-                car.rotation.y -= joystickData.x * turnSpeed * (speed * 2);
+                var rot = isRobot ? robotGroup.rotation.y : carGroup.rotation.y;
+                rot -= joystickData.x * turnSpeed * (speed * 2);
+                
+                if (isRobot) robotGroup.rotation.y = rot;
+                else carGroup.rotation.y = rot;
             }
 
             // Acceleration
-            if (gasPressed) {
-                speed += acceleration;
-            } else if (brakePressed) {
-                speed -= acceleration * 2;
-            } else {
-                speed *= friction;
-            }
+            if (gasPressed) speed += acceleration;
+            else if (brakePressed) speed -= acceleration * 2;
+            else speed *= friction;
 
-            // Cap Speed
             if (speed > maxSpeed) speed = maxSpeed;
             if (speed < -maxSpeed / 2) speed = -maxSpeed / 2;
 
-            // Apply Movement
-            var direction = car.rotation.y;
-            car.position.x += Math.sin(direction) * speed;
-            car.position.z += Math.cos(direction) * speed;
+            // Move Car/Robot
+            var pos = isRobot ? robotGroup.position : carGroup.position;
+            pos.x += Math.sin(rot) * speed;
+            pos.z += Math.cos(rot) * speed;
+
+            // Animate Wheels
+            if (!isRobot) {
+                var wheels = carGroup.userData.wheels;
+                for(var i=0; i<wheels.length; i++) {
+                    wheels[i].rotation.x -= speed * 0.5; // Spin wheels
+                }
+            }
 
             // Camera Follow
-            var relativeCameraOffset = new THREE.Vector3(0, 8, -12);
-            var cameraOffset = relativeCameraOffset.applyMatrix4(car.matrixWorld);
-            
-            // Smooth Lerp
-            camera.position.x += (cameraOffset.x - camera.position.x) * 0.1;
-            camera.position.y += (cameraOffset.y - camera.position.y) * 0.1;
-            camera.position.z += (cameraOffset.z - camera.position.z) * 0.1;
-            camera.lookAt(car.position.x, car.position.y + 2, car.position.z);
+            var camOffset = new THREE.Vector3(0, 10, -15);
+            camOffset.applyAxisAngle(new THREE.Vector3(0, 1, 0), rot);
+            camera.position.lerp(pos.clone().add(camOffset), 0.1);
+            camera.lookAt(pos.x, pos.y + 2, pos.z);
+
+            // Infinite Ground Texture
+            groundTexture.offset.y -= speed * 0.05;
         }
 
-        function updateTargets() {
-            for (var i = targets.length - 1; i >= 0; i--) {
-                var target = targets[i];
+        function updateTraffic() {
+            for (var i = trafficCars.length - 1; i >= 0; i--) {
+                var t = trafficCars[i];
+                // Move traffic towards player (simulate speed) or move them independently
+                // Let's make them move forward too
+                t.mesh.position.z -= t.speed; 
                 
-                // Rotate target
-                target.rotation.x += 0.01;
-                target.rotation.y += 0.01;
-
-                // Collision Check
-                var dist = car.position.distanceTo(target.position);
-                
-                if (dist < 3) {
-                    // Hit
-                    scene.remove(target);
-                    targets.splice(i, 1);
-                    score += 10;
-                    scoreEl.innerText = 'Score: ' + score;
-                    
-                    spawnTarget();
+                // If too far behind, remove and spawn new
+                if (t.mesh.position.z < carGroup.position.z - 50) {
+                    scene.remove(t.mesh);
+                    trafficCars.splice(i, 1);
+                    spawnTraffic();
                 }
             }
         }
 
-        function onWindowResize() {
+        function updateBullets() {
+            for (var i = bullets.length - 1; i >= 0; i--) {
+                var b = bullets[i];
+                b.mesh.position.addScaledVector(b.dir, 2);
+                b.life--;
+                
+                if (b.life <= 0) {
+                    scene.remove(b.mesh);
+                    bullets.splice(i, 1);
+                    continue;
+                }
+                
+                // Check collision with traffic
+                for (var j = trafficCars.length - 1; j >= 0; j--) {
+                    var t = trafficCars[j];
+                    if (b.mesh.position.distanceTo(t.mesh.position) < 2) {
+                        // Hit
+                        scene.remove(t.mesh);
+                        trafficCars.splice(j, 1);
+                        scene.remove(b.mesh);
+                        bullets.splice(i, 1);
+                        
+                        score += 10;
+                        scoreEl.innerText = 'Score: ' + score;
+                        
+                        spawnTraffic();
+                        break;
+                    }
+                }
+            }
+        }
+
+        function onResize() {
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
@@ -493,14 +632,12 @@
             
             if (gameActive) {
                 updatePhysics();
-                updateTargets();
+                updateTraffic();
+                updateBullets();
             }
             
             renderer.render(scene, camera);
         }
-
-        // Run Init
-        init();
 
     </script>
 </body>
