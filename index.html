@@ -1,509 +1,524 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Infinite Robot Racer</title>
-    <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-            background-color: #1a1a1a;
-            font-family: 'Arial', sans-serif;
-            touch-action: none;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Robot Car Racer</title>
+<style>
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #222;
+    overflow: hidden;
+    font-family: 'Arial', sans-serif;
+    touch-action: none; /* Prevents scrolling on mobile */
+}
 
-        #game-container {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-        }
+#game-container {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    background: linear-gradient(to bottom, #000033, #000066);
+}
 
-        canvas {
-            display: block;
-            width: 100%;
-            height: 100%;
-        }
+canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
 
-        /* UI Layer */
-        #ui-layer {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
+/* UI Controls */
+#ui-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* Let touches pass through to buttons */
+}
 
-        #score-board {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            color: #00ffcc;
-            font-size: 24px;
-            font-weight: bold;
-            text-shadow: 2px 2px 0 #000;
-            z-index: 10;
-        }
+#score {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    color: #fff;
+    font-size: 24px;
+    font-weight: bold;
+    text-shadow: 2px 2px 0 #000;
+    z-index: 10;
+}
 
-        /* Controls Area */
-        #controls-area {
-            position: absolute;
-            bottom: 20px;
-            width: 100%;
-            height: 150px;
-            pointer-events: auto;
-            display: flex;
-            justify-content: space-between;
-            padding: 0 20px;
-            box-sizing: border-box;
-            z-index: 20;
-        }
+#controls {
+    position: absolute;
+    bottom: 20px;
+    width: 100%;
+    height: 150px;
+    pointer-events: auto;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+    box-sizing: border-box;
+}
 
-        /* Steering Button */
-        #steer-btn {
-            width: 80px;
-            height: 80px;
-            background: rgba(255, 255, 255, 0.2);
-            border: 2px solid rgba(255, 255, 255, 0.5);
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            font-size: 24px;
-            user-select: none;
-        }
+/* Buttons */
+.btn {
+    width: 70px;
+    height: 70px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    color: white;
+    font-size: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    user-select: none;
+    touch-action: manipulation;
+}
 
-        #steer-btn:active {
-            background: rgba(0, 255, 200, 0.4);
-        }
+.btn:active {
+    background: rgba(0, 255, 200, 0.5);
+    transform: scale(0.95);
+}
 
-        /* Action Buttons */
-        #action-btns {
-            display: flex;
-            gap: 20px;
-            align-items: flex-end;
-        }
+/* Action Buttons */
+#action-btns {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 10px;
+}
 
-        .action-btn {
-            width: 70px;
-            height: 70px;
-            border-radius: 50%;
-            border: 2px solid #fff;
-            color: white;
-            font-weight: bold;
-            font-size: 14px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            box-shadow: 0 4px 0 rgba(0,0,0,0.5);
-            user-select: none;
-        }
+#btn-trans {
+    background: #ff0055;
+    border-color: #cc0044;
+    font-size: 14px;
+    font-weight: bold;
+    width: 80px;
+    height: 50px;
+    border-radius: 10px;
+}
 
-        #btn-transform {
-            background: #ff00ff;
-            border-color: #cc00cc;
-        }
-        
-        #btn-transform:active {
-            background: #cc00cc;
-            transform: translateY(4px);
-        }
+#btn-gas {
+    background: #ffcc00;
+    border-color: #cc9900;
+    color: black;
+    font-weight: bold;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    font-size: 18px;
+}
 
-        #btn-shoot {
-            background: #ffcc00;
-            border-color: #cc9900;
-            display: none; /* Hidden by default */
-        }
+#btn-shoot {
+    background: #ff3333;
+    border-color: #cc0000;
+    display: none; /* Hidden unless transformed */
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    font-weight: bold;
+    font-size: 16px;
+}
 
-        #btn-shoot:active {
-            background: #cc9900;
-            transform: translateY(4px);
-        }
+/* Game Over Screen */
+#game-over {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    pointer-events: auto;
+}
 
-        /* Start Screen */
-        #start-screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 100;
-            pointer-events: auto;
-        }
+#game-over h1 {
+    color: #ff0000;
+    font-size: 40px;
+    margin-bottom: 10px;
+}
 
-        #start-screen h1 {
-            color: #00ffcc;
-            font-size: 36px;
-            margin-bottom: 20px;
-            text-align: center;
-            text-transform: uppercase;
-        }
-
-        #start-btn {
-            background: #00ffcc;
-            color: #000;
-            border: none;
-            padding: 15px 40px;
-            font-size: 22px;
-            border-radius: 50px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-    </style>
+#restart-btn {
+    padding: 15px 30px;
+    font-size: 20px;
+    background: #00ff88;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: bold;
+}
+</style>
 </head>
 <body>
 
-    <div id="game-container">
-        <canvas id="gameCanvas"></canvas>
+<div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+    <div id="ui-layer">
+        <div id="score">Score: 0</div>
         
-        <div id="ui-layer">
-            <div id="score-board">Score: 0</div>
+        <div id="controls">
+            <!-- Steering Buttons -->
+            <button id="btn-left" class="btn">◄</button>
+            <button id="btn-right" class="btn">►</button>
             
-            <div id="controls-area">
-                <div id="steer-btn">◄</div> <!-- Simple steer for now -->
-                <div id="action-btns">
-                    <div class="action-btn" id="btn-transform">TRANS</div>
-                    <div class="action-btn" id="btn-shoot">SHOOT</div>
-                </div>
+            <!-- Action Buttons -->
+            <div id="action-btns">
+                <button id="btn-trans" class="btn">TRANS</button>
+                <button id="btn-gas" class="btn">GAS</button>
+                <button id="btn-shoot" class="btn">BANG</button>
             </div>
-            
-            <!-- Steering Logic: Tapping Left side of screen moves left, Right moves right -->
         </div>
     </div>
 
-    <div id="start-screen">
-        <h1>Robo-Car<br>Infinity Racer</h1>
-        <p style="color:#ccc; text-align:center; max-width: 300px;">
-            Tap Left/Right side of screen to Steer.<br>
-            'TRANS' button to change form.<br>
-            'SHOOT' button to fire gun.<br>
-            Avoid Traffic!
-        </p>
-        <button id="start-btn">START GAME</button>
+    <div id="game-over">
+        <h1>CRASHED!</h1>
+        <button id="restart-btn">RESTART</button>
     </div>
+</div>
 
-    <script>
-        // --- Variables ---
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
+<script>
+// --- Variables ---
+var canvas = document.getElementById('gameCanvas');
+var ctx = canvas.getContext('2d');
+
+var w, h;
+var isRunning = false;
+var score = 0;
+var speed = 0;
+var maxSpeed = 10;
+var frameCount = 0;
+
+// Player State
+var player = {
+    x: 0,
+    y: 0,
+    width: 40,
+    height: 70,
+    isRobot: false,
+    transformAnim: 0, // 0 = Car, 1 = Robot
+    isTransforming: false
+};
+
+// Controls State
+var moveLeft = false;
+var moveRight = false;
+var gasPressed = false;
+
+// Game Objects
+var bullets = [];
+var enemies = [];
+var roadLines = [];
+
+// --- Setup ---
+function resize() {
+    w = window.innerWidth;
+    h = window.innerHeight;
+    canvas.width = w;
+    canvas.height = h;
+    player.y = h - 150;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// --- Event Listeners (No Arrow Functions) ---
+
+// Start/Restart
+document.getElementById('restart-btn').addEventListener('click', startGame);
+
+// Steering
+var btnLeft = document.getElementById('btn-left');
+var btnRight = document.getElementById('btn-right');
+var gasBtn = document.getElementById('btn-gas');
+var transBtn = document.getElementById('btn-trans');
+var shootBtn = document.getElementById('btn-shoot');
+
+btnLeft.addEventListener('touchstart', function(e) { e.preventDefault(); moveLeft = true; });
+btnLeft.addEventListener('touchend', function(e) { e.preventDefault(); moveLeft = false; });
+btnLeft.addEventListener('mousedown', function() { moveLeft = true; });
+btnLeft.addEventListener('mouseup', function() { moveLeft = false; });
+
+btnRight.addEventListener('touchstart', function(e) { e.preventDefault(); moveRight = true; });
+btnRight.addEventListener('touchend', function(e) { e.preventDefault(); moveRight = false; });
+btnRight.addEventListener('mousedown', function() { moveRight = true; });
+btnRight.addEventListener('mouseup', function() { moveRight = false; });
+
+// Gas
+gasBtn.addEventListener('touchstart', function(e) { e.preventDefault(); gasPressed = true; });
+gasBtn.addEventListener('touchend', function(e) { e.preventDefault(); gasPressed = false; });
+
+// Transform
+transBtn.addEventListener('click', function() {
+    if (player.isTransforming) return;
+    player.isRobot = !player.isRobot;
+    player.isTransforming = true;
+    
+    if (player.isRobot) {
+        shootBtn.style.display = 'flex';
+    } else {
+        shootBtn.style.display = 'none';
+        bullets = [];
+    }
+});
+
+// Shoot
+shootBtn.addEventListener('touchstart', function(e) { 
+    e.preventDefault(); 
+    if (player.isRobot) fireBullet();
+});
+shootBtn.addEventListener('click', function() { 
+    if (player.isRobot) fireBullet();
+});
+
+// --- Game Logic ---
+
+function startGame() {
+    document.getElementById('game-over').style.display = 'none';
+    isRunning = true;
+    score = 0;
+    speed = 0;
+    frameCount = 0;
+    player.x = w / 2;
+    player.isRobot = false;
+    player.isTransforming = false;
+    player.transformAnim = 0;
+    shootBtn.style.display = 'none';
+    bullets = [];
+    enemies = [];
+    roadLines = [];
+    animate();
+}
+
+function fireBullet() {
+    bullets.push({
+        x: player.x,
+        y: player.y - 20,
+        speed: 15
+    });
+}
+
+function spawnEnemy() {
+    var lane = Math.random() * (w * 0.6) - (w * 0.3); // Random X relative to center
+    enemies.push({
+        x: player.x + lane,
+        y: -100,
+        speed: 5 + Math.random() * 5,
+        width: 40,
+        height: 70,
+        color: '#ff0000'
+    });
+}
+
+function update() {
+    // Speed Control
+    if (gasPressed) {
+        if (speed < maxSpeed) speed += 0.2;
+    } else {
+        if (speed > 2) speed -= 0.1;
+        else speed = 0;
+    }
+
+    // Player Movement
+    if (moveLeft && player.x > 50) player.x -= 8;
+    if (moveRight && player.x < w - 50) player.x += 8;
+
+    // Transform Animation
+    if (player.isTransforming) {
+        player.transformAnim += 0.1;
+        if (player.transformAnim >= 1) {
+            player.transformAnim = 1;
+            player.isTransforming = false;
+        }
+    }
+
+    // Road Lines
+    roadLines.push({y: -20});
+    if (roadLines.length < 10) roadLines.push({y: -20 + (h/10)*2});
+    
+    for (var i = roadLines.length - 1; i >= 0; i--) {
+        roadLines[i].y += speed;
+        if (roadLines[i].y > h) {
+            roadLines.splice(i, 1);
+        }
+    }
+
+    // Enemies
+    if (frameCount % 60 === 0) spawnEnemy();
+    
+    for (var i = enemies.length - 1; i >= 0; i--) {
+        var e = enemies[i];
+        e.y += speed + e.speed;
         
-        // Resize Canvas
-        function resize() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
+        // Collision
+        if (
+            player.x + 20 > e.x - 20 && 
+            player.x - 20 < e.x + 20 && 
+            player.y + 35 > e.y - 35 && 
+            player.y - 35 < e.y + 35
+        ) {
+            gameOver();
         }
-        window.addEventListener('resize', resize);
-        resize();
-
-        // Game State
-        let gameActive = false;
-        let score = 0;
-        let speed = 0;
-        let maxSpeed = 15;
-        let frame = 0;
-        let isRobot = false;
-        let bullets = [];
-        let enemies = [];
-        let roadOffset = 0;
-
-        // Player
-        let player = {
-            x: 0, // -1 to 1 (Left to Right)
-            y: 0, // Fixed visually
-            width: 40,
-            height: 70,
-            color: '#00ff00'
-        };
-
-        // Controls
-        let steerLeft = false;
-        let steerRight = false;
         
-        // UI Elements
-        const scoreEl = document.getElementById('score-board');
-        const startScreen = document.getElementById('start-screen');
-        const startBtn = document.getElementById('start-btn');
-        const transformBtn = document.getElementById('btn-transform');
-        const shootBtn = document.getElementById('btn-shoot');
-        const steerBtn = document.getElementById('steer-btn');
+        if (e.y > h + 100) {
+            enemies.splice(i, 1);
+            score += 10;
+            document.getElementById('score').innerText = "Score: " + score;
+        }
+    }
 
-        // Input Handling
-        startBtn.addEventListener('click', startGame);
+    // Bullets
+    for (var i = bullets.length - 1; i >= 0; i--) {
+        var b = bullets[i];
+        b.y -= b.speed;
         
-        // Steering
-        window.addEventListener('touchstart', (e) => {
-            if(!gameActive) return;
-            let x = e.touches[0].clientX;
-            let w = window.innerWidth;
-            if (x < w / 2) steerLeft = true;
-            else steerRight = true;
-        });
-
-        window.addEventListener('touchend', () => {
-            steerLeft = false;
-            steerRight = false;
-        });
-
-        // Keyboard support
-        window.addEventListener('keydown', (e) => {
-            if(e.key === 'ArrowLeft') steerLeft = true;
-            if(e.key === 'ArrowRight') steerRight = true;
-            if(e.key === 't') toggleTransform();
-            if(e.key === ' ') shoot();
-        });
-        window.addEventListener('keyup', (e) => {
-            if(e.key === 'ArrowLeft') steerLeft = false;
-            if(e.key === 'ArrowRight') steerRight = false;
-        });
-
-        // Buttons
-        transformBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            toggleTransform();
-        });
+        // Bullet Collision
+        for (var j = enemies.length - 1; j >= 0; j--) {
+            var enemy = enemies[j];
+            if (b.x > enemy.x - 20 && b.x < enemy.x + 20 && b.y > enemy.y - 35 && b.y < enemy.y + 35) {
+                enemies.splice(j, 1);
+                bullets.splice(i, 1);
+                score += 20;
+                document.getElementById('score').innerText = "Score: " + score;
+                break;
+            }
+        }
         
-        shootBtn.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            shoot();
-        });
+        if (b.y < -50) bullets.splice(i, 1);
+    }
+}
 
-        function toggleTransform() {
-            isRobot = !isRobot;
-            if(isRobot) {
-                shootBtn.style.display = 'flex';
-            } else {
-                shootBtn.style.display = 'none';
-                bullets = []; // Clear bullets on transform
-            }
+function draw() {
+    // Clear
+    ctx.fillStyle = '#111';
+    ctx.fillRect(0, 0, w, h);
+    
+    // Draw Road
+    ctx.fillStyle = '#333';
+    ctx.fillRect(w/2 - 200, 0, 400, h);
+    
+    // Draw Road Lines
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(w/2 - 2, 0, 4, h);
+    
+    for (var i = 0; i < roadLines.length; i++) {
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(w/2 - 10, roadLines[i].y, 20, 40);
+    }
+
+    // Draw Player
+    drawPlayer(player.x, player.y);
+
+    // Draw Enemies
+    for (var i = 0; i < enemies.length; i++) {
+        drawCar(enemies[i].x, enemies[i].y, enemies[i].color);
+    }
+
+    // Draw Bullets
+    ctx.fillStyle = '#ffff00';
+    for (var i = 0; i < bullets.length; i++) {
+        ctx.fillRect(bullets[i].x - 2, bullets[i].y, 4, 10);
+    }
+}
+
+function drawPlayer(x, y) {
+    var anim = player.transformAnim;
+    
+    if (player.isRobot) {
+        // Robot Mode
+        // If animating, scale effect
+        var scaleX = 1;
+        var scaleY = 1;
+        if (player.isTransforming) {
+            scaleY = 1 + Math.sin(anim * 10) * 0.2;
+            scaleX = 1 + Math.sin(anim * 10) * 0.1;
         }
-
-        function shoot() {
-            if(!isRobot) return;
-            // Create bullet
-            bullets.push({
-                x: canvas.width / 2,
-                y: canvas.height - 150, // Gun position
-                width: 5,
-                height: 15,
-                speed: 20,
-                color: '#ff0000'
-            });
+        
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(scaleX, scaleY);
+        
+        // Body
+        ctx.fillStyle = '#0055aa';
+        ctx.fillRect(-15, -30, 30, 40);
+        
+        // Head
+        ctx.fillStyle = '#ffff00';
+        ctx.fillRect(-10, -50, 20, 20);
+        
+        // Arms/Guns
+        ctx.fillStyle = '#555';
+        ctx.fillRect(-25, -20, 10, 30);
+        ctx.fillRect(15, -20, 10, 30);
+        
+        // Gun barrels
+        ctx.fillStyle = '#ff0000';
+        ctx.fillRect(-22, 10, 4, 10);
+        ctx.fillRect(18, 10, 4, 10);
+        
+        ctx.restore();
+    } else {
+        // Car Mode
+        // Animation effect
+        var scaleY = 1;
+        if (player.isTransforming) {
+            scaleY = 1 + Math.sin(anim * 10) * 0.1;
         }
+        
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(1, scaleY);
+        
+        // Car Body
+        ctx.fillStyle = '#ff0000';
+        ctx.fillRect(-20, -35, 40, 70);
+        
+        // Roof
+        ctx.fillStyle = '#aa0000';
+        ctx.fillRect(-18, -15, 36, 30);
+        
+        // Windows
+        ctx.fillStyle = '#88ccff';
+        ctx.fillRect(-15, -10, 30, 15);
+        
+        // Wheels
+        ctx.fillStyle = '#000';
+        ctx.fillRect(-22, -30, 5, 15);
+        ctx.fillRect(17, -30, 5, 15);
+        ctx.fillRect(-22, 15, 5, 15);
+        ctx.fillRect(17, 15, 5, 15);
+        
+        ctx.restore();
+    }
+}
 
-        function startGame() {
-            startScreen.style.display = 'none';
-            gameActive = true;
-            score = 0;
-            speed = 0;
-            player.x = 0;
-            isRobot = false;
-            shootBtn.style.display = 'none';
-            bullets = [];
-            enemies = [];
-            animate();
-        }
+function drawCar(x, y, color) {
+    ctx.fillStyle = color;
+    ctx.fillRect(x - 20, y - 35, 40, 70);
+    ctx.fillStyle = '#333';
+    ctx.fillRect(x - 18, y - 15, 36, 30);
+    
+    ctx.fillStyle = '#000';
+    ctx.fillRect(x - 22, y - 30, 5, 15);
+    ctx.fillRect(x + 17, y - 30, 5, 15);
+    ctx.fillRect(x - 22, y + 15, 5, 15);
+    ctx.fillRect(x + 17, y + 15, 5, 15);
+}
 
-        function spawnEnemy() {
-            // Spawn logic: Random X between road edges
-            let laneWidth = 100; // Width of road in pixels
-            let roadCenter = canvas.width / 2;
-            
-            // Random X position within road
-            let x = (Math.random() - 0.5) * (roadCenter * 1.5); 
-            let y = -100;
-            
-            enemies.push({
-                x: x,
-                y: y,
-                width: 40,
-                height: 70,
-                color: '#ff3333',
-                speed: 5 + Math.random() * 5
-            });
-        }
+function gameOver() {
+    isRunning = false;
+    document.getElementById('game-over').style.display = 'flex';
+}
 
-        function update() {
-            if (!gameActive) return;
+function animate() {
+    if (!isRunning) return;
+    update();
+    draw();
+    requestAnimationFrame(animate);
+}
 
-            // Road Movement
-            roadOffset += speed;
-            if (roadOffset > 100) roadOffset = 0;
-
-            // Player Movement
-            if (steerLeft) player.x -= 15;
-            if (steerRight) player.x += 15;
-            
-            // Clamp player to road
-            let roadLimit = (canvas.width * 0.4); // 40% of screen
-            if (player.x < -roadLimit) player.x = -roadLimit;
-            if (player.x > roadLimit) player.x = roadLimit;
-
-            // Update Bullets
-            for (let i = bullets.length - 1; i >= 0; i--) {
-                let b = bullets[i];
-                b.y -= b.speed;
-                
-                // Check collision with enemies
-                for (let j = enemies.length - 1; j >= 0; j--) {
-                    let e = enemies[j];
-                    if (
-                        b.x > e.x - e.width/2 && 
-                        b.x < e.x + e.width/2 && 
-                        b.y > e.y - e.height/2 && 
-                        b.y < e.y + e.height/2
-                    ) {
-                        // Hit!
-                        enemies.splice(j, 1);
-                        bullets.splice(i, 1);
-                        score += 10;
-                        scoreEl.innerText = 'Score: ' + score;
-                        break;
-                    }
-                }
-
-                if (b.y < -50) {
-                    bullets.splice(i, 1);
-                }
-            }
-
-            // Update Enemies
-            if (frame % 60 === 0) { // Spawn every 60 frames
-                spawnEnemy();
-            }
-
-            for (let i = enemies.length - 1; i >= 0; i--) {
-                let e = enemies[i];
-                e.y += speed + e.speed;
-
-                // Collision with Player
-                if (
-                    player.x + 20 > e.x - e.width/2 && 
-                    player.x - 20 < e.x + e.width/2 && 
-                    canvas.height - 150 + 35 > e.y - e.height/2 && 
-                    canvas.height - 150 - 35 < e.y + e.height/2
-                ) {
-                    gameOver();
-                }
-
-                if (e.y > canvas.height + 100) {
-                    enemies.splice(i, 1);
-                }
-            }
-
-            // Increase Speed
-            if (speed < maxSpeed) speed += 0.01;
-            
-            frame++;
-        }
-
-        function draw() {
-            // Clear Screen
-            ctx.fillStyle = '#333';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Draw Road
-            let roadWidth = canvas.width * 0.8;
-            let roadCenter = canvas.width / 2;
-            
-            ctx.fillStyle = '#555';
-            ctx.fillRect(roadCenter - roadWidth/2, 0, roadWidth, canvas.height);
-
-            // Draw Road Lines (Infinite Scroll)
-            ctx.strokeStyle = '#fff';
-            ctx.lineWidth = 4;
-            ctx.setLineDash([20, 20]);
-            ctx.lineDashOffset = -roadOffset;
-            
-            ctx.beginPath();
-            ctx.moveTo(roadCenter ctx.lineTo(roadCenter, canvas.height);
-            ctx.stroke();
-            ctx.setLineDash([]); // Reset
-
-            // Draw Enemies
-            enemies.forEach(e => {
-                drawCar(e.x + roadCenter, e.y, e.width, e.height, e.color, false);
-            });
-
-            // Draw Player
-            drawPlayer();
-
-            // Draw Bullets
-            bullets.forEach(b => {
-                ctx.fillStyle = b.color;
-                ctx.fillRect(b.x + roadCenter, b.y, b.width, b.height);
-            });
-        }
-
-        function drawPlayer() {
-            let x = player.x + roadCenter;
-            let y = canvas.height - 150;
-            
-            if (isRobot) {
-                drawRobot(x, y);
-            } else {
-                drawCar(x, y, player.width, player.height, player.color, true);
-            }
-        }
-
-        function drawCar(x, y, w, h, color, isPlayer) {
-            ctx.fillStyle = color;
-            ctx.fillRect(x - w/2, y - h/2, w, h);
-            
-            // Windows
-            ctx.fillStyle = '#111';
-            ctx.fillRect(x - w/2 + 5, y - h/2 + 10, w - 10, h/4);
-            
-            // Wheels
-            ctx.fillStyle = '#000';
-            ctx.fillRect(x - w/2 - 2, y - h/2 + 5, 4, 15);
-            ctx.fillRect(x + w/2 - 2, y - h/2 + 5, 4, 15);
-            ctx.fillRect(x - w/2 - 2, y + h/2 - 20, 4, 15);
-            ctx.fillRect(x + w/2 - 2, y + h/2 - 20, 4, 15);
-        }
-
-        function drawRobot(x, y) {
-            // Robot Body
-            ctx.fillStyle = '#0000aa';
-            ctx.fillRect(x - 15, y - 30, 30, 40);
-            
-            // Robot Head
-            ctx.fillStyle = '#ffff00';
-            ctx.fillRect(x - 10, y - 50, 20, 20);
-            
-            // Robot Arms (Gun)
-            ctx.fillStyle = '#888';
-            ctx.fillRect(x - 20, y - 20, 10, 30);
-            ctx.fillRect(x + 10, y - 20, 10, 30);
-            
-            // Gun (Right Arm)
-            ctx.fillStyle = '#ff0000';
-            ctx.fillRect(x + 15, y - 10, 20, 5); // Gun barrel
-        }
-
-        function gameOver() {
-            gameActive = false;
-            startScreen.style.display = 'flex';
-            startScreen.querySelector('h1').innerText = 'GAME OVER';
-            startScreen.querySelector('p').innerText = 'Final Score: ' + score;
-        }
-
-        function animate() {
-            if (!gameActive) return;
-            update();
-            draw();
-            requestAnimationFrame(animate);
-        }
-
-        // Initial Draw
-        resize();
-        draw();
-    </script>
+</script>
 </body>
 </html>
