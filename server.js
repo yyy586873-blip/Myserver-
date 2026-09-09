@@ -1,72 +1,43 @@
-var http = require("http");
-var fs = require("fs");
-var path = require("path");
+const express = require("express");
 
-var PORT = parseInt(process.env.PORT || "10000", 10);
-var HOST = "0.0.0.0";
+const app = express();
 
-// WebSocket dependency (npm install ws karna zaroori hai)
-var WebSocketServer = require('ws').Server;
+let latestFrame = null;
 
-var INDEX_FILE = path.join(__dirname, "index.html");
+app.use(express.raw({
+    type: "image/jpeg",
+    limit: "20mb"
+}));
 
-// WebSocket Server for real-time streaming
-var wss = new WebSocketServer({ port: 8080 });
+app.use(express.static("public"));
 
-// Store connected browser clients
-var webClients = [];
+app.post("/upload", function (req, res) {
 
-wss.on('connection', function (ws) {
-    console.log('Browser Connected');
-    webClients.push(ws);
-    
-    ws.on('close', function() {
-        console.log('Browser Disconnected');
-        // Remove closed client
-        var index = webClients.indexOf(ws);
-        if (index > -1) webClients.splice(index, 1);
-    });
-});
-
-var server = http.createServer(function (req, res) {
-  
-  // New Endpoint: /upload for Android App
-  if (req.method === 'POST' && req.url === '/upload') {
-    var body = [];
-    
-    req.on('data', function (chunk) {
-      body.push(chunk);
-    });
-    
-    req.on('end', function () {
-      var data = Buffer.concat(body);
-      
-      // Broadcast this raw frame to all connected browsers
-      for (var i = 0; i < webClients.length; i++) {
-        if (webClients[i].readyState === WebSocket.OPEN) {
-            webClients[i].send(data);
-        }
-      }
-      
-      res.writeHead(200);
-      res.end("OK");
-    });
-    return; // Exit early so we don't serve HTML
-  }
-
-  // Default: Serve index.html
-  fs.readFile(INDEX_FILE, function (err, data) {
-    if (err) {
-      res.writeHead(500);
-      res.end("Error");
-      return;
+    if (!req.body || req.body.length === 0) {
+        return res.status(400).send("No image received");
     }
-    res.writeHead(200, { "Content-Type": "text/html" });
-    res.end(data);
-  });
+
+    latestFrame = Buffer.from(req.body);
+
+    console.log("Frame received: " + latestFrame.length + " bytes");
+
+    res.status(200).send("OK");
 });
 
-server.listen(PORT, HOST, function () {
-  console.log("Server running at http://" + HOST + ":" + PORT + "/");
-  console.log("WebSocket ready on port 8080");
+app.get("/latest.jpg", function (req, res) {
+
+    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+
+    if (latestFrame === null) {
+        return res.status(404).send("No screen available");
+    }
+
+    res.setHeader("Content-Type", "image/jpeg");
+    res.send(latestFrame);
+});
+
+const port = process.env.PORT || 3000;
+
+app.listen(port, function () {
+    console.log("Server running on port " + port);
 });
