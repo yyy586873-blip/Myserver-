@@ -1,76 +1,105 @@
-<!DOCTYPE html>
-<html>
-<head>
+<!DOCTYPE html><html>
+<head><meta charset="UTF-8">
 
-    <meta charset="UTF-8">
+<meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+>
 
-    <title>Screen Share</title>
+<title>Live Screen Share</title>
 
-    <style>
+<style>
 
-        body {
-            margin: 0;
-            padding: 0;
-            background: #111;
-            color: white;
-            font-family: Arial;
-            text-align: center;
+    body {
+        margin: 0;
+        padding: 0;
+        background: #111111;
+        color: white;
+        font-family: Arial, sans-serif;
+        text-align: center;
+    }
+
+    h2 {
+        margin: 15px;
+    }
+
+    #status {
+        margin: 10px;
+        color: #cccccc;
+    }
+
+    #screen {
+        width: 100%;
+        max-width: 1000px;
+        max-height: 85vh;
+        object-fit: contain;
+        background: black;
+    }
+
+</style>
+
+</head><body><h2>Live Screen Share</h2>
+
+<div id="status">
+    Connecting...
+</div>
+
+<img
+    id="screen"
+    alt="Waiting for screen"
+>
+
+<script>
+
+    var screenImage =
+        document.getElementById("screen");
+
+    var status =
+        document.getElementById("status");
+
+    var loading = false;
+
+    function updateScreen() {
+
+        if (loading) {
+            return;
         }
 
-        h2 {
-            padding: 15px;
-        }
+        loading = true;
 
-        #screen {
-            max-width: 100%;
-            max-height: 85vh;
-            border: 2px solid #444;
-        }
+        var image = new Image();
 
-        #status {
-            margin: 10px;
-            color: #aaa;
-        }
+        image.onload = function () {
 
-    </style>
+            screenImage.src = image.src;
 
-</head>
+            status.innerHTML =
+                "Live - Screen Connected";
 
-<body>
+            loading = false;
+        };
 
-    <h2>Live Screen Share</h2>
+        image.onerror = function () {
 
-    <div id="status">
-        Waiting for screen...
-    </div>
+            status.innerHTML =
+                "Waiting for device...";
 
-    <img id="screen" src="" />
+            loading = false;
+        };
 
-    <script>
+        image.src =
+            "/latest.jpg?t=" +
+            new Date().getTime();
+    }
 
-        var image = document.getElementById("screen");
-        var status = document.getElementById("status");
+    setInterval(
+        updateScreen,
+        700
+    );
 
-        function loadScreen() {
+    updateScreen();
 
-            var url = "/latest.jpg?t=" + new Date().getTime();
-
-            image.onload = function () {
-                status.innerHTML = "Connected - Live";
-            };
-
-            image.onerror = function () {
-                status.innerHTML = "Waiting for device...";
-            };
-
-            image.src = url;
-        }
-
-        setInterval(loadScreen, 500);
-
-        loadScreen();
-
-    </script>
+</script>
 
 </body>
 </html>
