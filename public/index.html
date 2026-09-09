@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>Screen Share</title>
+
+    <style>
+
+        body {
+            margin: 0;
+            padding: 0;
+            background: #111;
+            color: white;
+            font-family: Arial;
+            text-align: center;
+        }
+
+        h2 {
+            padding: 15px;
+        }
+
+        #screen {
+            max-width: 100%;
+            max-height: 85vh;
+            border: 2px solid #444;
+        }
+
+        #status {
+            margin: 10px;
+            color: #aaa;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <h2>Live Screen Share</h2>
+
+    <div id="status">
+        Waiting for screen...
+    </div>
+
+    <img id="screen" src="" />
+
+    <script>
+
+        var image = document.getElementById("screen");
+        var status = document.getElementById("status");
+
+        function loadScreen() {
+
+            var url = "/latest.jpg?t=" + new Date().getTime();
+
+            image.onload = function () {
+                status.innerHTML = "Connected - Live";
+            };
+
+            image.onerror = function () {
+                status.innerHTML = "Waiting for device...";
+            };
+
+            image.src = url;
+        }
+
+        setInterval(loadScreen, 500);
+
+        loadScreen();
+
+    </script>
+
+</body>
+</html>
