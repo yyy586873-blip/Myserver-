@@ -1,52 +1,724 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta charset="utf-8">
-    <title>Live Mirror</title>
-    <style>
-        body { background: #000; color: white; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        video { width: 100%; max-width: 640px; border: 2px solid #333; }
-        #status { position: absolute; top: 10px; left: 10px; color: lime; }
-    </style>
-</head>
-<body>
-    <div id="status">Connecting...</div>
-    <video id="player" autoplay playsinline></video>
+<meta charset="UTF-8">
+<meta name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-    <script>
-        var video = document.getElementById('player');
-        var status = document.getElementById('status');
-        
-        // Media Source setup
-        var mediaSource = new MediaSource();
-        video.src = URL.createObjectURL(mediaSource);
-        
-        mediaSource.addEventListener('sourceopen', function(e) {
-            try {
-                var sourceBuffer = mediaSource.addSourceBuffer('video/mp4; codecs="avc1.42E01F, mp4a.40.2"');
-                
-                // Connect to WebSocket (Same server, different port)
-                var ws = new WebSocket('ws://myserver-b0ls.onrender.com:8080');
-                
-                ws.binaryType = 'arraybuffer';
-                
-                ws.onopen = function() {
-                    status.textContent = "Connected!";
-                };
-                
-                ws.onmessage = function(event) {
-                    if (sourceBuffer.updating) {
-                        sourceBuffer.addEventListener('updateend', function() {
-                            sourceBuffer.appendBuffer(event.data);
-                        }, { once: true });
-                    } else {
-                        sourceBuffer.appendBuffer(event.data);
-                    }
-                };
-            } catch (err) {
-                status.textContent = "Error: " + err.message;
-            }
-        });
-    </script>
+<title>3D Mobile Tetris</title>
+
+<style>
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #050713;
+  font-family: Arial, sans-serif;
+  color: white;
+  touch-action: none;
+}
+
+#game {
+  position: fixed;
+  inset: 0;
+}
+
+#ui {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+.top {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  right: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title {
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.scoreBox {
+  text-align: right;
+  font-size: 13px;
+  color: #aeb8d8;
+}
+
+#score {
+  color: white;
+  font-size: 21px;
+  font-weight: bold;
+}
+
+.controls {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  pointer-events: auto;
+}
+
+.row {
+  display: flex;
+  gap: 10px;
+}
+
+button {
+  width: 68px;
+  height: 58px;
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 16px;
+  background: rgba(30, 39, 75, .86);
+  color: white;
+  font-size: 24px;
+  font-weight: bold;
+  box-shadow:
+    0 5px 20px rgba(0,0,0,.35),
+    inset 0 1px rgba(255,255,255,.12);
+  backdrop-filter: blur(8px);
+}
+
+button:active {
+  transform: scale(.92);
+  background: rgba(70, 88, 145, .95);
+}
+
+.drop {
+  width: 146px;
+  font-size: 15px;
+  letter-spacing: 1px;
+}
+
+#gameOver {
+  display: none;
+  position: absolute;
+  inset: 0;
+  background: rgba(3,5,15,.78);
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  pointer-events: auto;
+}
+
+#gameOver h1 {
+  margin: 0 0 8px;
+  font-size: 34px;
+}
+
+#gameOver p {
+  color: #aeb8d8;
+  margin: 0 0 20px;
+}
+
+#restart {
+  width: 150px;
+  height: 52px;
+  font-size: 16px;
+}
+
+.help {
+  position: absolute;
+  top: 62px;
+  left: 14px;
+  color: #747e9e;
+  font-size: 11px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="game"></div>
+
+<div id="ui">
+
+  <div class="top">
+    <div class="title">3D TETRIS</div>
+
+    <div class="scoreBox">
+      SCORE<br>
+      <span id="score">0</span>
+    </div>
+  </div>
+
+  <div class="help">MOBILE CONTROLS</div>
+
+  <div class="controls">
+
+    <div class="row">
+      <button id="rotate">↻</button>
+    </div>
+
+    <div class="row">
+      <button id="left">◀</button>
+      <button id="down">▼</button>
+      <button id="right">▶</button>
+    </div>
+
+    <div class="row">
+      <button class="drop" id="drop">HARD DROP</button>
+    </div>
+
+  </div>
+
+  <div id="gameOver">
+    <h1>GAME OVER</h1>
+    <p>Score: <span id="finalScore">0</span></p>
+    <button id="restart">RESTART</button>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+
+<script>
+/* =========================
+   THREE.JS / WEBGL SETUP
+========================= */
+
+const scene = new THREE.Scene();
+
+scene.background = new THREE.Color(0x050713);
+
+const camera = new THREE.PerspectiveCamera(
+  45,
+  innerWidth / innerHeight,
+  0.1,
+  100
+);
+
+camera.position.set(9, 11, 17);
+camera.lookAt(0, 5, 0);
+
+const renderer = new THREE.WebGLRenderer({
+  antialias: true,
+  powerPreference: "high-performance"
+});
+
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+renderer.setSize(innerWidth, innerHeight);
+
+document.getElementById("game").appendChild(renderer.domElement);
+
+
+/* =========================
+   LIGHTS
+========================= */
+
+scene.add(new THREE.AmbientLight(0xffffff, 1.4));
+
+const light = new THREE.DirectionalLight(0xffffff, 2);
+light.position.set(5, 12, 8);
+scene.add(light);
+
+
+/* =========================
+   BOARD
+========================= */
+
+const W = 10;
+const H = 20;
+
+const board = [];
+
+for (let y = 0; y < H; y++) {
+  board[y] = [];
+
+  for (let x = 0; x < W; x++) {
+    board[y][x] = null;
+  }
+}
+
+
+/* =========================
+   BOARD VISUAL
+========================= */
+
+const boardGroup = new THREE.Group();
+scene.add(boardGroup);
+
+const boardFrame = new THREE.LineSegments(
+  new THREE.EdgesGeometry(
+    new THREE.BoxGeometry(W, H, 1)
+  ),
+  new THREE.LineBasicMaterial({
+    color: 0x3e4a76
+  })
+);
+
+boardFrame.position.set(0, H / 2, 0);
+boardGroup.add(boardFrame);
+
+
+/* =========================
+   GRID
+========================= */
+
+const gridMaterial = new THREE.LineBasicMaterial({
+  color: 0x151b35,
+  transparent: true,
+  opacity: .55
+});
+
+for (let x = 0; x <= W; x++) {
+
+  const points = [
+    new THREE.Vector3(x - W/2, 0, -.51),
+    new THREE.Vector3(x - W/2, H, -.51)
+  ];
+
+  const geo = new THREE.BufferGeometry().setFromPoints(points);
+  boardGroup.add(new THREE.Line(geo, gridMaterial));
+}
+
+for (let y = 0; y <= H; y++) {
+
+  const points = [
+    new THREE.Vector3(-W/2, y, -.51),
+    new THREE.Vector3(W/2, y, -.51)
+  ];
+
+  const geo = new THREE.BufferGeometry().setFromPoints(points);
+  boardGroup.add(new THREE.Line(geo, gridMaterial));
+}
+
+
+/* =========================
+   TETROMINOES
+========================= */
+
+const shapes = [
+
+  {
+    cells: [[0,0],[1,0],[-1,0],[2,0]],
+    color: 0x00e5ff
+  },
+
+  {
+    cells: [[0,0],[1,0],[0,1],[1,1]],
+    color: 0xffd900
+  },
+
+  {
+    cells: [[0,0],[-1,0],[1,0],[1,1]],
+    color: 0xa855f7
+  },
+
+  {
+    cells: [[0,0],[1,0],[-1,0],[-1,1]],
+    color: 0xff8a00
+  },
+
+  {
+    cells: [[0,0],[-1,0],[1,0],[1,-1]],
+    color: 0x246bff
+  },
+
+  {
+    cells: [[0,0],[1,0],[0,1],[-1,1]],
+    color: 0x22e06f
+  },
+
+  {
+    cells: [[0,0],[-1,0],[0,1],[1,1]],
+    color: 0xff3158
+  }
+
+];
+
+
+/* =========================
+   CUBE CREATION
+========================= */
+
+function createCube(color) {
+
+  const geo = new THREE.BoxGeometry(.94,.94,.94);
+
+  const mat = new THREE.MeshStandardMaterial({
+    color: color,
+    roughness: .35,
+    metalness: .15
+  });
+
+  const cube = new THREE.Mesh(geo, mat);
+
+  const edges = new THREE.LineSegments(
+    new THREE.EdgesGeometry(geo),
+    new THREE.LineBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: .28
+    })
+  );
+
+  cube.add(edges);
+
+  return cube;
+}
+
+
+/* =========================
+   CURRENT PIECE
+========================= */
+
+let current;
+let pieceGroup;
+
+function newPiece() {
+
+  const data =
+    shapes[Math.floor(Math.random() * shapes.length)];
+
+  current = {
+    cells: data.cells.map(c => [...c]),
+    color: data.color,
+    x: 4,
+    y: 18
+  };
+
+  pieceGroup = new THREE.Group();
+  scene.add(pieceGroup);
+
+  updatePieceVisual();
+
+  if (!validPosition()) {
+    gameOver();
+  }
+}
+
+
+function updatePieceVisual() {
+
+  while (pieceGroup.children.length) {
+    pieceGroup.remove(pieceGroup.children[0]);
+  }
+
+  current.cells.forEach(cell => {
+
+    const cube = createCube(current.color);
+
+    cube.position.set(
+      cell[0] + current.x - W/2 + .5,
+      cell[1] + current.y + .5,
+      0
+    );
+
+    pieceGroup.add(cube);
+  });
+}
+
+
+/* =========================
+   COLLISION
+========================= */
+
+function validPosition() {
+
+  for (const cell of current.cells) {
+
+    const x = current.x + cell[0];
+    const y = current.y + cell[1];
+
+    if (x < 0 || x >= W) return false;
+    if (y < 0) return false;
+
+    if (y < H && board[y][x]) return false;
+  }
+
+  return true;
+}
+
+
+/* =========================
+   MOVE
+========================= */
+
+function move(dx, dy) {
+
+  current.x += dx;
+  current.y += dy;
+
+  if (!validPosition()) {
+
+    current.x -= dx;
+    current.y -= dy;
+
+    return false;
+  }
+
+  updatePieceVisual();
+
+  return true;
+}
+
+
+/* =========================
+   ROTATE
+========================= */
+
+function rotate() {
+
+  const old = current.cells.map(c => [...c]);
+
+  current.cells = current.cells.map(
+    ([x,y]) => [-y,x]
+  );
+
+  if (!validPosition()) {
+    current.cells = old;
+  }
+
+  updatePieceVisual();
+}
+
+
+/* =========================
+   HARD DROP
+========================= */
+
+function hardDrop() {
+
+  while (move(0,-1)) {}
+
+  lockPiece();
+}
+
+
+/* =========================
+   LOCK
+========================= */
+
+function lockPiece() {
+
+  current.cells.forEach(cell => {
+
+    const x = current.x + cell[0];
+    const y = current.y + cell[1];
+
+    if (y >= 0 && y < H) {
+
+      board[y][x] = {
+        color: current.color
+      };
+    }
+  });
+
+  scene.remove(pieceGroup);
+
+  renderBoard();
+  clearLines();
+
+  newPiece();
+}
+
+
+/* =========================
+   RENDER BOARD
+========================= */
+
+const fixedGroup = new THREE.Group();
+scene.add(fixedGroup);
+
+function renderBoard() {
+
+  while (fixedGroup.children.length) {
+    fixedGroup.remove(fixedGroup.children[0]);
+  }
+
+  for (let y = 0; y < H; y++) {
+
+    for (let x = 0; x < W; x++) {
+
+      if (!board[y][x]) continue;
+
+      const cube = createCube(board[y][x].color);
+
+      cube.position.set(
+        x - W/2 + .5,
+        y + .5,
+        0
+      );
+
+      fixedGroup.add(cube);
+    }
+  }
+}
+
+
+/* =========================
+   LINE CLEAR
+========================= */
+
+let score = 0;
+
+function clearLines() {
+
+  let lines = 0;
+
+  for (let y = H - 1; y >= 0; y--) {
+
+    if (board[y].every(Boolean)) {
+
+      board.splice(y, 1);
+
+      board.push(
+        Array(W).fill(null)
+      );
+
+      lines++;
+      y++;
+    }
+  }
+
+  if (lines > 0) {
+
+    score += [0,100,300,500,800][lines] || 1000;
+
+    document.getElementById("score").textContent = score;
+
+    renderBoard();
+  }
+}
+
+
+/* =========================
+   GAME LOOP
+========================= */
+
+let lastDrop = 0;
+let dropSpeed = 650;
+let running = true;
+
+function animate(time) {
+
+  requestAnimationFrame(animate);
+
+  if (running && time - lastDrop > dropSpeed) {
+
+    if (!move(0,-1)) {
+      lockPiece();
+    }
+
+    lastDrop = time;
+  }
+
+  renderer.render(scene,camera);
+}
+
+requestAnimationFrame(animate);
+
+
+/* =========================
+   MOBILE CONTROLS
+========================= */
+
+function button(id, action) {
+
+  const el = document.getElementById(id);
+
+  el.addEventListener("pointerdown", e => {
+
+    e.preventDefault();
+
+    if (!running) return;
+
+    action();
+  });
+}
+
+button("left", () => move(-1,0));
+button("right", () => move(1,0));
+button("down", () => {
+
+  if (!move(0,-1)) {
+    lockPiece();
+  }
+
+});
+
+button("rotate", rotate);
+button("drop", hardDrop);
+
+
+/* =========================
+   RESTART
+========================= */
+
+function resetGame() {
+
+  for (let y = 0; y < H; y++) {
+    board[y].fill(null);
+  }
+
+  score = 0;
+
+  document.getElementById("score").textContent = "0";
+
+  document.getElementById("gameOver").style.display = "none";
+
+  running = true;
+
+  renderBoard();
+  newPiece();
+}
+
+document
+  .getElementById("restart")
+  .addEventListener("pointerdown", resetGame);
+
+
+/* =========================
+   GAME OVER
+========================= */
+
+function gameOver() {
+
+  running = false;
+
+  document.getElementById("finalScore").textContent = score;
+
+  document.getElementById("gameOver").style.display = "flex";
+}
+
+
+/* =========================
+   RESIZE
+========================= */
+
+addEventListener("resize", () => {
+
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+
+/* =========================
+   START
+========================= */
+
+newPiece();
+
+</script>
+
 </body>
 </html>
