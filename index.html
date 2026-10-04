@@ -1,10 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Fixed VR TV Mode</title>
+    <title>True Spatial VR - Fixed Screen</title>
     <style>
         body {
             margin: 0;
@@ -15,7 +14,7 @@
             touch-action: none;
         }
 
-        /* 1. REAL CAMERA BACKGROUND (The Room) */
+        /* 1. CAMERA BACKGROUND */
         #camera-stream {
             position: fixed;
             top: 0;
@@ -24,41 +23,41 @@
             height: 100%;
             object-fit: cover;
             z-index: 1;
-            /* Mirror selfie cam for better UX, remove if you want rear cam view */
-            transform: scaleX(-1); 
+            transform: scaleX(-1); /* Mirror effect */
+            transition: transform 0.1s linear; /* Smooth movement */
         }
 
-        /* 2. THE FIXED SCREEN (The TV on the wall) */
+        /* 2. THE FIXED SCREEN (The Object) */
         .tv-screen-container {
             position: fixed;
             top: 50%;
             left: 50%;
-            /* Center it */
+            /* Center it initially */
             transform: translate(-50%, -50%);
             
-            /* Size of the TV */
-            width: 70vw; 
-            height: 45vh;
+            /* Size */
+            width: 60vw; 
+            height: 40vh;
             
-            /* No border, just shadow for depth */
-            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+            /* Style */
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.2);
             z-index: 10;
-            
-            /* Keep it flat and facing you */
-            transform-style: preserve-3d;
-            perspective: 1000px;
+            border-radius: 12px;
+            overflow: hidden;
+            opacity: 0; /* Initially hidden */
+            transition: opacity 0.5s ease;
         }
 
-        /* The actual video element */
         .tv-video {
             width: 100%;
             height: 100%;
-            object-fit: contain; /* Ensures video fits without stretching */
+            object-fit: contain;
             display: block;
             background: #000;
         }
 
-        /* 3. UI CONTROLS (Hidden by default, shown on tap) */
+        /* Controls */
         .controls {
             position: fixed;
             bottom: 20px;
@@ -67,30 +66,25 @@
             z-index: 20;
             display: flex;
             gap: 10px;
-            opacity: 0.8;
-            transition: opacity 0.3s;
-        }
-        
-        .controls:hover {
-            opacity: 1;
+            width: 90%;
+            justify-content: center;
         }
 
         button, label.file-label {
-            padding: 10px 15px;
-            background: rgba(0, 0, 0, 0.6);
+            padding: 12px 20px;
+            background: rgba(0, 0, 0, 0.7);
             color: white;
             border: 1px solid #fff;
-            border-radius: 20px;
+            border-radius: 25px;
             cursor: pointer;
             font-size: 14px;
             backdrop-filter: blur(5px);
+            text-align: center;
         }
 
-        input[type="file"] {
-            display: none;
-        }
+        input[type="file"] { display: none; }
 
-        /* Vignette to make it feel like a headset */
+        /* Vignette for immersion */
         .vignette {
             position: fixed;
             top: 0;
@@ -99,110 +93,136 @@
             height: 100%;
             pointer-events: none;
             z-index: 15;
-            background: radial-gradient(circle, transparent 60%, black 100%);
+            background: radial-gradient(circle, transparent 50%, black 100%);
         }
 
-        /* Status Message */
         #status {
             position: fixed;
             top: 10px;
             left: 50%;
             transform: translateX(-50%);
-            color: yellow;
-            background: rgba(0,0,0,0.7);
+            color: #0f0;
+            background: rgba(0,0,0,0.8);
             padding: 5px 10px;
             border-radius: 5px;
             z-index: 100;
-            display: none;
             font-size: 12px;
+            text-align: center;
         }
     </style>
 </head>
 <body>
 
-    <!-- Status Msg -->
-    <div id="status"></div>
+    <div id="status">Loading Sensors...</div>
 
-    <!-- Background Camera -->
+    <!-- Camera -->
     <video id="camera-stream" autoplay playsinline muted></video>
 
-    <!-- Fixed TV Screen -->
-    <div class="tv-screen-container">
-        <video id="movie-player" class="tv-video" loop controlsList="nodownload">
-            <!-- Source will be set by JS -->
-        </video>
+    <!-- TV Screen (Hidden initially) -->
+    <div class="tv-screen-container" id="tvScreen">
+        <video id="movie-player" class="tv-video" loop controlsList="nodownload"></video>
     </div>
 
-    <!-- Vignette Effect -->
+    <!-- Vignette -->
     <div class="vignette"></div>
 
     <!-- Controls -->
     <div class="controls">
-        <label for="file-upload" class="file-label">📂 Load Local Video</label>
+        <label for="file-upload" class="file-label">📂 Load Video</label>
         <input type="file" id="file-upload" accept="video/*">
         <button onclick="togglePlay()">⏯ Play/Pause</button>
-        <button onclick="toggleFullscreen()">🖥 Fullscreen</button>
     </div>
 
     <script>
         const camera = document.getElementById('camera-stream');
         const player = document.getElementById('movie-player');
         const fileInput = document.getElementById('file-upload');
+        const tvScreen = document.getElementById('tvScreen');
         const statusDiv = document.getElementById('status');
+
+        // Sensor Data Variables
+        let beta = 0; // Front/Back tilt
+        let gamma = 0; // Left/Right tilt
 
         // 1. Start Camera
         async function startCamera() {
             try {
-                // Try rear camera first, fallback to front
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } },
-                    audio: false
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: "environment" }, 
+                    audio: false 
                 });
                 camera.srcObject = stream;
-                showStatus("✅ Camera Active");
+                statusDiv.innerText = "Camera Active. Waiting for sensors...";
+                
+                // Request Permission for iOS 13+ devices
+                if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                    DeviceOrientationEvent.requestPermission()
+                        .then(response => {
+                            if (response == 'granted') {
+                                window.addEventListener('deviceorientation', handleOrientation);
+                                statusDiv.innerText = "Sensors Active! Move phone.";
+                            } else {
+                                statusDiv.innerText = "Sensors denied.";
+                            }
+                        })
+                        .catch(console.error);
+                } else {
+                    // Non-iOS 13+ devices
+                    window.addEventListener('deviceorientation', handleOrientation);
+                    statusDiv.innerText = "Sensors Active! Move phone.";
+                }
+
             } catch (err) {
-                console.error(err);
-                showStatus("❌ Camera Error: Check Permissions");
+                statusDiv.innerText = "Camera Error: " + err.message;
             }
         }
 
-        // 2. Handle Local File Upload
-        fileInput.addEventListener('change', (e) => {
+        // 2. Handle Head Movement (The Magic Part)
+        function handleOrientation(event) {
+            // Get device orientation data
+            let b = event.beta;   // [0, 180] front-back
+            let g = event.gamma;  // [-90, 90] left-right
+
+            // Clamp values to avoid flipping too much
+            if (b > 150) b = 150;
+            if (b < 30) b = 30;
+            if (g > 60) g = 60;
+            if (g < -60) g = -60;
+
+            // Calculate offset for the background camera
+            // We invert gamma because moving phone right should make world move left
+            const xMove = -g * 1.5; 
+            const yMove = (b - 90) * 1.5; 
+
+            // Apply transform to background only
+            // This creates the illusion that the camera is moving around the room
+            camera.style.transform = `scaleX(-1) translate(${xMove}px, ${yMove}px) scale(1.2)`;
+        }
+
+        // 3. Load Local Video
+        fileInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
             if (file) {
                 const url = URL.createObjectURL(file);
                 player.src = url;
-                player.play();
-                showStatus("✅ Video Loaded!");
+                tvScreen.style.opacity = '1'; // Show screen
+                togglePlay(); // Auto play
+                statusDiv.innerText = "Video Loaded. Move phone to see parallax.";
             }
         });
 
-        // 3. Play/Pause
+        // 4. Play/Pause
         function togglePlay() {
-            if (player.paused) player.play();
-            else player.pause();
-        }
-
-        // 4. Fullscreen Toggle
-        function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(err => {
-                    console.log(`Error: ${err.message}`);
-                });
+            if (player.paused) {
+                player.play();
             } else {
-                document.exitFullscreen();
+                player.pause();
             }
         }
 
-        // Helper
-        function showStatus(msg) {
-            statusDiv.textContent = msg;
-            statusDiv.style.display = 'block';
-            setTimeout(() => statusDiv.style.display = 'none', 3000);
-        }
-
-        // Init
+        // Initialize
         startCamera();
+
     </script>
 </body>
 </html>
