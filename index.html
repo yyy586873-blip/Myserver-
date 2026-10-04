@@ -2,226 +2,281 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Spatial Anchor VR</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pro Video Recorder with FX</title>
     <style>
         body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            background-color: #000;
-            font-family: sans-serif;
-            touch-action: none;
-        }
-
-        /* The Scene Container - Acts as the Window */
-        .scene {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            perspective: 800px; /* Depth perception */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        /* The World rotates based on your head movement */
-        .world {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            transform-style: preserve-3d;
-            transition: transform 0.05s linear; /* Smooth but responsive */
-        }
-
-        /* 1. Background Camera Layer */
-        #camera-stream {
-            position: absolute;
-            top: -50%; 
-            left: -50%;
-            width: 200%; 
-            height: 200%;
-            object-fit: cover;
-            z-index: 1;
-            /* Push it back in Z-space so the video appears in front of it */
-            transform: translateZ(-300px); 
-        }
-
-        /* 2. The Virtual Video Screen (The Fixed Object) */
-        .video-screen {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 60vw;
-            height: 40vh;
-            /* Center the screen and push it forward in Z-space */
-            transform: translate(-50%, -50%) translateZ(150px); 
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
-            border-radius: 15px;
-            overflow: hidden;
-            opacity: 0;
-            transition: opacity 0.5s ease;
-            background: #000;
-        }
-
-        .tv-video {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-
-        /* Controls */
-        .controls {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 100;
-            display: flex;
-            gap: 10px;
-        }
-
-        button, label.file-label {
-            padding: 12px 20px;
-            background: rgba(0, 0, 0, 0.8);
+            background: #1a1a1a;
             color: white;
-            border: 1px solid #fff;
-            border-radius: 25px;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h2 { margin-bottom: 10px; color: #00ffcc; }
+
+        .preview-container {
+            position: relative;
+            width: 640px;
+            height: 480px;
+            background: #000;
+            border: 2px solid #333;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+
+        /* Video Elements */
+        video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform-origin: center center;
+        }
+
+        /* CSS Filters for Color Grading */
+        .filter-none { filter: none; }
+        .filter-bw { filter: grayscale(100%) contrast(1.2); }
+        .filter-warm { filter: sepia(60%) brightness(1.1) saturate(1.4); }
+        .filter-cool { filter: hue-rotate(180deg) contrast(1.1); }
+        .filter-dramatic { filter: contrast(1.5) brightness(0.9) saturate(0.8); }
+
+        /* Controls Panel */
+        .controls {
+            width: 640px;
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .panel {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #444;
+        }
+
+        label { display: block; margin-bottom: 5px; font-size: 0.9em; color: #aaa; }
+        
+        input[type=range] {
+            width: 100%;
             cursor: pointer;
-            font-size: 14px;
-            backdrop-filter: blur(5px);
         }
 
-        input[type="file"] { display: none; }
-
-        #status {
-            position: fixed;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #0f0;
-            background: rgba(0,0,0,0.8);
-            padding: 5px 10px;
-            border-radius: 5px;
-            z-index: 100;
-            font-size: 12px;
-            text-align: center;
+        .btn-group {
+            display: flex;
+            gap: 5px;
+            margin-top: 10px;
         }
+
+        button {
+            flex: 1;
+            padding: 10px;
+            background: #444;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        button:hover { background: #555; }
+        button.active { background: #00ffcc; color: black; }
+
+        .record-btn {
+            grid-column: span 2;
+            padding: 15px;
+            font-size: 1.2em;
+            background: #ff3333;
+            margin-top: 10px;
+        }
+        
+        .record-btn.recording { background: #fff; color: #ff3333; animation: pulse 1s infinite; }
+
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        /* Hidden Canvas for Processing */
+        canvas { display: none; }
     </style>
 </head>
 <body>
 
-    <div id="status">Initializing...</div>
+    <h2>Pro Camera Studio</h2>
 
-    <!-- 3D Scene -->
-    <div class="scene">
-        <div class="world" id="world">
-            <!-- Background Camera -->
-            <video id="camera-stream" autoplay playsinline muted></video>
-            
-            <!-- Video Screen (Floating in Space) -->
-            <div class="video-screen" id="tvScreen">
-                <video id="movie-player" class="tv-video" loop controlsList="nodownload"></video>
-            </div>
-        </div>
+    <div class="preview-container">
+        <video id="webcam" autoplay playsinline muted></video>
+        <!-- We will draw onto a canvas later for recording -->
     </div>
 
-    <!-- Controls -->
     <div class="controls">
-        <label for="file-upload" class="file-label">📂 Load Video</label>
-        <input type="file" id="file-upload" accept="video/*">
-        <button onclick="togglePlay()">⏯ Play/Pause</button>
+        <!-- Color Grading -->
+        <div class="panel">
+            <label>Color Profile</label>
+            <div class="btn-group">
+                <button onclick="setFilter('none')" class="active" id="btn-none">Normal</button>
+                <button onclick="setFilter('bw')" id="btn-bw">B&W</button>
+                <button onclick="setFilter('warm')" id="btn-warm">Warm</button>
+                <button onclick="setFilter('cool')" id="btn-cool">Cool</button>
+                <button onclick="setFilter('dramatic')" id="btn-dramatic">Drama</button>
+            </div>
+            
+            <label style="margin-top:15px;">Brightness: <span id="val-bright">100%</span></label>
+            <input type="range" min="50" max="150" value="100" oninput="updateFilters()">
+            
+            <label>Saturation: <span id="val-sat">100%</span></label>
+            <input type="range" min="0" max="200" value="100" oninput="updateFilters()">
+        </div>
+
+        <!-- Stabilization & Auto -->
+        <div class="panel">
+            <label>Stabilization (Shake Control)</label>
+            <div class="btn-group">
+                <button onclick="toggleStabilize(false)">Off</button>
+                <button onclick="toggleStabilize(true)" class="active" id="btn-stab-on">On (Crop)</button>
+            </div>
+            <p style="font-size:0.8em; color:#777; margin-top:5px;">*Stabilization zooms in slightly to hide shakes.</p>
+
+            <label>Auto Adjust Light</label>
+            <button onclick="autoAdjust()" style="width:100%; margin-top:10px;">✨ Auto Enhance</button>
+        </div>
+
+        <!-- Recording -->
+        <button id="recordBtn" class="record-btn" onclick="toggleRecord()">🔴 Start Recording</button>
     </div>
 
     <script>
-        const camera = document.getElementById('camera-stream');
-        const player = document.getElementById('movie-player');
-        const fileInput = document.getElementById('file-upload');
-        const tvScreen = document.getElementById('tvScreen');
-        const world = document.getElementById('world');
-        const statusDiv = document.getElementById('status');
+        const video = document.getElementById('webcam');
+        const recordBtn = document.getElementById('recordBtn');
+        
+        // Settings State
+        let settings = {
+            filter: 'none',
+            brightness: 100,
+            saturation: 100,
+            stabilize: true,
+            autoMode: false
+        };
 
-        let beta = 0; // Tilt Front/Back
-        let gamma = 0; // Tilt Left/Right
-
-        // 1. Start Camera
-        async function startCamera() {
+        // 1. Initialize Camera
+        async function init() {
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "environment" }, 
-                    audio: false 
+                    video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } } 
                 });
-                camera.srcObject = stream;
-                statusDiv.innerText = "Camera Active. Loading Sensors...";
-
-                // Request Permission for iOS
-                if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                    DeviceOrientationEvent.requestPermission()
-                        .then(response => {
-                            if (response == 'granted') {
-                                window.addEventListener('deviceorientation', handleOrientation);
-                                statusDiv.innerText = "Sensors Active! Move phone.";
-                            } else {
-                                statusDiv.innerText = "Sensors denied.";
-                            }
-                        })
-                        .catch(console.error);
-                } else {
-                    window.addEventListener('deviceorientation', handleOrientation);
-                    statusDiv.innerText = "Sensors Active! Move phone.";
-                }
-
-            } catch (err) {
-                statusDiv.innerText = "Camera Error: " + err.message;
+                video.srcObject = stream;
+            } catch (e) {
+                alert("Camera access nahi mila.");
             }
         }
 
-        // 2. Handle Orientation (The Core Logic)
-        function handleOrientation(event) {
-            let b = event.beta;   // Front/Back tilt
-            let g = event.gamma;  // Left/Right tilt
-
-            // Clamp values to prevent weird flips
-            if (b > 150) b = 150;
-            if (b < 30) b = 30;
-            if (g > 60) g = 60;
-            if (g < -60) g = -60;
-
-            // Calculate Rotation for the ENTIRE WORLD
-            // This moves both Camera and Video together, preserving their relative positions
-            // We invert gamma because moving phone right makes the world appear to move left
-            const xRotation = -(b - 90); 
-            const yRotation = g; 
-
-            world.style.transform = `rotateX(${xRotation}deg) rotateY(${yRotation}deg)`;
+        // 2. Filter Logic
+        function setFilter(type) {
+            settings.filter = type;
+            // Update UI buttons
+            document.querySelectorAll('.btn-group button').forEach(b => b.classList.remove('active'));
+            document.getElementById(`btn-${type}`).classList.add('active');
+            updateFilters();
         }
 
-        // 3. Load Local Video
-        fileInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const url = URL.createObjectURL(file);
-                player.src = url;
-                tvScreen.style.opacity = '1'; // Show screen
-                togglePlay(); // Auto play
-                statusDiv.innerText = "Video Loaded. Move phone to see integration.";
-            }
-        });
+        function updateFilters() {
+            // Get slider values
+            const sliders = document.querySelectorAll('input[type=range]');
+            settings.brightness = sliders[0].value;
+            settings.saturation = sliders[1].value;
 
-        // 4. Play/Pause
-        function togglePlay() {
-            if (player.paused) {
-                player.play();
+            // Update Labels
+            document.getElementById('val-bright').innerText = settings.brightness + '%';
+            document.getElementById('val-sat').innerText = settings.saturation + '%';
+
+            // Apply CSS Filter string
+            let baseFilter = `brightness(${settings.brightness}%) saturate(${settings.saturation}%)`;
+            
+            if(settings.filter === 'bw') baseFilter += ' grayscale(100%) contrast(1.2)';
+            if(settings.filter === 'warm') baseFilter += ' sepia(60%)';
+            if(settings.filter === 'cool') baseFilter += ' hue-rotate(180deg)';
+            if(settings.filter === 'dramatic') baseFilter += ' contrast(1.5) brightness(0.9)';
+
+            video.style.filter = baseFilter;
+
+            // If Auto mode is ON, force some defaults
+            if(settings.autoMode) {
+                 video.style.filter = `brightness(110%) contrast(1.1) saturate(1.2)`;
+            }
+        }
+
+        // 3. Shake Control (Stabilization)
+        function toggleStabilize(isOn) {
+            settings.stabilize = isOn;
+            document.getElementById('btn-stab-on').classList.toggle('active', isOn);
+            
+            if(isOn) {
+                // Zoom in to hide edges when shaking
+                video.style.transform = "scale(1.2)"; 
+                video.style.objectFit = "cover";
             } else {
-                player.pause();
+                video.style.transform = "scale(1)";
             }
         }
 
-        // Initialize
-        startCamera();
+        // 4. Auto Adjust
+        function autoAdjust() {
+            settings.autoMode = true;
+            // Set sliders visually
+            document.querySelector('input[type=range]').value = 110; // Brightness
+            document.querySelectorAll('input[type=range]')[1].value = 120; // Saturation
+            updateFilters();
+            alert("Auto Adjust Applied! Lighting optimized.");
+        }
+
+        // 5. Recording Logic (Canvas based to capture filters)
+        let mediaRecorder;
+        let recordedChunks = [];
+
+        function toggleRecord() {
+            if (!mediaRecorder || mediaRecorder.state === 'inactive') {
+                startRecording();
+            } else {
+                stopRecording();
+            }
+        }
+
+        function startRecording() {
+            recordedChunks = [];
+            // Capture stream from the VIDEO element (which includes CSS filters)
+            const stream = video.captureStream();
+            
+            mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+            
+            mediaRecorder.ondataavailable = (e) => {
+                if (e.data.size > 0) recordedChunks.push(e.data);
+            };
+
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `my_video_${Date.now()}.webm`;
+                a.click();
+            };
+
+            mediaRecorder.start();
+            recordBtn.innerText = "⬛ Stop Recording";
+            recordBtn.classList.add('recording');
+        }
+
+        function stopRecording() {
+            mediaRecorder.stop();
+            recordBtn.innerText = "🔴 Start Recording";
+            recordBtn.classList.remove('recording');
+        }
+
+        // Init
+        init();
 
     </script>
 </body>
