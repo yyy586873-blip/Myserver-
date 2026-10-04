@@ -1,20 +1,21 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pro VR Camera + Custom Video</title>
+    <title>Fixed VR TV Mode</title>
     <style>
         body {
             margin: 0;
             padding: 0;
             overflow: hidden;
             background-color: #000;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            touch-action: none; /* Mobile pe scroll na ho */
+            font-family: sans-serif;
+            touch-action: none;
         }
 
-        /* REAL CAMERA LAYER */
+        /* 1. REAL CAMERA BACKGROUND (The Room) */
         #camera-stream {
             position: fixed;
             top: 0;
@@ -23,51 +24,42 @@
             height: 100%;
             object-fit: cover;
             z-index: 1;
-            transform: scaleX(-1); /* Selfie mirror effect for front cam */
+            /* Mirror selfie cam for better UX, remove if you want rear cam view */
+            transform: scaleX(-1); 
         }
 
-        /* VR CONTAINER */
-        .vr-container {
+        /* 2. THE FIXED SCREEN (The TV on the wall) */
+        .tv-screen-container {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 50%;
+            left: 50%;
+            /* Center it */
+            transform: translate(-50%, -50%);
+            
+            /* Size of the TV */
+            width: 70vw; 
+            height: 45vh;
+            
+            /* No border, just shadow for depth */
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
             z-index: 10;
-            perspective: 1200px; /* Depth */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            pointer-events: none;
-        }
-
-        /* MOVIE SCREEN (DRAGGABLE & ADJUSTABLE) */
-        .movie-screen {
-            width: 60vw; /* Default size */
-            height: 40vh;
-            background: black;
-            border: 2px solid #fff;
-            box-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+            
+            /* Keep it flat and facing you */
             transform-style: preserve-3d;
-            position: relative;
-            pointer-events: auto; /* Enable interaction */
-            cursor: grab;
-            transition: transform 0.1s ease-out; /* Smooth drag */
+            perspective: 1000px;
         }
 
-        .movie-screen:active {
-            cursor: grabbing;
-        }
-
-        .movie-video {
+        /* The actual video element */
+        .tv-video {
             width: 100%;
             height: 100%;
-            object-fit: contain;
+            object-fit: contain; /* Ensures video fits without stretching */
             display: block;
+            background: #000;
         }
 
-        /* UI CONTROLS */
-        .ui-layer {
+        /* 3. UI CONTROLS (Hidden by default, shown on tap) */
+        .controls {
             position: fixed;
             bottom: 20px;
             left: 50%;
@@ -75,39 +67,30 @@
             z-index: 20;
             display: flex;
             gap: 10px;
-            flex-wrap: wrap;
-            justify-content: center;
-            width: 90%;
+            opacity: 0.8;
+            transition: opacity 0.3s;
         }
-
-        .btn-group {
-            background: rgba(0,0,0,0.6);
-            padding: 5px;
-            border-radius: 15px;
-            backdrop-filter: blur(5px);
+        
+        .controls:hover {
+            opacity: 1;
         }
 
         button, label.file-label {
             padding: 10px 15px;
-            background: #333;
+            background: rgba(0, 0, 0, 0.6);
             color: white;
-            border: 1px solid #555;
-            border-radius: 8px;
+            border: 1px solid #fff;
+            border-radius: 20px;
             cursor: pointer;
             font-size: 14px;
-            text-align: center;
-            min-width: 80px;
-        }
-
-        button:hover, label.file-label:hover {
-            background: #555;
+            backdrop-filter: blur(5px);
         }
 
         input[type="file"] {
             display: none;
         }
 
-        /* Headset Vignette Effect */
+        /* Vignette to make it feel like a headset */
         .vignette {
             position: fixed;
             top: 0;
@@ -116,219 +99,110 @@
             height: 100%;
             pointer-events: none;
             z-index: 15;
-            background: radial-gradient(circle, transparent 70%, black 100%);
+            background: radial-gradient(circle, transparent 60%, black 100%);
         }
 
         /* Status Message */
-        #status-msg {
+        #status {
             position: fixed;
-            top: 20px;
+            top: 10px;
             left: 50%;
             transform: translateX(-50%);
             color: yellow;
-            background: rgba(0,0,0,0.8);
-            padding: 10px;
+            background: rgba(0,0,0,0.7);
+            padding: 5px 10px;
             border-radius: 5px;
             z-index: 100;
             display: none;
-            text-align: center;
-            width: 80%;
+            font-size: 12px;
         }
     </style>
 </head>
 <body>
 
-    <!-- Error/Status Message -->
-    <div id="status-msg"></div>
+    <!-- Status Msg -->
+    <div id="status"></div>
 
     <!-- Background Camera -->
     <video id="camera-stream" autoplay playsinline muted></video>
 
-    <!-- VR Screen Container -->
-    <div class="vr-container">
-        <div class="movie-screen" id="screen">
-            <video id="movie-player" class="movie-video" loop controlsList="nodownload">
-                <!-- Default placeholder if no file selected -->
-                <source src="" type="video/mp4">
-                Your browser does not support the video tag.
-            </video>
-        </div>
+    <!-- Fixed TV Screen -->
+    <div class="tv-screen-container">
+        <video id="movie-player" class="tv-video" loop controlsList="nodownload">
+            <!-- Source will be set by JS -->
+        </video>
     </div>
 
-    <!-- Vignette Overlay -->
+    <!-- Vignette Effect -->
     <div class="vignette"></div>
 
     <!-- Controls -->
-    <div class="ui-layer">
-        <div class="btn-group">
-            <label for="file-upload" class="file-label">📂 Select Video</label>
-            <input type="file" id="file-upload" accept="video/*">
-            <button onclick="togglePlay()">⏯ Play/Pause</button>
-        </div>
-        
-        <div class="btn-group">
-            <button onclick="adjustSize(1)">➕ Zoom In</button>
-            <button onclick="adjustSize(-1)">➖ Zoom Out</button>
-        </div>
-
-        <div class="btn-group">
-            <button onclick="resetView()">🔄 Reset View</button>
-        </div>
+    <div class="controls">
+        <label for="file-upload" class="file-label">📂 Load Local Video</label>
+        <input type="file" id="file-upload" accept="video/*">
+        <button onclick="togglePlay()">⏯ Play/Pause</button>
+        <button onclick="toggleFullscreen()">🖥 Fullscreen</button>
     </div>
 
     <script>
-        const cameraFeed = document.getElementById('camera-stream');
-        const moviePlayer = document.getElementById('movie-player');
-        const screenEl = document.getElementById('screen');
-        const statusMsg = document.getElementById('status-msg');
+        const camera = document.getElementById('camera-stream');
+        const player = document.getElementById('movie-player');
         const fileInput = document.getElementById('file-upload');
+        const statusDiv = document.getElementById('status');
 
-        // --- 1. CAMERA LOGIC ---
+        // 1. Start Camera
         async function startCamera() {
-            showStatus("Camera starting...");
             try {
-                // Try environment (rear) first, then fallback to user (front)
-                const constraints = {
-                    video: { 
-                        facingMode: "environment",
-                        width: { ideal: 1920 },
-                        height: { ideal: 1080 }
-                    },
-                    audio: false 
-                };
-
-                const stream = await navigator.mediaDevices.getUserMedia(constraints);
-                cameraFeed.srcObject = stream;
-                hideStatus();
+                // Try rear camera first, fallback to front
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } },
+                    audio: false
+                });
+                camera.srcObject = stream;
+                showStatus("✅ Camera Active");
             } catch (err) {
                 console.error(err);
-                showStatus("❌ Camera Error: Permission denied or not available. Check URL (use HTTPS).");
+                showStatus("❌ Camera Error: Check Permissions");
             }
         }
 
-        // --- 2. FILE UPLOAD LOGIC ---
-        fileInput.addEventListener('change', function(e) {
+        // 2. Handle Local File Upload
+        fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
                 const url = URL.createObjectURL(file);
-                moviePlayer.src = url;
-                moviePlayer.play();
+                player.src = url;
+                player.play();
                 showStatus("✅ Video Loaded!");
-            } else {
-                showStatus("❌ No file selected.");
             }
         });
 
-        // --- 3. PLAY/PAUSE ---
+        // 3. Play/Pause
         function togglePlay() {
-            if (moviePlayer.paused) {
-                moviePlayer.play();
+            if (player.paused) player.play();
+            else player.pause();
+        }
+
+        // 4. Fullscreen Toggle
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Error: ${err.message}`);
+                });
             } else {
-                moviePlayer.pause();
+                document.exitFullscreen();
             }
         }
 
-        // --- 4. ADJUSTMENT LOGIC (Zoom & Position) ---
-        let scaleVal = 1;
-        let rotateX = 10; // Slight tilt back
-        let rotateY = 0;
-        let posX = 0;
-        let posY = 0;
-
-        function adjustSize(direction) {
-            if (direction === 1) scaleVal += 0.1;
-            else scaleVal -= 0.1;
-            
-            // Clamp values
-            if(scaleVal < 0.5) scaleVal = 0.5;
-            if(scaleVal > 3.0) scaleVal = 3.0;
-
-            updateTransform();
-        }
-
-        function resetView() {
-            scaleVal = 1;
-            rotateX = 10;
-            rotateY = 0;
-            posX = 0;
-            posY = 0;
-            updateTransform();
-        }
-
-        function updateTransform() {
-            screenEl.style.transform = `translate(${posX}px, ${posY}px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(${scaleVal})`;
-        }
-
-        // --- 5. DRAG TO MOVE LOGIC (Mouse & Touch) ---
-        let isDragging = false;
-        let startX, startY;
-
-        screenEl.addEventListener('mousedown', startDrag);
-        screenEl.addEventListener('touchstart', startDrag, {passive: false});
-
-        window.addEventListener('mousemove', drag);
-        window.addEventListener('touchmove', drag, {passive: false});
-
-        window.addEventListener('mouseup', endDrag);
-        window.addEventListener('touchend', endDrag);
-
-        function startDrag(e) {
-            isDragging = true;
-            if (e.type === 'touchstart') {
-                startX = e.touches[0].clientX;
-                startY = e.touches[0].clientY;
-            } else {
-                startX = e.clientX;
-                startY = e.clientY;
-            }
-            screenEl.style.transition = "none"; // Disable transition for instant drag response
-        }
-
-        function drag(e) {
-            if (!isDragging) return;
-            e.preventDefault(); // Stop scrolling while dragging
-            
-            let clientX, clientY;
-            if (e.type === 'touchmove') {
-                clientX = e.touches[0].clientX;
-                clientY = e.touches[0].clientY;
-            } else {
-                clientX = e.clientX;
-                clientY = e.clientY;
-            }
-
-            const dx = clientX - startX;
-            const dy = clientY - startY;
-
-            posX += dx;
-            posY += dy;
-
-            startX = clientX;
-            startY = clientY;
-
-            updateTransform();
-        }
-
-        function endDrag() {
-            isDragging = false;
-            screenEl.style.transition = "transform 0.1s ease-out"; // Re-enable smooth movement
-        }
-
-        // Helper functions for UI
+        // Helper
         function showStatus(msg) {
-            statusMsg.textContent = msg;
-            statusMsg.style.display = 'block';
-            setTimeout(() => { if(!msg.includes("Error")) hideStatus(); }, 3000);
-        }
-        function hideStatus() {
-            statusMsg.style.display = 'none';
+            statusDiv.textContent = msg;
+            statusDiv.style.display = 'block';
+            setTimeout(() => statusDiv.style.display = 'none', 3000);
         }
 
         // Init
         startCamera();
-
     </script>
 </body>
 </html>
-
-
