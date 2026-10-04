@@ -2,165 +2,333 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VLC Streamer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pro VR Camera + Custom Video</title>
     <style>
-        :root {
-            --bg: #121212;
-            --card: #1e1e1e;
-            --primary: #ff6600; /* VLC Orange */
-            --text: #ffffff;
-            --sub-text: #b3b3b3;
-        }
-
         body {
             margin: 0;
             padding: 0;
-            background-color: var(--bg);
-            color: var(--text);
-            font-family: 'Segoe UI', sans-serif;
+            overflow: hidden;
+            background-color: #000;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            touch-action: none; /* Mobile pe scroll na ho */
+        }
+
+        /* REAL CAMERA LAYER */
+        #camera-stream {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 1;
+            transform: scaleX(-1); /* Selfie mirror effect for front cam */
+        }
+
+        /* VR CONTAINER */
+        .vr-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            perspective: 1200px; /* Depth */
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
+            pointer-events: none;
         }
 
-        .app-container {
-            width: 90%;
-            max-width: 500px;
-            background-color: var(--card);
-            padding: 40px;
-            border-radius: 20px;
-            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
-            text-align: center;
-        }
-
-        h2 {
-            margin-top: 0;
-            color: var(--primary);
-            font-size: 2rem;
-            margin-bottom: 10px;
-        }
-
-        p {
-            color: var(--sub-text);
-            margin-bottom: 30px;
-            font-size: 0.9rem;
-        }
-
-        .input-wrapper {
+        /* MOVIE SCREEN (DRAGGABLE & ADJUSTABLE) */
+        .movie-screen {
+            width: 60vw; /* Default size */
+            height: 40vh;
+            background: black;
+            border: 2px solid #fff;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.3);
+            transform-style: preserve-3d;
             position: relative;
-            margin-bottom: 20px;
+            pointer-events: auto; /* Enable interaction */
+            cursor: grab;
+            transition: transform 0.1s ease-out; /* Smooth drag */
         }
 
-        input[type="text"] {
+        .movie-screen:active {
+            cursor: grabbing;
+        }
+
+        .movie-video {
             width: 100%;
-            padding: 15px 20px;
-            border-radius: 50px;
-            border: 2px solid #333;
-            background-color: #2a2a2a;
-            color: white;
-            font-size: 1rem;
-            outline: none;
-            transition: border-color 0.3s;
-            box-sizing: border-box;
+            height: 100%;
+            object-fit: contain;
+            display: block;
         }
 
-        input[type="text"]:focus {
-            border-color: var(--primary);
-        }
-
-        .btn-vlc {
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            padding: 15px 40px;
-            border-radius: 50px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            display: inline-flex;
-            align-items: center;
+        /* UI CONTROLS */
+        .ui-layer {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            display: flex;
             gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 90%;
         }
 
-        .btn-vlc:hover {
-            transform: scale(1.05);
-            box-shadow: 0 5px 15px rgba(255, 102, 0, 0.4);
+        .btn-group {
+            background: rgba(0,0,0,0.6);
+            padding: 5px;
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
         }
 
-        .btn-vlc:active {
-            transform: scale(0.95);
+        button, label.file-label {
+            padding: 10px 15px;
+            background: #333;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            text-align: center;
+            min-width: 80px;
         }
 
-        /* Icon SVG */
-        .icon {
-            width: 20px;
-            height: 20px;
-            fill: currentColor;
+        button:hover, label.file-label:hover {
+            background: #555;
         }
 
-        .status {
-            margin-top: 20px;
-            font-size: 0.85rem;
-            color: #666;
-            min-height: 20px;
+        input[type="file"] {
+            display: none;
+        }
+
+        /* Headset Vignette Effect */
+        .vignette {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 15;
+            background: radial-gradient(circle, transparent 70%, black 100%);
+        }
+
+        /* Status Message */
+        #status-msg {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: yellow;
+            background: rgba(0,0,0,0.8);
+            padding: 10px;
+            border-radius: 5px;
+            z-index: 100;
+            display: none;
+            text-align: center;
+            width: 80%;
         }
     </style>
 </head>
 <body>
 
-    <div class="app-container">
-        <h2>VLC Streamer</h2>
-        <p>Paste any YouTube link below to open it directly in VLC Player.</p>
+    <!-- Error/Status Message -->
+    <div id="status-msg"></div>
+
+    <!-- Background Camera -->
+    <video id="camera-stream" autoplay playsinline muted></video>
+
+    <!-- VR Screen Container -->
+    <div class="vr-container">
+        <div class="movie-screen" id="screen">
+            <video id="movie-player" class="movie-video" loop controlsList="nodownload">
+                <!-- Default placeholder if no file selected -->
+                <source src="" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        </div>
+    </div>
+
+    <!-- Vignette Overlay -->
+    <div class="vignette"></div>
+
+    <!-- Controls -->
+    <div class="ui-layer">
+        <div class="btn-group">
+            <label for="file-upload" class="file-label">📂 Select Video</label>
+            <input type="file" id="file-upload" accept="video/*">
+            <button onclick="togglePlay()">⏯ Play/Pause</button>
+        </div>
         
-        <div class="input-wrapper">
-            <input type="text" id="ytLink" placeholder="https://www.youtube.com/watch?v=..." />
+        <div class="btn-group">
+            <button onclick="adjustSize(1)">➕ Zoom In</button>
+            <button onclick="adjustSize(-1)">➖ Zoom Out</button>
         </div>
 
-        <button class="btn-vlc" onclick="openInVLC()">
-            <!-- VLC Cone Icon -->
-            <svg class="icon" viewBox="0 0 24 24">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14.5v-9l6 4.5-6 4.5z"/>
-            </svg>
-            Play in VLC
-        </button>
-
-        <div class="status" id="statusMsg"></div>
+        <div class="btn-group">
+            <button onclick="resetView()">🔄 Reset View</button>
+        </div>
     </div>
 
     <script>
-        function openInVLC() {
-            const urlInput = document.getElementById('ytLink').value.trim();
-            const statusMsg = document.getElementById('statusMsg');
+        const cameraFeed = document.getElementById('camera-stream');
+        const moviePlayer = document.getElementById('movie-player');
+        const screenEl = document.getElementById('screen');
+        const statusMsg = document.getElementById('status-msg');
+        const fileInput = document.getElementById('file-upload');
 
-            if (!urlInput) {
-                statusMsg.style.color = '#ff4444';
-                statusMsg.innerText = "Please enter a valid URL first.";
-                return;
+        // --- 1. CAMERA LOGIC ---
+        async function startCamera() {
+            showStatus("Camera starting...");
+            try {
+                // Try environment (rear) first, then fallback to user (front)
+                const constraints = {
+                    video: { 
+                        facingMode: "environment",
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    },
+                    audio: false 
+                };
+
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                cameraFeed.srcObject = stream;
+                hideStatus();
+            } catch (err) {
+                console.error(err);
+                showStatus("❌ Camera Error: Permission denied or not available. Check URL (use HTTPS).");
             }
-
-            // Check if it's a valid YouTube link
-            const ytRegex = /^(https?\:\/\/)?(www\.youtube\.com|youtu\.?be)\/.+$/;
-            if (!ytRegex.test(urlInput)) {
-                statusMsg.style.color = '#ff4444';
-                statusMsg.innerText = "That doesn't look like a YouTube link.";
-                return;
-            }
-
-            statusMsg.style.color = '#666';
-            statusMsg.innerText = "Opening VLC...";
-
-            // Construct the deep link for VLC
-            // Note: This works best on Mobile. On Desktop, it might ask to open the app.
-            const vlcProtocol = `vlc://${encodeURIComponent(urlInput)}`;
-            
-            // Create a temporary link to trigger the protocol
-            const tempLink = document.createElement('a');
-            tempLink.href = vlcProtocol;
-            tempLink.click();
         }
+
+        // --- 2. FILE UPLOAD LOGIC ---
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                moviePlayer.src = url;
+                moviePlayer.play();
+                showStatus("✅ Video Loaded!");
+            } else {
+                showStatus("❌ No file selected.");
+            }
+        });
+
+        // --- 3. PLAY/PAUSE ---
+        function togglePlay() {
+            if (moviePlayer.paused) {
+                moviePlayer.play();
+            } else {
+                moviePlayer.pause();
+            }
+        }
+
+        // --- 4. ADJUSTMENT LOGIC (Zoom & Position) ---
+        let scaleVal = 1;
+        let rotateX = 10; // Slight tilt back
+        let rotateY = 0;
+        let posX = 0;
+        let posY = 0;
+
+        function adjustSize(direction) {
+            if (direction === 1) scaleVal += 0.1;
+            else scaleVal -= 0.1;
+            
+            // Clamp values
+            if(scaleVal < 0.5) scaleVal = 0.5;
+            if(scaleVal > 3.0) scaleVal = 3.0;
+
+            updateTransform();
+        }
+
+        function resetView() {
+            scaleVal = 1;
+            rotateX = 10;
+            rotateY = 0;
+            posX = 0;
+            posY = 0;
+            updateTransform();
+        }
+
+        function updateTransform() {
+            screenEl.style.transform = `translate(${posX}px, ${posY}px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale(${scaleVal})`;
+        }
+
+        // --- 5. DRAG TO MOVE LOGIC (Mouse & Touch) ---
+        let isDragging = false;
+        let startX, startY;
+
+        screenEl.addEventListener('mousedown', startDrag);
+        screenEl.addEventListener('touchstart', startDrag, {passive: false});
+
+        window.addEventListener('mousemove', drag);
+        window.addEventListener('touchmove', drag, {passive: false});
+
+        window.addEventListener('mouseup', endDrag);
+        window.addEventListener('touchend', endDrag);
+
+        function startDrag(e) {
+            isDragging = true;
+            if (e.type === 'touchstart') {
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+            } else {
+                startX = e.clientX;
+                startY = e.clientY;
+            }
+            screenEl.style.transition = "none"; // Disable transition for instant drag response
+        }
+
+        function drag(e) {
+            if (!isDragging) return;
+            e.preventDefault(); // Stop scrolling while dragging
+            
+            let clientX, clientY;
+            if (e.type === 'touchmove') {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+
+            const dx = clientX - startX;
+            const dy = clientY - startY;
+
+            posX += dx;
+            posY += dy;
+
+            startX = clientX;
+            startY = clientY;
+
+            updateTransform();
+        }
+
+        function endDrag() {
+            isDragging = false;
+            screenEl.style.transition = "transform 0.1s ease-out"; // Re-enable smooth movement
+        }
+
+        // Helper functions for UI
+        function showStatus(msg) {
+            statusMsg.textContent = msg;
+            statusMsg.style.display = 'block';
+            setTimeout(() => { if(!msg.includes("Error")) hideStatus(); }, 3000);
+        }
+        function hideStatus() {
+            statusMsg.style.display = 'none';
+        }
+
+        // Init
+        startCamera();
+
     </script>
 </body>
 </html>
+
+
