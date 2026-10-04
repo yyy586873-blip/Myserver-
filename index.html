@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>True Spatial VR - Fixed Screen</title>
+    <title>True Spatial AR - Integrated Screen</title>
     <style>
         body {
             margin: 0;
@@ -14,47 +14,61 @@
             touch-action: none;
         }
 
-        /* 1. CAMERA BACKGROUND */
-        #camera-stream {
+        /* 3D Scene Container */
+        .scene {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            object-fit: cover;
-            z-index: 1;
-            transform: scaleX(-1); /* Mirror effect */
-            transition: transform 0.1s linear; /* Smooth movement */
+            perspective: 600px; /* Depth perception */
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        /* 2. THE FIXED SCREEN (The Object) */
-        .tv-screen-container {
-            position: fixed;
+        /* The World that rotates with your head */
+        .world {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transform-style: preserve-3d;
+            transition: transform 0.1s linear; /* Smoothness */
+        }
+
+        /* 1. Background Camera Layer */
+        #camera-stream {
+            position: absolute;
+            top: -50%; 
+            left: -50%;
+            width: 200%; 
+            height: 200%;
+            object-fit: cover;
+            z-index: 1;
+            transform: translateZ(-200px); /* Push it back slightly for depth */
+        }
+
+        /* 2. The Video Screen (Floating in Space) */
+        .video-screen {
+            position: absolute;
             top: 50%;
             left: 50%;
-            /* Center it initially */
-            transform: translate(-50%, -50%);
-            
-            /* Size */
-            width: 60vw; 
-            height: 40vh;
-            
-            /* Style */
-            box-shadow: 0 0 40px rgba(0, 0, 0, 0.8);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            z-index: 10;
-            border-radius: 12px;
+            width: 70vw;
+            height: 45vh;
+            transform: translate(-50%, -50%) translateZ(0px); /* Center but at Z=0 */
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+            border-radius: 10px;
             overflow: hidden;
-            opacity: 0; /* Initially hidden */
+            opacity: 0;
             transition: opacity 0.5s ease;
+            background: #000;
         }
 
         .tv-video {
             width: 100%;
             height: 100%;
             object-fit: contain;
-            display: block;
-            background: #000;
         }
 
         /* Controls */
@@ -63,38 +77,23 @@
             bottom: 20px;
             left: 50%;
             transform: translateX(-50%);
-            z-index: 20;
+            z-index: 100;
             display: flex;
             gap: 10px;
-            width: 90%;
-            justify-content: center;
         }
 
         button, label.file-label {
             padding: 12px 20px;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0, 0, 0, 0.8);
             color: white;
             border: 1px solid #fff;
             border-radius: 25px;
             cursor: pointer;
             font-size: 14px;
             backdrop-filter: blur(5px);
-            text-align: center;
         }
 
         input[type="file"] { display: none; }
-
-        /* Vignette for immersion */
-        .vignette {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 15;
-            background: radial-gradient(circle, transparent 50%, black 100%);
-        }
 
         #status {
             position: fixed;
@@ -113,18 +112,20 @@
 </head>
 <body>
 
-    <div id="status">Loading Sensors...</div>
+    <div id="status">Initializing...</div>
 
-    <!-- Camera -->
-    <video id="camera-stream" autoplay playsinline muted></video>
-
-    <!-- TV Screen (Hidden initially) -->
-    <div class="tv-screen-container" id="tvScreen">
-        <video id="movie-player" class="tv-video" loop controlsList="nodownload"></video>
+    <!-- 3D Scene -->
+    <div class="scene">
+        <div class="world" id="world">
+            <!-- Background Camera -->
+            <video id="camera-stream" autoplay playsinline muted></video>
+            
+            <!-- Video Screen (Integrated into the world) -->
+            <div class="video-screen" id="tvScreen">
+                <video id="movie-player" class="tv-video" loop controlsList="nodownload"></video>
+            </div>
+        </div>
     </div>
-
-    <!-- Vignette -->
-    <div class="vignette"></div>
 
     <!-- Controls -->
     <div class="controls">
@@ -138,11 +139,11 @@
         const player = document.getElementById('movie-player');
         const fileInput = document.getElementById('file-upload');
         const tvScreen = document.getElementById('tvScreen');
+        const world = document.getElementById('world');
         const statusDiv = document.getElementById('status');
 
-        // Sensor Data Variables
-        let beta = 0; // Front/Back tilt
-        let gamma = 0; // Left/Right tilt
+        let beta = 0; // Tilt Front/Back
+        let gamma = 0; // Tilt Left/Right
 
         // 1. Start Camera
         async function startCamera() {
@@ -152,9 +153,9 @@
                     audio: false 
                 });
                 camera.srcObject = stream;
-                statusDiv.innerText = "Camera Active. Waiting for sensors...";
-                
-                // Request Permission for iOS 13+ devices
+                statusDiv.innerText = "Camera Active. Loading Sensors...";
+
+                // Request Permission for iOS
                 if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                     DeviceOrientationEvent.requestPermission()
                         .then(response => {
@@ -167,7 +168,6 @@
                         })
                         .catch(console.error);
                 } else {
-                    // Non-iOS 13+ devices
                     window.addEventListener('deviceorientation', handleOrientation);
                     statusDiv.innerText = "Sensors Active! Move phone.";
                 }
@@ -177,26 +177,24 @@
             }
         }
 
-        // 2. Handle Head Movement (The Magic Part)
+        // 2. Handle Orientation (The Core Logic)
         function handleOrientation(event) {
-            // Get device orientation data
-            let b = event.beta;   // [0, 180] front-back
-            let g = event.gamma;  // [-90, 90] left-right
+            let b = event.beta;   // Front/Back tilt
+            let g = event.gamma;  // Left/Right tilt
 
-            // Clamp values to avoid flipping too much
+            // Clamp values to prevent weird flips
             if (b > 150) b = 150;
             if (b < 30) b = 30;
             if (g > 60) g = 60;
             if (g < -60) g = -60;
 
-            // Calculate offset for the background camera
-            // We invert gamma because moving phone right should make world move left
-            const xMove = -g * 1.5; 
-            const yMove = (b - 90) * 1.5; 
+            // Calculate Rotation for the ENTIRE WORLD
+            // This moves both Camera and Video together, preserving their relative positions
+            // We invert gamma because moving phone right makes the world appear to move left
+            const xRotation = -(b - 90); 
+            const yRotation = g; 
 
-            // Apply transform to background only
-            // This creates the illusion that the camera is moving around the room
-            camera.style.transform = `scaleX(-1) translate(${xMove}px, ${yMove}px) scale(1.2)`;
+            world.style.transform = `rotateX(${xRotation}deg) rotateY(${yRotation}deg)`;
         }
 
         // 3. Load Local Video
@@ -207,7 +205,7 @@
                 player.src = url;
                 tvScreen.style.opacity = '1'; // Show screen
                 togglePlay(); // Auto play
-                statusDiv.innerText = "Video Loaded. Move phone to see parallax.";
+                statusDiv.innerText = "Video Loaded. Move phone to see integration.";
             }
         });
 
