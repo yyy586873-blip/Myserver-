@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chess - Room 123</title>
+    <title>Instant Chess</title>
     <style>
         :root {
             --bg-color: #2c3e50;
@@ -37,15 +37,6 @@
             max-width: 400px;
         }
 
-        input {
-            padding: 10px;
-            font-size: 16px;
-            width: 70%;
-            margin-bottom: 10px;
-            border-radius: 5px;
-            border: none;
-        }
-
         button {
             padding: 10px 20px;
             font-size: 16px;
@@ -75,14 +66,6 @@
             display: flex;
             gap: 20px;
             align-items: center;
-        }
-
-        .room-code-display {
-            background: rgba(255,255,255,0.1);
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-family: monospace;
-            cursor: pointer;
         }
 
         #board {
@@ -125,7 +108,7 @@
         .piece.white { color: #fff; text-shadow: 0 0 2px #000; }
         .piece.black { color: #000; }
 
-        /* Modal for Promotion */
+        /* Promotion Modal */
         #promotion-modal {
             display: none;
             position: fixed;
@@ -164,8 +147,8 @@
 
     <!-- Main Menu -->
     <div id="menu-container">
-        <h1>Chess Online</h1>
-        <p>Join Room <strong>123</strong> to play.</p>
+        <h1>Instant Chess</h1>
+        <p>Click below to join the public lobby.</p>
         <button onclick="joinGame()">Join Game</button>
     </div>
 
@@ -173,7 +156,6 @@
     <div id="game-container">
         <div id="status-bar">
             <span id="status-text">Connecting...</span>
-            <span class="room-code-display" id="current-room-code" title="Click to Copy">Room: 123</span>
         </div>
         <div id="board"></div>
         <div style="margin-top: 15px;">
@@ -200,7 +182,8 @@
     let selectedSquare = null;
     let turn = 'white'; 
     let myRole = null; // 'white' or 'black'
-    let socket = null;
+    let myId = null;
+    let pollingInterval = null;
     let isWaitingForOpponent = false;
 
     // --- DOM ELEMENTS ---
@@ -211,96 +194,105 @@
     const promoModal = document.getElementById('promotion-modal');
     const promoOptions = document.getElementById('promo-options');
 
-    // --- SOCKET LOGIC ---
-    function connectSocket() {
-        socket = new WebSocket(`ws://${location.host}`);
+    // --- POLLING LOGIC ---
 
-        socket.onopen = () => {
-            console.log("Connected to server");
-        };
-
-        socket.onmessage = (event) => {
-            const msg = JSON.parse(event.data);
-            handleServerMessage(msg);
-        };
-
-        socket.onclose = () => {
-            alert("Connection lost");
-            location.reload();
-        };
-    }
-
-    function handleServerMessage(msg) {
-        switch(msg.type) {
-            case 'joined':
-                myRole = msg.role;
+    window.joinGame = function() {
+        fetch('/api/join', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                myId = data.playerId;
+                myRole = data.role;
+                
                 menuContainer.style.display = 'none';
                 gameContainer.style.display = 'flex';
                 
-                updateStatus(msg.status === 'waiting_opponent' ? "Waiting for Opponent..." : "Game Started!");
-                
-                if (msg.status === 'waiting_opponent') {
-                    // Wait for opponent to join before showing board fully? 
-                    // No, show board but disable interaction until start
-                    initBoard();
-                    renderBoard();
-                } else {
-                    initBoard();
-                    renderBoard();
-                    if (myRole === 'white') {
-                        updateStatus("Your Turn (White)");
-                    } else {
-                        updateStatus("Opponent's Turn (Black)");
-                    }
-                }
-                break;
-                
-            case 'opponent_joined':
-                updateStatus("Opponent Joined! Game Starting...");
-                setTimeout(() => {
-                    updateStatus(myRole === 'white' ? "Your Turn (White)" : "Opponent's Turn (Black)");
-                }, 1000);
-                break;
-
-            case 'game_start':
-                updateStatus("Game Started!");
-                break;
-
-            case 'opponent_move':
-                applyMove(msg.move);
-                break;
-                
-            case 'board_reset':
                 initBoard();
                 renderBoard();
-                updateStatus("New Game! You are " + myRole);
-                break;
-                
-            case 'opponent_left':
-                alert("Opponent left. You win!");
-                location.reload();
-                break;
-                
-            case 'error':
-                alert(msg.message);
-                break;
-        }
-    }
 
-    window.joinGame = function() {
-        if(!socket) connectSocket();
-        setTimeout(() => {
-            socket.send(JSON.stringify({ type: "join" }));
-        }, 100);
+                if (data.started) {
+                    updateStatus("Game Started!");
+                    startPolling();
+                    checkTurn();
+                } else {
+                    updateStatus("Waiting for opponent...");
+                    startPolling();
+                }
+            }
+        });
     };
 
     window.leaveGame = function() {
+        stopPolling();
         location.reload();
     };
 
     window.requestReset = function() {
-        if(socket) socket.send(JSON.stringify({ type: "reset" }));
+        fetch('/api/reset', { method: 'POST' })
+            .then(() => {
+                // Force refresh to reset state cleanly
+                location.reload();
+            });
     };
+
+    function startPolling() {
+        if (pollingInterval) clearInterval(pollingInterval);
+        
+        pollingInterval = setInterval(() => {
+            fetch(`/api/state?id=${myId}`)
+                .then(res => res.json())
+                .then(data => {
+                    updateGameState(data);
+                });
+        }, 1000); // Poll every 1 second
+    }
+
+    function stopPolling() {
+        if (pollingInterval) clearInterval(pollingInterval);
+    }
+
+    function updateGameState(data) {
+        // Update local board only if different to avoid flicker
+        if (JSON.stringify(board) !== JSON.stringify(data.board)) {
+            board = data.board;
+            turn = data.turn;
+            renderBoard();
+            
+            // Check if game just started
+            if (!data.started && data.white && data.black) {
+                updateStatus("Game Started!");
+            }
+        }
+        
+        // Update status text based on state
+        if (!data.started) {
+            if (data.white && !data.black) {
+                updateStatus("Waiting for Black Player...");
+            } else if (!data.white && !data.black) {
+                updateStatus("Lobby Empty...");
+            }
+        } else {
+            checkTurn();
+        }
+    }
+
+    function checkTurn() {
+        if (turn === 'white') {
+            if (myRole === 'white') updateStatus("Your Turn (White)");
+            else updateStatus("Opponent's Turn (Black)");
+        } else {
+            if (myRole === 'black') updateStatus("Your Turn (Black)");
+            else updateStatus("Opponent's Turn (White)");
+        }
+    }
+
+    function updateStatus(msg) {
+        statusText.innerText = msg;
+    }
 
     // --- CHESS LOGIC ---
 
@@ -391,51 +383,21 @@
     function executeMove(fromR, fromC, toR, toC) {
         const piece = board[fromR][fromC];
         
-        // Update local board immediately for responsiveness
+        // Optimistic UI update
         board[toR][toC] = piece;
         board[fromR][fromC] = '';
-        
-        // Send to server
-        const moveData = { from: {r: fromR, c: fromC}, to: {r: toR, c: toC} };
-        if(socket) socket.send(JSON.stringify({ type: "move", move: moveData }));
-
-        // Optimistic UI update
-        applyMove(moveData);
-    }
-
-    function applyMove(moveData) {
-        const { from, to } = moveData;
-        const piece = board[from.r][from.c];
-        
-        board[to.r][to.c] = piece;
-        board[from.r][from.c] = '';
-
-        // Auto-promote to Queen
-        if (piece === 'P' && to.r === 0) board[to.r][to.c] = 'Q';
-        if (piece === 'p' && to.r === 7) board[to.r][to.c] = 'q';
-
-        turn = turn === 'white' ? 'black' : 'white';
-        selectedSquare = null;
         renderBoard();
         
-        checkGameState();
-    }
-
-    function checkGameState() {
-        const inCheck = isKingInCheck(turn);
-        const hasMoves = getValidMoves(turn).length > 0;
-
-        if (!hasMoves) {
-            if (inCheck) {
-                updateStatus(`Checkmate! ${turn === 'white' ? 'Black' : 'White'} Wins!`);
-            } else {
-                updateStatus("Stalemate!");
-            }
-        } else if (inCheck) {
-            updateStatus(`${turn === 'white' ? 'White' : 'Black'} is in Check!`);
-        } else {
-            updateStatus(`${turn === 'white' ? 'White' : 'Black'}'s Turn`);
-        }
+        // Send to server
+        fetch('/api/move', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                from: {r: fromR, c: fromC},
+                to: {r: toR, c: toC},
+                playerId: myId
+            })
+        }).catch(err => console.error("Move failed", err));
     }
 
     // --- MOVE VALIDATION ENGINE ---
@@ -517,35 +479,6 @@
         return false;
     }
 
-    function getValidMoves(color) {
-        let moves = [];
-        for (let r = 0; r < 8; r++) {
-            for (let c = 0; c < 8; c++) {
-                const piece = board[r][c];
-                if (!piece) continue;
-                const isMyPiece = (color === 'white') ? (piece === piece.toUpperCase()) : (piece === piece.toLowerCase());
-                if (isMyPiece) {
-                    for (let tr = 0; tr < 8; tr++) {
-                        for (let tc = 0; tc < 8; tc++) {
-                            if (isValidMove(r, c, tr, tc)) {
-                                // Simulate
-                                const savedTarget = board[tr][tc];
-                                const savedSource = board[r][c];
-                                board[tr][tc] = savedSource;
-                                board[r][c] = '';
-                                const inCheck = isKingInCheck(color);
-                                board[r][c] = savedSource;
-                                board[tr][tc] = savedTarget;
-                                if (!inCheck) moves.push({r1:r, c1:c, r2:tr, c2:tc});
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return moves;
-    }
-
     // --- PROMOTION UI ---
     function showPromotionModal(r1, c1, r2, c2) {
         const isWhite = board[r1][c1] === 'P';
@@ -563,21 +496,23 @@
                 board[r2][c2] = map[p];
                 board[r1][c1] = '';
                 
-                const moveData = { from: {r:r1, c:c1}, to: {r:r2, c:c2} };
-                if(socket) socket.send(JSON.stringify({ type: "move", move: moveData }));
-                applyMove(moveData);
+                // Send move with promotion info if needed, but server auto-promotes
+                fetch('/api/move', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        from: {r:r1, c:c1},
+                        to: {r:r2, c:c2},
+                        playerId: myId
+                    })
+                });
+                
+                renderBoard();
             };
             promoOptions.appendChild(div);
         });
         promoModal.style.display = 'flex';
     }
-
-    function updateStatus(msg) {
-        statusText.innerText = msg;
-    }
-
-    // Start connection
-    connectSocket();
 
 </script>
 </body>
