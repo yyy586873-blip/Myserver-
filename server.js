@@ -1,49 +1,117 @@
-const express = require('express');
-const path = require('path');
+const express = require("express");
+const path = require("path");
+
 const app = express();
 
-// Middleware
-app.use(express.json());
-app.use(express.static(path.join(__dirname))); // Serve index.html
+app.use(express.json({ limit: "20kb" }));
 
-// In-memory storage
-let latestStats = {}; 
-let messageHistory = []; 
+app.use(express.static(__dirname, {
+    index: false
+}));
 
-// 1. Serve Index
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+// Latest accepted device statistics
+let latestStats = null;
+
+// Recent history, stored in memory
+const messageHistory = [];
+
+const MAX_HISTORY = 50;
+
+// Dashboard
+app.get("/", (req, res) => {
+    res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// 2. Receive Stats from Android App
-app.post('/api/stats', (req, res) => {
-    const { id, text, timestamp } = req.body;
-    
-    // Update latest stats immediately for real-time view
-    if(id === 'monitor_bot') {
-        latestStats = {
-            id: id,
-            text: text,
-            timestamp: timestamp || Date.now()
-        };
+// Receive Android monitoring data
+app.post("/api/stats", (req, res) => {
+    try {
+        const body = req.body;
+
+        if (!body || typeof body !== "object" ||
+            Array.isArray(body)) {
+            return res.status(400).json({
+                success: false,
+                error: "Invalid JSON body"
+            });
+        }
+
+        const timestamp = Number(body.timestamp) || Date.now();
+
+        let stats;
+
+        // Legacy Android payload format
+        if (typeof body.text === "string") {
+            stats = {
+                id: String(body.id || "system_monitor"),
+                text: body.text,
+                timestamp: timestamp
+            };
+        } else {
+            // Structured Android payload format
+            stats = {
+                id: String(body.id || "system_monitor"),
+                model: String(body.model || "Unknown"),
+                android_version: String(
+                    body.android_version || "Unknown"
+                ),
+                battery: String(body.battery || "Unknown"),
+                app_memory: String(
+                    body.app_memory || "Unknown"
+                ),
+                max_app_memory: String(
+                    body.max_app_memory || "Unknown"
+                ),
+                timestamp: timestamp
+            };
+        }
+
+        latestStats = stats;
+
+        messageHistory.push(stats);
+
+        if (messageHistory.length > MAX_HISTORY) {
+            messageHistory.shift();
+        }
+
+        return res.status(200).json({
+            success: true,
+            timestamp: timestamp
+        });
+
+    } catch (error) {
+        console.error("POST /api/stats error:", error);
+
+        return res.status(500).json({
+            success: false,
+            error: "Internal server error"
+        });
     }
-    
-    // Keep history for the "Recent Logs" section
-    messageHistory.push({ sender: id, text, timestamp: timestamp || Date.now() });
-    if(messageHistory.length > 50) messageHistory.shift();
-    
-    res.json({ success: true });
 });
 
-// 3. Get Latest Stats (for polling)
-app.get('/api/stats', (req, res) => {
-    res.json(latestStats);
+// Fetch latest statistics
+app.get("/api/stats", (req, res) => {
+    res.set("Cache-Control", "no-store");
+
+    res.json(latestStats || {});
 });
 
-// 4. Get History (optional, for logs)
-app.get('/api/history', (req, res) => {
-    res.json(messageHistory);
+// Fetch recent history
+app.get("/api/history", (req, res) => {
+    res.set("Cache-Control", "no-store");
+
+    res.json(messageHistory.slice().reverse());
+});
+
+// Health check
+app.get("/health", (req, res) => {
+    res.json({
+        status: "ok",
+        service: "system-monitor"
+    });
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+app.listen(PORT, "0.0.0.0", () => {
+    console.log(`Server listening on port ${PORT}`);
+});
