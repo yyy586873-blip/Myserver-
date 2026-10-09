@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Multiplayer Chess</title>
+    <title>Chess - Room 123</title>
     <style>
         :root {
             --bg-color: #2c3e50;
@@ -74,6 +74,7 @@
             font-weight: bold;
             display: flex;
             gap: 20px;
+            align-items: center;
         }
 
         .room-code-display {
@@ -164,17 +165,15 @@
     <!-- Main Menu -->
     <div id="menu-container">
         <h1>Chess Online</h1>
-        <p>Create a room or Join an existing one.</p>
-        <button onclick="createRoom()">Create Room</button><br><br>
-        <input type="text" id="join-input" placeholder="Enter Room Code">
-        <button class="secondary" onclick="joinRoom()">Join Room</button>
+        <p>Join Room <strong>123</strong> to play.</p>
+        <button onclick="joinGame()">Join Game</button>
     </div>
 
     <!-- Game Area -->
     <div id="game-container">
         <div id="status-bar">
-            <span id="status-text">Waiting...</span>
-            <span class="room-code-display" id="current-room-code" title="Click to Copy"></span>
+            <span id="status-text">Connecting...</span>
+            <span class="room-code-display" id="current-room-code" title="Click to Copy">Room: 123</span>
         </div>
         <div id="board"></div>
         <div style="margin-top: 15px;">
@@ -200,16 +199,14 @@
     let board = [];
     let selectedSquare = null;
     let turn = 'white'; 
-    let myColor = 'white'; // 'white' or 'black'
-    let roomId = null;
+    let myRole = null; // 'white' or 'black'
     let socket = null;
-    let pendingMove = null; // For promotion
+    let isWaitingForOpponent = false;
 
     // --- DOM ELEMENTS ---
     const menuContainer = document.getElementById('menu-container');
     const gameContainer = document.getElementById('game-container');
     const statusText = document.getElementById('status-text');
-    const roomCodeDisplay = document.getElementById('current-room-code');
     const boardEl = document.getElementById('board');
     const promoModal = document.getElementById('promotion-modal');
     const promoOptions = document.getElementById('promo-options');
@@ -235,70 +232,67 @@
 
     function handleServerMessage(msg) {
         switch(msg.type) {
-            case 'room_created':
-                enterGame(msg.roomId, msg.color);
-                break;
             case 'joined':
-                enterGame(msg.roomId, msg.color);
+                myRole = msg.role;
+                menuContainer.style.display = 'none';
+                gameContainer.style.display = 'flex';
+                
+                updateStatus(msg.status === 'waiting_opponent' ? "Waiting for Opponent..." : "Game Started!");
+                
+                if (msg.status === 'waiting_opponent') {
+                    // Wait for opponent to join before showing board fully? 
+                    // No, show board but disable interaction until start
+                    initBoard();
+                    renderBoard();
+                } else {
+                    initBoard();
+                    renderBoard();
+                    if (myRole === 'white') {
+                        updateStatus("Your Turn (White)");
+                    } else {
+                        updateStatus("Opponent's Turn (Black)");
+                    }
+                }
                 break;
+                
             case 'opponent_joined':
-                updateStatus("Opponent Joined! Your Turn.");
-                renderBoard();
+                updateStatus("Opponent Joined! Game Starting...");
+                setTimeout(() => {
+                    updateStatus(myRole === 'white' ? "Your Turn (White)" : "Opponent's Turn (Black)");
+                }, 1000);
                 break;
+
+            case 'game_start':
+                updateStatus("Game Started!");
+                break;
+
             case 'opponent_move':
                 applyMove(msg.move);
                 break;
+                
             case 'board_reset':
                 initBoard();
                 renderBoard();
-                updateStatus("Game Reset. You are " + myColor);
+                updateStatus("New Game! You are " + myRole);
                 break;
+                
             case 'opponent_left':
                 alert("Opponent left. You win!");
                 location.reload();
                 break;
+                
             case 'error':
                 alert(msg.message);
                 break;
         }
     }
 
-    window.createRoom = function() {
+    window.joinGame = function() {
         if(!socket) connectSocket();
         setTimeout(() => {
-            socket.send(JSON.stringify({ type: "create_room" }));
+            socket.send(JSON.stringify({ type: "join" }));
         }, 100);
     };
-
-    window.joinRoom = function() {
-        const code = document.getElementById('join-input').value.trim();
-        if(!code) return alert("Enter a code");
-        if(!socket) connectSocket();
-        setTimeout(() => {
-            socket.send(JSON.stringify({ type: "join_room", roomId: code }));
-        }, 100);
-    };
-
-    function enterGame(id, color) {
-        roomId = id;
-        myColor = color;
-        menuContainer.style.display = 'none';
-        gameContainer.style.display = 'flex';
-        roomCodeDisplay.innerText = `Room: ${id} (Click to Copy)`;
-        roomCodeDisplay.onclick = () => {
-            navigator.clipboard.writeText(id);
-            alert("Copied!");
-        };
-        
-        initBoard();
-        renderBoard();
-        
-        if (color === 'white') {
-            updateStatus("Your Turn (White)");
-        } else {
-            updateStatus("Opponent's Turn (Black)");
-        }
-    }
 
     window.leaveGame = function() {
         location.reload();
@@ -362,10 +356,13 @@
     function handleSquareClick(r, c) {
         // Block interaction if waiting for opponent or wrong turn
         if (isWaitingForOpponent) return;
-        if ((turn === 'white' && myColor === 'black') || (turn === 'black' && myColor === 'white')) return;
+        
+        // Check if it's my turn
+        const isMyTurn = (turn === 'white' && myRole === 'white') || (turn === 'black' && myRole === 'black');
+        if (!isMyTurn) return;
 
         const clickedPiece = board[r][c];
-        const isMyPiece = clickedPiece && ((myColor === 'white' && clickedPiece === clickedPiece.toUpperCase()) || (myColor === 'black' && clickedPiece === clickedPiece.toLowerCase()));
+        const isMyPiece = clickedPiece && ((myRole === 'white' && clickedPiece === clickedPiece.toUpperCase()) || (myRole === 'black' && clickedPiece === clickedPiece.toLowerCase()));
 
         if (isMyPiece) {
             selectedSquare = { r, c };
@@ -394,7 +391,7 @@
     function executeMove(fromR, fromC, toR, toC) {
         const piece = board[fromR][fromC];
         
-        // Update local board
+        // Update local board immediately for responsiveness
         board[toR][toC] = piece;
         board[fromR][fromC] = '';
         
@@ -402,8 +399,8 @@
         const moveData = { from: {r: fromR, c: fromC}, to: {r: toR, c: toC} };
         if(socket) socket.send(JSON.stringify({ type: "move", move: moveData }));
 
-            // Optimistic UI update
-            applyMove(moveData);
+        // Optimistic UI update
+        applyMove(moveData);
     }
 
     function applyMove(moveData) {
@@ -413,7 +410,7 @@
         board[to.r][to.c] = piece;
         board[from.r][from.c] = '';
 
-        // Auto-promote to Queen for simplicity in online sync
+        // Auto-promote to Queen
         if (piece === 'P' && to.r === 0) board[to.r][to.c] = 'Q';
         if (piece === 'p' && to.r === 7) board[to.r][to.c] = 'q';
 
@@ -562,8 +559,6 @@
             div.onclick = () => {
                 promoModal.style.display = 'none';
                 // Apply promotion
-                const finalPiece = isWhite ? p.replace('♕','Q').replace('♖','R').replace('♗','B').replace('♘','N') : p.replace('♛','Q').replace('♜','R').replace('♝','B').replace('♞','N');
-                // Actually just map them directly
                 const map = {'♕':'Q','♛':'q','♖':'R','♜':'r','♗':'B','♝':'b','♘':'N','♞':'n'};
                 board[r2][c2] = map[p];
                 board[r1][c1] = '';
