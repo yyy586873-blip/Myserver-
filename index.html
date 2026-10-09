@@ -3,555 +3,417 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pro 3D Video Editor</title>
+    <title>SecureChat</title>
     <style>
         :root {
-            --bg-color: #121212;
-            --panel-bg: #1e1e1e;
-            --accent: #00ffcc;
-            --text: #fff;
-            --border: #333;
+            --bg-color: #0d1117;
+            --chat-bg: #161b22;
+            --input-bg: #21262d;
+            --primary: #58a6ff;
+            --sent-msg: #1f6feb;
+            --recv-msg: #30363d;
+            --text-main: #c9d1d9;
+            --text-muted: #8b949e;
+            --border: #30363d;
         }
 
+        * { box-sizing: border-box; margin: 0; padding: 0; outline: none; -webkit-tap-highlight-color: transparent; }
+        
         body {
-            margin: 0;
             background: var(--bg-color);
-            color: var(--text);
-            font-family: 'Segoe UI', sans-serif;
-            overflow: hidden; /* Prevent scroll on mobile */
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            height: 100vh;
             display: flex;
             flex-direction: column;
-            height: 100vh;
+            overflow: hidden;
         }
 
-        /* --- Top Bar --- */
-        .top-bar {
-            height: 50px;
-            background: var(--panel-bg);
+        /* Header */
+        header {
+            background: var(--chat-bg);
+            padding: 15px;
             border-bottom: 1px solid var(--border);
             display: flex;
-            align-items: center;
             justify-content: space-between;
-            padding: 0 15px;
-            box-sizing: border-box;
-        }
-
-        .logo { font-weight: bold; color: var(--accent); letter-spacing: 1px; }
-        
-        .action-btn {
-            background: #333;
-            border: none;
-            color: white;
-            padding: 8px 15px;
-            border-radius: 4px;
-            font-size: 0.9rem;
-            cursor: pointer;
-        }
-        .btn-record { background: #ff3333; }
-        .btn-record.recording { animation: pulse 1s infinite; background: #fff; color: red; }
-
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-
-        /* --- Main Canvas Area --- */
-        .canvas-area {
-            flex: 1;
-            position: relative;
-            background: #000;
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
             align-items: center;
-        }
-
-        #video-layer {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            z-index: 1;
-        }
-
-        /* The Stage where layers live */
-        #stage {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
             z-index: 10;
-            transform-origin: center center;
         }
+        .logo { font-weight: 700; font-size: 1.2rem; color: var(--primary); letter-spacing: 1px; }
+        .user-id { font-size: 0.8rem; color: var(--text-muted); }
 
-        /* Individual Layers */
-        .layer-item {
-            position: absolute;
-            border: 2px solid transparent;
-            cursor: grab;
-            touch-action: none; /* Critical for mobile drag */
-            transition: border-color 0.2s;
-        }
-        .layer-item.selected { border-color: var(--accent); }
-        .layer-item img, .layer-item video {
-            width: 100%;
-            height: 100%;
-            pointer-events: none; /* Let clicks pass through to container */
-            object-fit: contain;
-        }
-
-        /* --- Timeline Area --- */
-        .timeline-container {
-            height: 60px;
-            background: var(--panel-bg);
-            border-top: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            padding: 0 10px;
-            gap: 10px;
-            overflow-x: auto;
-        }
-
-        .track-slot {
-            min-width: 50px;
-            height: 40px;
-            background: #333;
-            border-radius: 4px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.8rem;
-            color: #aaa;
-        }
-
-        .add-track-btn {
-            min-width: 40px;
-            height: 40px;
-            background: var(--accent);
-            color: black;
-            border: none;
-            border-radius: 4px;
-            font-weight: bold;
-            font-size: 1.2rem;
-        }
-
-        /* --- Bottom Control Panel (Properties) --- */
-        .properties-panel {
-            height: 180px;
-            background: var(--panel-bg);
-            border-top: 1px solid var(--border);
-            padding: 15px;
+        /* Chat Area */
+        #messages-container {
+            flex: 1;
             overflow-y: auto;
-        }
-
-        .prop-group {
-            margin-bottom: 15px;
-        }
-
-        .prop-label {
+            padding: 20px;
             display: flex;
-            justify-content: space-between;
-            font-size: 0.8rem;
-            color: #aaa;
-            margin-bottom: 5px;
+            flex-direction: column;
+            gap: 10px;
+            scroll-behavior: smooth;
         }
 
-        input[type=range] {
-            width: 100%;
-            -webkit-appearance: none;
-            background: #333;
-            height: 6px;
-            border-radius: 3px;
+        .message {
+            max-width: 80%;
+            padding: 10px 15px;
+            border-radius: 18px;
+            position: relative;
+            word-wrap: break-word;
+            animation: popIn 0.2s ease-out;
         }
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 16px;
-            height: 16px;
-            background: var(--accent);
+
+        @keyframes popIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .msg-sent {
+            align-self: flex-end;
+            background: var(--sent-msg);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .msg-received {
+            align-self: flex-start;
+            background: var(--recv-msg);
+            color: var(--text-main);
+            border-bottom-left-radius: 4px;
+        }
+
+        .meta {
+            font-size: 0.7rem;
+            opacity: 0.7;
+            margin-top: 4px;
+            text-align: right;
+        }
+
+        /* Poll Styles */
+        .poll-container {
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+            padding: 10px;
+            margin-top: 5px;
+        }
+        .poll-option {
+            display: block;
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: left;
+            color: var(--text-main);
+            transition: 0.2s;
+        }
+        .poll-option:hover { background: var(--border); }
+        .poll-option.voted { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* Typing Indicator */
+        #typing-indicator {
+            padding: 5px 15px;
+            font-size: 0.8rem;
+            color: var(--primary);
+            height: 20px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .dots span {
+            display: inline-block;
+            width: 4px;
+            height: 4px;
+            background: var(--primary);
             border-radius: 50%;
+            margin-right: 2px;
+            animation: bounce 1s infinite;
+        }
+        .dots span:nth-child(2) { animation-delay: 0.2s; }
+        .dots span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        /* Input Area */
+        .input-area {
+            background: var(--chat-bg);
+            padding: 10px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            color: white;
+            padding: 12px;
+            border-radius: 20px;
+            font-size: 1rem;
+        }
+
+        button.icon-btn {
+            background: none;
+            border: none;
+            color: var(--primary);
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0 10px;
+        }
+
+        button.send-btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: bold;
             cursor: pointer;
         }
 
-        .mode-tabs {
-            display: flex;
-            gap: 5px;
-            margin-bottom: 10px;
+        /* Modal for Polls */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
         }
-        .mode-tab {
-            flex: 1;
-            padding: 8px;
-            background: #333;
-            border: none;
-            color: white;
-            text-align: center;
-            font-size: 0.8rem;
+        .modal-content {
+            background: var(--chat-bg);
+            padding: 20px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 300px;
+            border: 1px solid var(--border);
         }
-        .mode-tab.active { background: var(--accent); color: black; }
+        .modal input { width: 100%; margin-bottom: 10px; }
+        .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; }
+        .btn-cancel { background: #333; color: white; border: none; padding: 8px 15px; border-radius: 5px; }
+        .btn-confirm { background: var(--primary); color: white; border: none; padding: 8px 15px; border-radius: 5px; }
 
-        /* Mobile Optimization */
-        @media (max-width: 600px) {
-            .properties-panel { height: 200px; }
-            .top-bar { height: 45px; }
-        }
     </style>
 </head>
 <body>
 
-    <!-- Top Bar -->
-    <div class="top-bar">
-        <div class="logo">PRO EDITOR 3D</div>
-        <button id="recordBtn" class="action-btn btn-record" onclick="toggleRecord()">🔴 Record</button>
+    <header>
+        <div class="logo">SECURE_CHAT</div>
+        <div class="user-id" id="userIdDisplay">Loading ID...</div>
+    </header>
+
+    <div id="messages-container">
+        <!-- Messages will appear here -->
     </div>
 
-    <!-- Canvas / Preview -->
-    <div class="canvas-area" id="canvasArea">
-        <video id="video-layer" autoplay playsinline muted></video>
-        <div id="stage"></div>
+    <div id="typing-indicator"><span class="dots"><span></span><span></span><span></span></span> Typing...</div>
+
+    <div class="input-area">
+        <button class="icon-btn" onclick="openPollModal()">📊</button>
+        <input type="text" id="msgInput" placeholder="Type a message..." autocomplete="off">
+        <button class="send-btn" onclick="sendMessage()">➤</button>
     </div>
 
-    <!-- Timeline -->
-    <div class="timeline-container">
-        <div class="track-slot">L1</div>
-        <div class="track-slot">L2</div>
-        <button class="add-track-btn" onclick="addLayer('image')">+</button>
-    </div>
-
-    <!-- Properties Panel -->
-    <div class="properties-panel">
-        <div class="mode-tabs">
-            <button class="mode-tab active" onclick="setMode('transform')">Transform</button>
-            <button class="mode-tab" onclick="setMode('filter')">Filter</button>
-        </div>
-
-        <div id="transform-controls">
-            <div class="prop-group">
-                <div class="prop-label"><span>X Position</span><span id="val-x">0</span></div>
-                <input type="range" min="-200" max="200" value="0" oninput="updateProp('x', this.value)">
+    <!-- Poll Modal -->
+    <div id="pollModal" class="modal">
+        <div class="modal-content">
+            <h3>Create Poll</h3>
+            <input type="text" id="pollQuestion" placeholder="Question?">
+            <input type="text" id="pollOpt1" placeholder="Option 1">
+            <input type="text" id="pollOpt2" placeholder="Option 2">
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closePollModal()">Cancel</button>
+                <button class="btn-confirm" onclick="createPoll()">Post</button>
             </div>
-            <div class="prop-group">
-                <div class="prop-label"><span>Y Position</span><span id="val-y">0</span></div>
-                <input type="range" min="-200" max="200" value="0" oninput="updateProp('y', this.value)">
-            </div>
-            <div class="prop-group">
-                <div class="prop-label"><span>Scale</span><span id="val-scale">100%</span></div>
-                <input type="range" min="10" max="300" value="100" oninput="updateProp('scale', this.value)">
-            </div>
-            <div class="prop-group">
-                <div class="prop-label"><span>Rotation (Z)</span><span id="val-rot">0°</span></div>
-                <input type="range" min="-180" max="180" value="0" oninput="updateProp('rot', this.value)">
-            </div>
-        </div>
-
-        <div id="filter-controls" style="display:none;">
-             <div class="prop-group">
-                <div class="prop-label"><span>Brightness</span><span id="val-bright">100%</span></div>
-                <input type="range" min="0" max="200" value="100" oninput="updateProp('bright', this.value)">
-            </div>
-            <div class="prop-group">
-                <div class="prop-label"><span>Saturation</span><span id="val-sat">100%</span></div>
-                <input type="range" min="0" max="300" value="100" oninput="updateProp('sat', this.value)">
-            </div>
-        </div>
-        
-        <div class="prop-group" style="margin-top:20px; text-align:center;">
-            <button onclick="deleteSelected()" style="background:#ff3333; border:none; color:white; padding:10px; border-radius:4px;">Delete Selected Layer</button>
         </div>
     </div>
 
     <script>
-        // --- State Management ---
-        let layers = [];
-        let selectedLayerId = null;
-        let isDragging = false;
-        let startX, startY, startLeft, startTop;
-        let recordingStream;
-        let mediaRecorder;
-        let recordedChunks = [];
+        // --- CONFIG & STATE ---
+        const SERVER_URL = window.location.origin; 
+        let myId = localStorage.getItem('chat_user_id');
+        if (!myId) {
+            myId = 'user_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('chat_user_id', myId);
+        }
+        document.getElementById('userIdDisplay').innerText = `ID: ${myId.substr(-6)}`;
 
-        const stage = document.getElementById('stage');
-        const videoFeed = document.getElementById('video-layer');
-        const canvasArea = document.getElementById('canvasArea');
+        let messages = [];
+        let pollingInterval;
+        let typingTimeout;
 
-        // --- Initialization ---
-        async function init() {
+        // --- INIT ---
+        window.onload = () => {
+            fetchMessages();
+            setInterval(fetchMessages, 1000); // Poll server every second
+            
+            const input = document.getElementById('msgInput');
+            input.addEventListener('input', handleTyping);
+            input.addEventListener('keypress', (e) => {
+                if(e.key === 'Enter') sendMessage();
+            });
+        };
+
+        // --- API FUNCTIONS ---
+        async function fetchMessages() {
             try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: "environment", width: 1280, height: 720 } 
-                });
-                videoFeed.srcObject = stream;
+                const res = await fetch(`${SERVER_URL}/api/messages`);
+                const data = await res.json();
                 
-                // Add a default sticker/text layer
-                createLayer('image', 'https://cdn-icons-png.flaticon.com/512/742/742751.png');
-            } catch (e) {
-                alert("Camera access denied.");
-            }
-        }
-
-        // --- Layer Logic ---
-        function createLayer(type, src) {
-            const id = 'layer-' + Date.now();
-            const el = document.createElement(type === 'image' ? 'img' : 'div');
-            
-            if (type === 'image') {
-                el.src = src || 'https://via.placeholder.com/150';
-                el.style.width = '150px';
-                el.style.height = '150px';
-            } else {
-                el.innerText = "Text Layer";
-                el.style.background = "rgba(0,0,0,0.5)";
-                el.style.color = "white";
-                el.style.padding = "10px";
-                el.style.fontWeight = "bold";
-                el.style.borderRadius = "5px";
-                el.style.width = "100px";
-                el.style.textAlign = "center";
-            }
-
-            // Default Transforms
-            const props = { x: 0, y: 0, scale: 1, rot: 0, bright: 100, sat: 100 };
-            
-            const layerObj = {
-                id, element: el, props, type
-            };
-            
-            layers.push(layerObj);
-            renderLayer(layerObj);
-            selectLayer(id);
-        }
-
-        function renderLayer(layer) {
-            if (!document.getElementById(layer.id)) {
-                layer.element.id = layer.id;
-                layer.element.classList.add('layer-item');
-                updateTransformDOM(layer);
-                stage.appendChild(layer.element);
-                
-                // Drag Events
-                layer.element.addEventListener('mousedown', startDrag);
-                layer.element.addEventListener('touchstart', startDrag, {passive: false});
-            }
-        }
-
-        function updateTransformDOM(layer) {
-            const p = layer.props;
-            layer.element.style.transform = `translate(${p.x}px, ${p.y}px) rotate(${p.rot}deg) scale(${p.scale})`;
-            layer.element.style.filter = `brightness(${p.bright}%) saturate(${p.sat}%)`;
-        }
-
-        function selectLayer(id) {
-            // Deselect all
-            document.querySelectorAll('.layer-item').forEach(el => el.classList.remove('selected'));
-            
-            selectedLayerId = id;
-            const layer = layers.find(l => l.id === id);
-            
-            if (layer) {
-                layer.element.classList.add('selected');
-                populateSliders(layer.props);
-            }
-        }
-
-        function populateSliders(props) {
-            document.getElementById('val-x').innerText = props.x;
-            document.getElementById('val-y').innerText = props.y;
-            document.getElementById('val-scale').innerText = Math.round(props.scale * 100) + '%';
-            document.getElementById('val-rot').innerText = props.rot + '°';
-            document.getElementById('val-bright').innerText = props.bright + '%';
-            document.getElementById('val-sat').innerText = props.sat + '%';
-        }
-
-        function updateProp(prop, value) {
-            if (!selectedLayerId) return;
-            const layer = layers.find(l => l.id === selectedLayerId);
-            const val = parseFloat(value);
-            
-            if (prop === 'scale') layer.props.scale = val / 100;
-            else layer.props[prop] = val;
-
-            // Update label
-            const labelMap = {'x':'val-x', 'y':'val-y', 'scale':'val-scale', 'rot':'val-rot', 'bright':'val-bright', 'sat':'val-sat'};
-            if(labelMap[prop]) document.getElementById(labelMap[prop]).innerText = (prop==='scale'? val+'%' : val + (prop==='rot'?'°':'%'));
-
-            updateTransformDOM(layer);
-        }
-
-        // --- Dragging Logic (Touch & Mouse) ---
-        function startDrag(e) {
-            e.preventDefault();
-            e.stopPropagation(); // Stop clicking the stage
-            
-            const target = e.target.closest('.layer-item');
-            if(!target) return;
-            
-            selectLayer(target.id);
-            isDragging = true;
-            
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            
-            startX = clientX;
-            startY = clientY;
-            
-            const layer = layers.find(l => l.id === target.id);
-            // We need to read current computed style or just track delta from last known good state
-            // For simplicity in this snippet, we will adjust X/Y based on delta
-            
-            const moveHandler = (ev) => {
-                if (!isDragging) return;
-                const cx = ev.touches ? ev.touches[0].clientX : ev.clientX;
-                const cy = ev.touches ? ev.touches[0].clientY : ev.clientY;
-                
-                const dx = cx - startX;
-                const dy = cy - startY;
-                
-                layer.props.x += dx;
-                layer.props.y += dy;
-                
-                startX = cx;
-                startY = cy;
-                
-                updateTransformDOM(layer);
-                populateSliders(layer.props);
-            };
-
-            const stopHandler = () => {
-                isDragging = false;
-                document.removeEventListener('mousemove', moveHandler);
-                document.removeEventListener('mouseup', stopHandler);
-                document.removeEventListener('touchmove', moveHandler);
-                document.removeEventListener('touchend', stopHandler);
-            };
-
-            document.addEventListener('mousemove', moveHandler);
-            document.addEventListener('mouseup', stopHandler);
-            document.addEventListener('touchmove', moveHandler, {passive: false});
-            document.addEventListener('touchend', stopHandler);
-        }
-
-        // Click on stage to deselect
-        canvasArea.addEventListener('click', (e) => {
-            if(e.target === canvasArea || e.target === videoFeed) {
-                document.querySelectorAll('.layer-item').forEach(el => el.classList.remove('selected'));
-                selectedLayerId = null;
-            }
-        });
-
-        // --- Tools ---
-        function addLayer(type) {
-            createLayer(type);
-        }
-
-        function deleteSelected() {
-            if(selectedLayerId) {
-                const idx = layers.findIndex(l => l.id === selectedLayerId);
-                if(idx > -1) {
-                    layers[idx].element.remove();
-                    layers.splice(idx, 1);
-                    selectedLayerId = null;
+                // Only update if data changed to avoid flickering
+                if(JSON.stringify(data.messages) !== JSON.stringify(messages)) {
+                    messages = data.messages;
+                    renderMessages();
                 }
-            }
+                
+                // Check for typing status from others
+                if(data.typing && data.typing !== myId) {
+                    showTyping(true);
+                } else {
+                    showTyping(false);
+                }
+            } catch (e) { console.error("Fetch error", e); }
         }
 
-        function setMode(mode) {
-            document.querySelectorAll('.mode-tab').forEach(b => b.classList.remove('active'));
-            event.target.classList.add('active');
-            
-            document.getElementById('transform-controls').style.display = mode === 'transform' ? 'block' : 'none';
-            document.getElementById('filter-controls').style.display = mode === 'filter' ? 'block' : 'none';
-        }
+        async function sendMessage(text = null) {
+            const input = document.getElementById('msgInput');
+            const msgText = text || input.value.trim();
+            if (!msgText) return;
 
-        // --- Recording Logic ---
-        function toggleRecord() {
-            const btn = document.getElementById('recordBtn');
-            if(mediaRecorder && mediaRecorder.state === 'recording') {
-                mediaRecorder.stop();
-                btn.innerText = "🔴 Record";
-                btn.classList.remove('recording');
-            } else {
-                startRecording();
-                btn.innerText = "⬛ Stop";
-                btn.classList.add('recording');
-            }
-        }
-
-        function startRecording() {
-            recordedChunks = [];
-            // Capture the whole canvas area as stream
-            const canvas = document.createElement('canvas');
-            canvas.width = 1280;
-            canvas.height = 720;
-            const ctx = canvas.getContext('2d');
-            
-            // Stream from canvas
-            const stream = canvas.captureStream(30);
-            recordingStream = stream;
-            
-            mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
-            
-            mediaRecorder.ondataavailable = (e) => {
-                if(e.data.size > 0) recordedChunks.push(e.data);
+            const payload = {
+                action: 'send',
+                id: myId,
+                text: msgText,
+                timestamp: Date.now()
             };
-            
-            mediaRecorder.onstop = () => {
-                const blob = new Blob(recordedChunks, { type: 'video/webm' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `edited_video_${Date.now()}.webm`;
-                a.click();
-            };
-            
-            mediaRecorder.start();
-            
-            // Render Loop
-            function draw() {
-                ctx.fillStyle = "#000";
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                // Draw Background Video
-                ctx.save();
-                ctx.drawImage(videoFeed, 0, 0, canvas.width, canvas.height);
-                ctx.restore();
-                
-                // Draw Layers
-                layers.forEach(layer => {
-                    ctx.save();
-                    const p = layer.props;
-                    
-                    // Calculate center point relative to canvas
-                    // This is simplified math for demo purposes
-                    const rect = layer.element.getBoundingClientRect();
-                    const scaleX = canvas.width / canvasArea.clientWidth;
-                    const scaleY = canvas.height / canvasArea.clientHeight;
-                    
-                    // Just drawing the image/video directly from DOM
-                    // Better way: Use html2canvas logic but simpler here:
-                    ctx.translate(canvas.width/2 + p.x * scaleX, canvas.height/2 + p.y * scaleY);
-                    ctx.rotate(p.rot * Math.PI / 180);
-                    ctx.scale(p.scale, p.scale);
-                    ctx.filter = `brightness(${p.bright}%) saturate(${p.sat}%)`;
-                    
-                    // Draw the actual DOM element onto canvas
-                    // Note: Drawing DOM elements to canvas requires html2canvas lib usually, 
-                    // but for raw JS we can't easily do cross-origin without CORS issues.
-                    // So for this demo, we rely on CSS visual preview which IS what gets recorded via captureStream on modern browsers?
-                    // Actually, to record the DOM properly we need html2canvas. 
-                    // But let's use the simple approach: Record the VIDEO feed + Overlay Audio.
-                    // Since we can't easily draw DOM to Canvas without libs, 
-                    // I will stick to recording the Camera + Audio and applying filters via CSS on the video tag itself?
-                    // No, the user wants layers.
-                    
-                    // Hack: Use getComputedStyle to apply styles to a temp canvas context? Too slow.
-                    // Let's just record the 'preview' using css-filters and hope the browser supports capturing styled elements.
-                    // Modern browsers allow capturing styled elements if they are part of the DOM structure being captured.
-                    
-                    ctx.restore();
-                });
-                
-                requestAnimationFrame(draw);
-            }
-            draw();
+
+            await fetch(`${SERVER_URL}/api/messages`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+
+            input.value = '';
+            input.focus();
         }
 
-        init();
+        async function setTypingStatus(isTyping) {
+            await fetch(`${SERVER_URL}/api/status`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ id: myId, typing: isTyping })
+            });
+        }
+
+        function handleTyping() {
+            showTyping(true);
+            setTypingStatus(true);
+            
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(() => {
+                showTyping(false);
+                setTypingStatus(false);
+            }, 2000);
+        }
+
+        // --- RENDER UI ---
+        function renderMessages() {
+            const container = document.getElementById('messages-container');
+            container.innerHTML = '';
+
+            messages.forEach(msg => {
+                const div = document.createElement('div');
+                
+                if (msg.type === 'poll') {
+                    div.className = `message ${msg.sender === myId ? 'msg-sent' : 'msg-received'}`;
+                    div.innerHTML = `
+                        <div style="font-weight:bold; margin-bottom:5px;">${msg.text}</div>
+                        <div class="poll-container">
+                            ${renderPollOptions(msg)}
+                        </div>
+                        <div class="meta">${new Date(msg.timestamp).toLocaleTimeString()}</div>
+                    `;
+                } else {
+                    div.className = `message ${msg.sender === myId ? 'msg-sent' : 'msg-received'}`;
+                    div.innerText = msg.text;
+                    div.innerHTML += `<div class="meta">${new Date(msg.timestamp).toLocaleTimeString()}</div>`;
+                }
+                container.appendChild(div);
+            });
+            
+            // Scroll to bottom
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function renderPollOptions(pollMsg) {
+            let html = '';
+            pollMsg.options.forEach((opt, idx) => {
+                const voted = pollMsg.votes.includes(myId);
+                const count = pollMsg.votes.filter(v => v === idx).length;
+                const percent = pollMsg.totalVotes > 0 ? Math.round((count / pollMsg.totalVotes) * 100) : 0;
+                
+                html += `<button class="poll-option ${voted ? 'voted' : ''}" 
+                         onclick="votePoll('${pollMsg.id}', ${idx})" 
+                         ${voted ? 'disabled' : ''}>
+                         ${opt} (${percent}%)
+                         </button>`;
+            });
+            return html;
+        }
+
+        // --- POLL LOGIC ---
+        function openPollModal() { document.getElementById('pollModal').style.display = 'flex'; }
+        function closePollModal() { document.getElementById('pollModal').style.display = 'none'; }
+
+        async function createPoll() {
+            const q = document.getElementById('pollQuestion').value;
+            const o1 = document.getElementById('pollOpt1').value;
+            const o2 = document.getElementById('pollOpt2').value;
+            
+            if(!q || !o1 || !o2) return alert("Fill all fields");
+
+            const payload = {
+                action: 'poll',
+                id: myId,
+                question: q,
+                options: [o1, o2],
+                votes: [],
+                totalVotes: 0,
+                timestamp: Date.now()
+            };
+
+            await fetch(`${SERVER_URL}/api/polls`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(payload)
+            });
+            
+            closePollModal();
+            document.getElementById('pollQuestion').value = '';
+            document.getElementById('pollOpt1').value = '';
+            document.getElementById('pollOpt2').value = '';
+        }
+
+        async function votePoll(pollId, optionIdx) {
+            await fetch(`${SERVER_URL}/api/vote`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ pollId, voterId: myId, option: optionIdx })
+            });
+        }
+
+        // --- UTILS ---
+        function showTyping(show) {
+            const el = document.getElementById('typing-indicator');
+            el.style.opacity = show ? 1 : 0;
+        }
 
     </script>
 </body>
-</html>
+</html>!
