@@ -2,498 +2,588 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1.0">
-
-    <title>System Monitor Dashboard</title>
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiplayer Chess</title>
     <style>
         :root {
-            --bg: #0f172a;
-            --card: #1e293b;
-            --text: #f8fafc;
-            --muted: #94a3b8;
-            --accent: #38bdf8;
-            --border: #334155;
-            --green: #22c55e;
-            --red: #ef4444;
-        }
-
-        * {
-            box-sizing: border-box;
+            --bg-color: #2c3e50;
+            --board-light: #eeeed2;
+            --board-dark: #769656;
+            --highlight: rgba(255, 255, 0, 0.5);
+            --text-color: #ecf0f1;
+            --accent: #3498db;
         }
 
         body {
-            margin: 0;
-            padding: 20px;
-            background: var(--bg);
-            color: var(--text);
-            font-family: Arial, sans-serif;
-        }
-
-        h1 {
-            text-align: center;
-            color: var(--accent);
-            margin-bottom: 10px;
-        }
-
-        .subtitle {
-            text-align: center;
-            color: var(--muted);
-            margin-bottom: 24px;
-        }
-
-        .container {
-            max-width: 700px;
-            margin: auto;
-            display: grid;
-            gap: 16px;
-        }
-
-        .card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 20px;
-        }
-
-        .card h2 {
-            font-size: 15px;
-            color: var(--muted);
-            text-transform: uppercase;
-            border-bottom: 1px solid var(--border);
-            padding-bottom: 10px;
-            margin-top: 0;
-        }
-
-        .row {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
             display: flex;
-            justify-content: space-between;
-            gap: 16px;
-            padding: 10px 0;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .row:last-child {
-            border-bottom: none;
-        }
-
-        .label {
-            color: var(--muted);
-        }
-
-        .value {
-            font-weight: bold;
-            text-align: right;
-            overflow-wrap: anywhere;
-        }
-
-        .status {
-            display: inline-flex;
+            flex-direction: column;
             align-items: center;
-            gap: 8px;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
         }
 
-        .dot {
-            width: 9px;
-            height: 9px;
-            border-radius: 50%;
-            background: var(--muted);
+        h1 { margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+
+        /* Menu Styles */
+        #menu-container {
+            background: rgba(0,0,0,0.2);
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            max-width: 400px;
         }
 
-        .online {
-            background: var(--green);
-        }
-
-        .offline {
-            background: var(--red);
-        }
-
-        .logs {
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .log {
-            border-bottom: 1px solid var(--border);
-            padding: 12px 0;
-            overflow-wrap: anywhere;
-        }
-
-        .log:last-child {
-            border-bottom: none;
-        }
-
-        .log-time {
-            display: block;
-            margin-top: 5px;
-            color: var(--muted);
-            font-size: 12px;
-        }
-
-        .muted {
-            color: var(--muted);
+        input {
+            padding: 10px;
+            font-size: 16px;
+            width: 70%;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: none;
         }
 
         button {
-            width: 100%;
-            border: 0;
-            border-radius: 8px;
-            padding: 12px;
-            background: var(--accent);
-            color: #082f49;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin: 5px;
+            transition: transform 0.1s;
+        }
+        
+        button:active { transform: scale(0.95); }
+        button.secondary { background-color: #95a5a6; }
+
+        /* Game Board Styles */
+        #game-container {
+            display: none; /* Hidden initially */
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #status-bar {
+            margin-bottom: 15px;
+            font-size: 1.2rem;
             font-weight: bold;
+            display: flex;
+            gap: 20px;
+        }
+
+        .room-code-display {
+            background: rgba(255,255,255,0.1);
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-family: monospace;
             cursor: pointer;
         }
 
-        @media (max-width: 480px) {
-            body {
-                padding: 12px;
-            }
+        #board {
+            display: grid;
+            grid-template-columns: repeat(8, 60px);
+            grid-template-rows: repeat(8, 60px);
+            border: 5px solid #4a3021;
+            user-select: none;
+        }
 
-            .card {
-                padding: 15px;
+        .square {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 45px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .light { background-color: var(--board-light); color: black; }
+        .dark { background-color: var(--board-dark); color: black; }
+        
+        .selected { background-color: #baca44 !important; }
+        
+        .possible-move::after {
+            content: '';
+            width: 15px;
+            height: 15px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 50%;
+            position: absolute;
+        }
+
+        .piece {
+            cursor: grab;
+            z-index: 2;
+        }
+        .piece.white { color: #fff; text-shadow: 0 0 2px #000; }
+        .piece.black { color: #000; }
+
+        /* Modal for Promotion */
+        #promotion-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        .promo-options {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            display: flex;
+            gap: 10px;
+        }
+        .promo-piece {
+            font-size: 40px;
+            cursor: pointer;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .promo-piece:hover { background: #eee; }
+
+        @media (max-width: 600px) {
+            #board {
+                grid-template-columns: repeat(8, 11vw);
+                grid-template-rows: repeat(8, 11vw);
             }
+            .square { width: 11vw; height: 11vw; font-size: 8vw; }
         }
     </style>
 </head>
-
 <body>
 
-    <h1>System Monitor</h1>
-
-    <div class="subtitle">
-        Live Device Dashboard
+    <!-- Main Menu -->
+    <div id="menu-container">
+        <h1>Chess Online</h1>
+        <p>Create a room or Join an existing one.</p>
+        <button onclick="createRoom()">Create Room</button><br><br>
+        <input type="text" id="join-input" placeholder="Enter Room Code">
+        <button class="secondary" onclick="joinRoom()">Join Room</button>
     </div>
 
-    <main class="container">
+    <!-- Game Area -->
+    <div id="game-container">
+        <div id="status-bar">
+            <span id="status-text">Waiting...</span>
+            <span class="room-code-display" id="current-room-code" title="Click to Copy"></span>
+        </div>
+        <div id="board"></div>
+        <div style="margin-top: 15px;">
+            <button class="secondary" onclick="requestReset()">Rematch</button>
+            <button class="secondary" onclick="leaveGame()">Leave</button>
+        </div>
+    </div>
 
-        <section class="card">
-            <h2>Connection Status</h2>
+    <!-- Promotion Modal -->
+    <div id="promotion-modal">
+        <div class="promo-options" id="promo-options">
+            <!-- Injected via JS -->
+        </div>
+    </div>
 
-            <div class="row">
-                <span class="label">Dashboard API</span>
-                <span class="value status">
-                    <span id="api-dot" class="dot"></span>
-                    <span id="api-status">Connecting...</span>
-                </span>
-            </div>
+<script>
+    // --- GAME CONSTANTS ---
+    const PIECES = {
+        w: { k: '♔', q: '♕', r: '♖', b: '♗', n: '♘', p: '♙' },
+        b: { k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟' }
+    };
 
-            <div class="row">
-                <span class="label">Last device update</span>
-                <span id="last-update" class="value">
-                    Waiting for data
-                </span>
-            </div>
-        </section>
+    let board = [];
+    let selectedSquare = null;
+    let turn = 'white'; 
+    let myColor = 'white'; // 'white' or 'black'
+    let roomId = null;
+    let socket = null;
+    let pendingMove = null; // For promotion
 
-        <section class="card">
-            <h2>Live Device Status</h2>
+    // --- DOM ELEMENTS ---
+    const menuContainer = document.getElementById('menu-container');
+    const gameContainer = document.getElementById('game-container');
+    const statusText = document.getElementById('status-text');
+    const roomCodeDisplay = document.getElementById('current-room-code');
+    const boardEl = document.getElementById('board');
+    const promoModal = document.getElementById('promotion-modal');
+    const promoOptions = document.getElementById('promo-options');
 
-            <div class="row">
-                <span class="label">Battery</span>
-                <span id="battery" class="value">--</span>
-            </div>
+    // --- SOCKET LOGIC ---
+    function connectSocket() {
+        socket = new WebSocket(`ws://${location.host}`);
 
-            <div class="row">
-                <span class="label">Charging status</span>
-                <span id="charging" class="value">--</span>
-            </div>
-
-            <div class="row">
-                <span class="label">App memory</span>
-                <span id="memory" class="value">--</span>
-            </div>
-
-            <div class="row">
-                <span class="label">Maximum app memory</span>
-                <span id="max-memory" class="value">--</span>
-            </div>
-        </section>
-
-        <section class="card">
-            <h2>Device Information</h2>
-
-            <div class="row">
-                <span class="label">Device model</span>
-                <span id="model" class="value">--</span>
-            </div>
-
-            <div class="row">
-                <span class="label">Android version</span>
-                <span id="os" class="value">--</span>
-            </div>
-
-            <div class="row">
-                <span class="label">Monitoring ID</span>
-                <span id="device-id" class="value">--</span>
-            </div>
-        </section>
-
-        <section class="card">
-            <h2>Recent Activity</h2>
-
-            <button id="refresh-button" type="button">
-                Refresh Now
-            </button>
-
-            <div id="logs" class="logs">
-                <p class="muted">Loading history...</p>
-            </div>
-        </section>
-
-    </main>
-
-    <script>
-        const $ = function(id) {
-            return document.getElementById(id);
+        socket.onopen = () => {
+            console.log("Connected to server");
         };
 
-        let lastHistoryTimestamp = null;
+        socket.onmessage = (event) => {
+            const msg = JSON.parse(event.data);
+            handleServerMessage(msg);
+        };
 
-        function setText(id, value) {
-            $(id).textContent =
-                value === undefined ||
-                value === null ||
-                value === ""
-                    ? "--"
-                    : String(value);
+        socket.onclose = () => {
+            alert("Connection lost");
+            location.reload();
+        };
+    }
+
+    function handleServerMessage(msg) {
+        switch(msg.type) {
+            case 'room_created':
+                enterGame(msg.roomId, msg.color);
+                break;
+            case 'joined':
+                enterGame(msg.roomId, msg.color);
+                break;
+            case 'opponent_joined':
+                updateStatus("Opponent Joined! Your Turn.");
+                renderBoard();
+                break;
+            case 'opponent_move':
+                applyMove(msg.move);
+                break;
+            case 'board_reset':
+                initBoard();
+                renderBoard();
+                updateStatus("Game Reset. You are " + myColor);
+                break;
+            case 'opponent_left':
+                alert("Opponent left. You win!");
+                location.reload();
+                break;
+            case 'error':
+                alert(msg.message);
+                break;
         }
+    }
 
-        function parseLegacyText(text) {
-            const result = {};
+    window.createRoom = function() {
+        if(!socket) connectSocket();
+        setTimeout(() => {
+            socket.send(JSON.stringify({ type: "create_room" }));
+        }, 100);
+    };
 
-            if (typeof text !== "string") {
-                return result;
-            }
+    window.joinRoom = function() {
+        const code = document.getElementById('join-input').value.trim();
+        if(!code) return alert("Enter a code");
+        if(!socket) connectSocket();
+        setTimeout(() => {
+            socket.send(JSON.stringify({ type: "join_room", roomId: code }));
+        }, 100);
+    };
 
-            const parts = text.split("|");
+    function enterGame(id, color) {
+        roomId = id;
+        myColor = color;
+        menuContainer.style.display = 'none';
+        gameContainer.style.display = 'flex';
+        roomCodeDisplay.innerText = `Room: ${id} (Click to Copy)`;
+        roomCodeDisplay.onclick = () => {
+            navigator.clipboard.writeText(id);
+            alert("Copied!");
+        };
+        
+        initBoard();
+        renderBoard();
+        
+        if (color === 'white') {
+            updateStatus("Your Turn (White)");
+        } else {
+            updateStatus("Opponent's Turn (Black)");
+        }
+    }
 
-            parts.forEach(function(part) {
-                const index = part.indexOf(":");
+    window.leaveGame = function() {
+        location.reload();
+    };
 
-                if (index === -1) {
-                    return;
+    window.requestReset = function() {
+        if(socket) socket.send(JSON.stringify({ type: "reset" }));
+    };
+
+    // --- CHESS LOGIC ---
+
+    function initBoard() {
+        board = [
+            ['r','n','b','q','k','b','n','r'],
+            ['p','p','p','p','p','p','p','p'],
+            ['','','','','','','',''],
+            ['','','','','','','',''],
+            ['','','','','','','',''],
+            ['','','','','','','',''],
+            ['P','P','P','P','P','P','P','P'],
+            ['R','N','B','Q','K','B','N','R']
+        ];
+        turn = 'white';
+        selectedSquare = null;
+    }
+
+    function renderBoard() {
+        boardEl.innerHTML = '';
+        for (let r = 0; r < 8; r++) {
+            for (let c = 0; c < 8; c++) {
+                const square = document.createElement('div');
+                square.className = `square ${(r + c) % 2 === 0 ? 'light' : 'dark'}`;
+                square.dataset.row = r;
+                square.dataset.col = c;
+                square.onclick = () => handleSquareClick(r, c);
+
+                const pieceCode = board[r][c];
+                if (pieceCode) {
+                    const color = pieceCode === pieceCode.toUpperCase() ? 'white' : 'black';
+                    const symbol = PIECES[color === 'white' ? 'w' : 'b'][pieceCode.toLowerCase()];
+                    
+                    const span = document.createElement('span');
+                    span.className = `piece ${color}`;
+                    span.textContent = symbol;
+                    square.appendChild(span);
                 }
 
-                const key = part.substring(0, index).trim();
-                const value = part.substring(index + 1).trim();
-
-                result[key] = value;
-            });
-
-            return result;
-        }
-
-        function normaliseStats(data) {
-            if (!data || typeof data !== "object") {
-                return null;
-            }
-
-            // Legacy payload: { id, text, timestamp }
-            if (typeof data.text === "string") {
-                const parsed = parseLegacyText(data.text);
-
-                return {
-                    id: data.id || "monitor_bot",
-                    model: parsed.Model,
-                    android_version: parsed.OS,
-                    battery: parsed.Battery,
-                    app_memory: parsed.RAM,
-                    active_app: parsed.App,
-                    timestamp: data.timestamp
-                };
-            }
-
-            // Structured payload from updated Android app
-            return data;
-        }
-
-        function formatTimestamp(timestamp) {
-            const value = Number(timestamp);
-
-            if (!Number.isFinite(value) || value <= 0) {
-                return "Unknown";
-            }
-
-            return new Date(value).toLocaleString();
-        }
-
-        function updateDevice(data) {
-            const stats = normaliseStats(data);
-
-            if (!stats) {
-                return;
-            }
-
-            setText("model", stats.model);
-            setText("os", stats.android_version);
-            setText("device-id", stats.id);
-            setText("battery", stats.battery);
-            setText("memory", stats.app_memory);
-            setText("max-memory", stats.max_app_memory);
-
-            const battery = String(stats.battery || "");
-
-            let charging = "Unknown";
-
-            if (/charging/i.test(battery) &&
-                !/discharging|not charging/i.test(battery)) {
-                charging = "Charging";
-            } else if (/discharging/i.test(battery)) {
-                charging = "Discharging";
-            } else if (/not charging/i.test(battery)) {
-                charging = "Not charging";
-            }
-
-            setText("charging", charging);
-            setText("last-update", formatTimestamp(stats.timestamp));
-
-            addLog(stats);
-        }
-
-        function addLog(stats) {
-            const timestamp = Number(stats.timestamp) || 0;
-
-            const key = String(stats.id) + ":" + timestamp;
-
-            if (key === lastHistoryTimestamp) {
-                return;
-            }
-
-            lastHistoryTimestamp = key;
-
-            const container = $("logs");
-
-            if (container.querySelector(".muted")) {
-                container.replaceChildren();
-            }
-
-            const entry = document.createElement("div");
-            entry.className = "log";
-
-            const details = document.createElement("div");
-
-            details.textContent =
-                (stats.model || "Unknown device") +
-                " | Battery: " + (stats.battery || "Unknown") +
-                " | Memory: " + (stats.app_memory || "Unknown");
-
-            const time = document.createElement("span");
-            time.className = "log-time";
-            time.textContent = formatTimestamp(stats.timestamp);
-
-            entry.appendChild(details);
-            entry.appendChild(time);
-
-            container.prepend(entry);
-
-            while (container.children.length > 50) {
-                container.removeChild(container.lastElementChild);
-            }
-        }
-
-        async function fetchLatest() {
-            try {
-                const response = await fetch("/api/stats", {
-                    cache: "no-store"
-                });
-
-                if (!response.ok) {
-                    throw new Error("HTTP " + response.status);
+                if (selectedSquare && selectedSquare.r === r && selectedSquare.c === c) {
+                    square.classList.add('selected');
                 }
 
-                const data = await response.json();
-
-                $("api-dot").className = "dot online";
-                setText("api-status", "Connected");
-
-                if (data && data.timestamp) {
-                    updateDevice(data);
+                if (selectedSquare && isValidMove(selectedSquare.r, selectedSquare.c, r, c, true)) {
+                    square.classList.add('possible-move');
                 }
 
-            } catch (error) {
-                $("api-dot").className = "dot offline";
-                setText("api-status", "Unavailable");
-
-                console.error("Latest stats error:", error);
+                boardEl.appendChild(square);
             }
         }
+    }
 
-        async function fetchHistory() {
-            try {
-                const response = await fetch("/api/history", {
-                    cache: "no-store"
-                });
+    function handleSquareClick(r, c) {
+        // Block interaction if waiting for opponent or wrong turn
+        if (isWaitingForOpponent) return;
+        if ((turn === 'white' && myColor === 'black') || (turn === 'black' && myColor === 'white')) return;
 
-                if (!response.ok) {
-                    throw new Error("HTTP " + response.status);
+        const clickedPiece = board[r][c];
+        const isMyPiece = clickedPiece && ((myColor === 'white' && clickedPiece === clickedPiece.toUpperCase()) || (myColor === 'black' && clickedPiece === clickedPiece.toLowerCase()));
+
+        if (isMyPiece) {
+            selectedSquare = { r, c };
+            renderBoard();
+            return;
+        }
+
+        if (selectedSquare) {
+            if (isValidMove(selectedSquare.r, selectedSquare.c, r, c)) {
+                // Check for promotion
+                const piece = board[selectedSquare.r][selectedSquare.c];
+                const isPromotion = (piece === 'P' && r === 0) || (piece === 'p' && r === 7);
+
+                if (isPromotion) {
+                    showPromotionModal(selectedSquare.r, selectedSquare.c, r, c);
+                } else {
+                    executeMove(selectedSquare.r, selectedSquare.c, r, c);
                 }
+            } else {
+                selectedSquare = null;
+                renderBoard();
+            }
+        }
+    }
 
-                const history = await response.json();
+    function executeMove(fromR, fromC, toR, toC) {
+        const piece = board[fromR][fromC];
+        
+        // Update local board
+        board[toR][toC] = piece;
+        board[fromR][fromC] = '';
+        
+        // Send to server
+        const moveData = { from: {r: fromR, c: fromC}, to: {r: toR, c: toC} };
+        if(socket) socket.send(JSON.stringify({ type: "move", move: moveData }));
 
-                if (!Array.isArray(history)) {
-                    return;
+            // Optimistic UI update
+            applyMove(moveData);
+    }
+
+    function applyMove(moveData) {
+        const { from, to } = moveData;
+        const piece = board[from.r][from.c];
+        
+        board[to.r][to.c] = piece;
+        board[from.r][from.c] = '';
+
+        // Auto-promote to Queen for simplicity in online sync
+        if (piece === 'P' && to.r === 0) board[to.r][to.c] = 'Q';
+        if (piece === 'p' && to.r === 7) board[to.r][to.c] = 'q';
+
+        turn = turn === 'white' ? 'black' : 'white';
+        selectedSquare = null;
+        renderBoard();
+        
+        checkGameState();
+    }
+
+    function checkGameState() {
+        const inCheck = isKingInCheck(turn);
+        const hasMoves = getValidMoves(turn).length > 0;
+
+        if (!hasMoves) {
+            if (inCheck) {
+                updateStatus(`Checkmate! ${turn === 'white' ? 'Black' : 'White'} Wins!`);
+            } else {
+                updateStatus("Stalemate!");
+            }
+        } else if (inCheck) {
+            updateStatus(`${turn === 'white' ? 'White' : 'Black'} is in Check!`);
+        } else {
+            updateStatus(`${turn === 'white' ? 'White' : 'Black'}'s Turn`);
+        }
+    }
+
+    // --- MOVE VALIDATION ENGINE ---
+    function isValidMove(r1, c1, r2, c2, checkCheck = false) {
+        const piece = board[r1][c1].toLowerCase();
+        const dx = c2 - c1;
+        const dy = r2 - r1;
+        const target = board[r2][c2];
+        
+        // Cannot capture own piece
+        if (target) {
+            const isTargetWhite = target === target.toUpperCase();
+            const isMoverWhite = board[r1][c1] === board[r1][c1].toUpperCase();
+            if (isTargetWhite === isMoverWhite) return false;
+        }
+
+        switch(piece) {
+            case 'p': 
+                const direction = (board[r1][c1] === 'P') ? -1 : 1;
+                const startRow = (board[r1][c1] === 'P') ? 6 : 1;
+                if (dx === 0 && dy === direction && !target) return true;
+                if (dx === 0 && dy === 2 * direction && r1 === startRow && !target && !board[r1+direction][c1]) return true;
+                if (Math.abs(dx) === 1 && dy === direction && target) return true;
+                return false;
+            case 'r': 
+                if (dx !== 0 && dy !== 0) return false;
+                return isPathClear(r1, c1, r2, c2);
+            case 'b': 
+                if (Math.abs(dx) !== Math.abs(dy)) return false;
+                return isPathClear(r1, c1, r2, c2);
+            case 'q': 
+                if ((dx !== 0 && dy !== 0) && (Math.abs(dx) !== Math.abs(dy))) return false;
+                return isPathClear(r1, c1, r2, c2);
+            case 'n': 
+                return (Math.abs(dx) * Math.abs(dy)) === 2;
+            case 'k': 
+                return Math.abs(dx) <= 1 && Math.abs(dy) <= 1;
+            default: return false;
+        }
+    }
+
+    function isPathClear(r1, c1, r2, c2) {
+        const dr = Math.sign(r2 - r1);
+        const dc = Math.sign(c2 - c1);
+        let r = r1 + dr;
+        let c = c1 + dc;
+        while (r !== r2 || c !== c2) {
+            if (board[r][c] !== '') return false;
+            r += dr;
+            c += dc;
+        }
+        return true;
+    }
+
+    function findKing(color) {
+        const target = color === 'white' ? 'K' : 'k';
+        for(let r=0; r<8; r++) {
+            for(let c=0; c<8; c++) {
+                if(board[r][c] === target) return {r, c};
+            }
+        }
+        return null;
+    }
+
+    function isKingInCheck(kingColor) {
+        const kingPos = findKing(kingColor);
+        if (!kingPos) return true;
+
+        for (let r = 0; r < 8; r++) {
+            for (let c = 0; c < 8; c++) {
+                const piece = board[r][c];
+                if (!piece) continue;
+                const isEnemy = (kingColor === 'white') ? (piece === piece.toLowerCase()) : (piece === piece.toUpperCase());
+                if (isEnemy) {
+                    if (isValidMove(r, c, kingPos.r, kingPos.c, false)) return true;
                 }
+            }
+        }
+        return false;
+    }
 
-                const container = $("logs");
-
-                if (history.length === 0) {
-                    container.textContent = "No activity received yet.";
-                    container.className = "logs muted";
-                    return;
-                }
-
-                container.replaceChildren();
-                container.className = "logs";
-
-                history.slice(0, 50).forEach(function(item) {
-                    const stats = normaliseStats(item);
-
-                    if (!stats) {
-                        return;
+    function getValidMoves(color) {
+        let moves = [];
+        for (let r = 0; r < 8; r++) {
+            for (let c = 0; c < 8; c++) {
+                const piece = board[r][c];
+                if (!piece) continue;
+                const isMyPiece = (color === 'white') ? (piece === piece.toUpperCase()) : (piece === piece.toLowerCase());
+                if (isMyPiece) {
+                    for (let tr = 0; tr < 8; tr++) {
+                        for (let tc = 0; tc < 8; tc++) {
+                            if (isValidMove(r, c, tr, tc)) {
+                                // Simulate
+                                const savedTarget = board[tr][tc];
+                                const savedSource = board[r][c];
+                                board[tr][tc] = savedSource;
+                                board[r][c] = '';
+                                const inCheck = isKingInCheck(color);
+                                board[r][c] = savedSource;
+                                board[tr][tc] = savedTarget;
+                                if (!inCheck) moves.push({r1:r, c1:c, r2:tr, c2:tc});
+                            }
+                        }
                     }
-
-                    const entry = document.createElement("div");
-                    entry.className = "log";
-
-                    const details = document.createElement("div");
-
-                    details.textContent =
-                        (stats.model || "Unknown device") +
-                        " | Battery: " + (stats.battery || "Unknown") +
-                        " | Memory: " + (stats.app_memory || "Unknown");
-
-                    const time = document.createElement("span");
-                    time.className = "log-time";
-                    time.textContent = formatTimestamp(stats.timestamp);
-
-                    entry.appendChild(details);
-                    entry.appendChild(time);
-
-                    container.appendChild(entry);
-                });
-
-            } catch (error) {
-                console.error("History error:", error);
+                }
             }
         }
+        return moves;
+    }
 
-        async function refreshDashboard() {
-            await fetchLatest();
-            await fetchHistory();
-        }
+    // --- PROMOTION UI ---
+    function showPromotionModal(r1, c1, r2, c2) {
+        const isWhite = board[r1][c1] === 'P';
+        const pieces = isWhite ? ['♕','♖','♗','♘'] : ['♛','♜','♝','♞'];
+        
+        promoOptions.innerHTML = '';
+        pieces.forEach(p => {
+            const div = document.createElement('div');
+            div.className = 'promo-piece';
+            div.textContent = p;
+            div.onclick = () => {
+                promoModal.style.display = 'none';
+                // Apply promotion
+                const finalPiece = isWhite ? p.replace('♕','Q').replace('♖','R').replace('♗','B').replace('♘','N') : p.replace('♛','Q').replace('♜','R').replace('♝','B').replace('♞','N');
+                // Actually just map them directly
+                const map = {'♕':'Q','♛':'q','♖':'R','♜':'r','♗':'B','♝':'b','♘':'N','♞':'n'};
+                board[r2][c2] = map[p];
+                board[r1][c1] = '';
+                
+                const moveData = { from: {r:r1, c:c1}, to: {r:r2, c:c2} };
+                if(socket) socket.send(JSON.stringify({ type: "move", move: moveData }));
+                applyMove(moveData);
+            };
+            promoOptions.appendChild(div);
+        });
+        promoModal.style.display = 'flex';
+    }
 
-        $("refresh-button").addEventListener(
-            "click",
-            refreshDashboard
-        );
+    function updateStatus(msg) {
+        statusText.innerText = msg;
+    }
 
-        refreshDashboard();
+    // Start connection
+    connectSocket();
 
-        setInterval(fetchLatest, 2000);
-        setInterval(fetchHistory, 10000);
-    </script>
-
+</script>
 </body>
 </html>
