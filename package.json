@@ -1,8 +1,8 @@
 {
-  "name": "multiplayer-chess-rooms",
-  "version": "2.0.0",
+  "name": "multiplayer-chess",
+  "version": "1.0.0",
   "private": true,
-  "description": "Room-based real-time multiplayer chess",
+  "description": "Real-time multiplayer chess game",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
