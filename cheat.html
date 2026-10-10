@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>Chess Arena</title>
+<title>Chess Arena — Analysis</title>
 <style>
 :root{color-scheme:dark;--bg:#10131b;--panel:#191e29;--border:#2c3445;--text:#f4f6ff;--muted:#929bad;--light:#e8e2d5;--dark:#78917d}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at top,#202a3d 0%,transparent 55%),var(--bg);color:var(--text);font-family:system-ui,-apple-system,sans-serif}
@@ -15,6 +15,7 @@ button,input{font:inherit}.app{width:100%;max-width:680px;margin:auto;padding:18
 </style>
 </head>
 <body>
+<div id="passwordGate" class="overlay show" style="z-index:50"><div class="dialog"><div class="dialog-icon">🔐</div><h2>Analysis Access</h2><p>Enter the access password to open the analysis chess room.</p><input id="cheatPassword" class="field" type="password" autocomplete="off" placeholder="Password"><div style="height:10px"></div><button id="unlockButton" class="btn primary" style="width:100%">Unlock</button><div class="hint" id="passwordError"></div></div></div>
 <main class="app">
 <header class="header"><div class="brand"><div class="logo">♞</div><div><h1>Chess Arena</h1><div class="subtitle">REAL-TIME MULTIPLAYER</div></div></div><div class="online"><span class="dot" id="connectionDot"></span><span id="connectionText">Connecting...</span></div></header>
 
@@ -54,6 +55,17 @@ button,input{font:inherit}.app{width:100%;max-width:680px;margin:auto;padding:18
 <script src="/socket.io/socket.io.js"></script>
 <script>
 (function(){
+if(location.pathname.toLowerCase().endsWith("/cheat.html")){
+  var gate=document.getElementById("passwordGate");
+  document.getElementById("unlockButton").addEventListener("click",function(){
+    if(document.getElementById("cheatPassword").value==="M1"){gate.classList.remove("show");startChess();}
+    else document.getElementById("passwordError").textContent="Incorrect password.";
+  });
+  document.getElementById("cheatPassword").addEventListener("keydown",function(e){if(e.key==="Enter")document.getElementById("unlockButton").click();});
+  return;
+}
+startChess();
+function startChess(){
 "use strict";
 var socket=io(),files=["a","b","c","d","e","f","g","h"];
 var symbols={wk:"♔",wq:"♕",wr:"♖",wb:"♗",wn:"♘",wp:"♙",bk:"♚",bq:"♛",br:"♜",bb:"♝",bn:"♞",bp:"♟"};
@@ -113,6 +125,7 @@ var promoButtons=document.querySelectorAll("[data-promotion]");for(var i=0;i<pro
 promotionOverlay.addEventListener("click",function(e){if(e.target===promotionOverlay){pendingPromotion=null;promotionOverlay.classList.remove("show");}});
 if(analysisMode){el("suggestionText").textContent="Analysis is private to this browser. Suggestions are optional; you make every move yourself.";}
 renderBoard();
+}
 })();
 </script>
 </body>
