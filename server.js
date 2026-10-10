@@ -1,20 +1,22 @@
-const express = require("express");
-const http = require("http");
-const path = require("path');
-
+const express = require('express');
+const path = require('path');
 const app = express();
-const server = http.createServer(app);
+const http = require('http').Server(app);
 
+app.use(express.json());
 app.use(express.static(path.join(__dirname)));
 
-// Global State - Only ONE game exists
-let gameState = {
+// Global Game State
+let game = {
     board: getInitialBoard(),
-    turn: 'white',
-    whitePlayer: null, // Stores IP/ID
+    turn: 'white', // 'white' or 'black'
+    whitePlayer: null,
     blackPlayer: null,
-    started: false,
-    lastUpdate: Date.now()
+    status: 'waiting', // waiting, playing, finished
+    winner: null,
+    timerWhite: 300, // 5 mins in seconds
+    timerBlack: 300,
+    lastMoveTime: Date.now()
 };
 
 function getInitialBoard() {
@@ -30,90 +32,69 @@ function getInitialBoard() {
     ];
 }
 
-// Helper to generate a simple ID for players
-function generateId() {
-    return Math.random().toString(36).substr(2, 9);
-}
-
+// API: Get current state
 app.get('/api/state', (req, res) => {
-    // Return current game state
-    res.json({
-        board: gameState.board,
-        turn: gameState.turn,
-        white: gameState.whitePlayer,
-        black: gameState.blackPlayer,
-        started: gameState.started,
-        myId: req.query.id || null
-    });
+    res.json(game);
 });
 
+// API: Join Game
 app.post('/api/join', (req, res) => {
-    let playerId = req.body.playerId;
-    if (!playerId) {
-        playerId = generateId();
-    }
-
-    // Logic: First person gets White, Second gets Black
-    if (!gameState.whitePlayer) {
-        gameState.whitePlayer = playerId;
-        gameState.roleForNewUser = 'white';
-    } else if (!gameState.blackPlayer && gameState.whitePlayer !== playerId) {
-        gameState.blackPlayer = playerId;
-        gameState.roleForNewUser = 'black';
-        gameState.started = true; // Game auto-starts when 2nd player joins
+    const id = req.body.id || Math.random().toString(36).substr(2, 9);
+    
+    if (!game.whitePlayer) {
+        game.whitePlayer = id;
+        res.json({ role: 'white', joined: true });
+    } else if (!game.blackPlayer && game.whitePlayer !== id) {
+        game.blackPlayer = id;
+        game.status = 'playing';
+        game.timerWhite = 300;
+        game.timerBlack = 300;
+        res.json({ role: 'black', joined: true, startGame: true });
     } else {
-        // If both are full, maybe return existing or wait? 
-        // For this simple version, we just say they joined their assigned role
-        // or re-join if they disconnected.
-        if(gameState.whitePlayer === playerId) gameState.roleForNewUser = 'white';
-        else gameState.roleForNewUser = 'black';
+        // Rejoin logic or error
+        const role = (game.whitePlayer === id) ? 'white' : 'black';
+        res.json({ role: role, joined: true });
     }
-
-    res.json({
-        success: true,
-        playerId: playerId,
-        role: gameState.roleForNewUser,
-        started: gameState.started
-    });
 });
 
+// API: Make a Move
 app.post('/api/move', (req, res) => {
+    if (game.status !== 'playing') return res.status(400).json({error: "Game not started"});
+    
     const { from, to, playerId } = req.body;
     
-    // Basic validation: Is it this player's turn?
-    const isWhiteTurn = gameState.turn === 'white';
-    const currentPlayerIsWhite = gameState.whitePlayer === playerId;
+    // Validate Turn
+    const isWhiteTurn = game.turn === 'white';
+    const isMyTurn = (isWhiteTurn && game.whitePlayer === playerId) || 
+                     (!isWhiteTurn && game.blackPlayer === playerId);
+                     
+    if (!isMyTurn) return res.status(400).json({error: "Not your turn"});
     
-    if ((isWhiteTurn && !currentPlayerIsWhite) || (!isWhiteTurn && currentPlayerIsWhite)) {
-        return res.status(400).json({ error: "Not your turn" });
-    }
-
-    // Apply move
-    const piece = gameState.board[from.r][from.c];
-    gameState.board[to.r][to.c] = piece;
-    gameState.board[from.r][from.c] = '';
-
-    // Auto-promote to Queen
-    if (piece === 'P' && to.r === 0) gameState.board[to.r][to.c] = 'Q';
-    if (piece === 'p' && to.r === 7) gameState.board[to.r][to.c] = 'q';
-
-    // Switch turn
-    gameState.turn = gameState.turn === 'white' ? 'black' : 'white';
-    gameState.lastUpdate = Date.now();
-
+    // Execute Move Logic
+    const piece = game.board[from.r][from.c];
+    game.board[to.r][to.c] = piece;
+    game.board[from.r][from.c] = '';
+    
+    // Auto Promote to Queen
+    if (piece === 'P' && to.r === 0) game.board[to.r][to.c] = 'Q';
+    if (piece === 'p' && to.r === 7) game.board[to.r][to.c] = 'q';
+    
+    // Switch Turn & Reset Timer
+    game.turn = game.turn === 'white' ? 'black' : 'white';
+    
     res.json({ success: true });
 });
 
-app.post('/api/reset', (req, res) => {
-    gameState.board = getInitialBoard();
-    gameState.turn = 'white';
-    gameState.started = false;
-    gameState.whitePlayer = null;
-    gameState.blackPlayer = null;
-    res.json({ success: true });
+// API: Timer Tick (Called by polling)
+app.post('/api/tick', (req, res) => {
+    if (game.status !== 'playing') return res.json({status: game.status});
+    
+    const now = Date.now();
+    // Simple decrement logic based on server time difference could be added here
+    // For simplicity, we handle timer display in client but track turn here
+    
+    res.json({ status: game.status, turn: game.turn });
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-    console.log(`Chess Polling Server running on port ${PORT}`);
-}); 
+http.listen(PORT, () => console.log(`Chess Server running on port ${PORT}`));
