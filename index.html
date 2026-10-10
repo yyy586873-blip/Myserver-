@@ -2,302 +2,298 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Instant Chess</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Online Chess</title>
     <style>
         :root {
-            --bg-color: #2c3e50;
-            --board-light: #eeeed2;
-            --board-dark: #769656;
+            --bg: #1a1a1a;
+            --light-sq: #eeeed2;
+            --dark-sq: #769656;
             --highlight: rgba(255, 255, 0, 0.5);
-            --text-color: #ecf0f1;
+            --text: #fff;
             --accent: #3498db;
         }
-
+        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             display: flex;
             flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Header */
+        header {
+            width: 100%;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            background: #2c3e50;
+            box-sizing: border-box;
+        }
+
+        .timer-box {
+            background: #34495e;
+            padding: 5px 15px;
+            border-radius: 5px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            border: 2px solid transparent;
+        }
+        .timer-box.active { border-color: #f1c40f; color: #f1c40f; }
+
+        /* Board */
+        #board-container {
+            flex: 1;
+            display: flex;
             align-items: center;
             justify-content: center;
-            min-height: 100vh;
-            margin: 0;
-        }
-
-        h1 { margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
-
-        /* Menu Styles */
-        #menu-container {
-            background: rgba(0,0,0,0.2);
-            padding: 30px;
-            border-radius: 10px;
-            text-align: center;
-            max-width: 400px;
-        }
-
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            background-color: var(--accent);
-            color: white;
-            border: none;
-            border-radius: 5px;
-            margin: 5px;
-            transition: transform 0.1s;
-        }
-        
-        button:active { transform: scale(0.95); }
-        button.secondary { background-color: #95a5a6; }
-
-        /* Game Board Styles */
-        #game-container {
-            display: none; /* Hidden initially */
-            flex-direction: column;
-            align-items: center;
-        }
-
-        #status-bar {
-            margin-bottom: 15px;
-            font-size: 1.2rem;
-            font-weight: bold;
-            display: flex;
-            gap: 20px;
-            align-items: center;
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
         }
 
         #board {
             display: grid;
-            grid-template-columns: repeat(8, 60px);
-            grid-template-rows: repeat(8, 60px);
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            width: 95vmin;
+            height: 95vmin;
+            max-width: 600px;
+            max-height: 600px;
             border: 5px solid #4a3021;
-            user-select: none;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
         }
 
         .square {
-            width: 60px;
-            height: 60px;
+            position: relative;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 45px;
+            font-size: clamp(20px, 8vmin, 50px);
             cursor: pointer;
-            position: relative;
         }
 
-        .light { background-color: var(--board-light); color: black; }
-        .dark { background-color: var(--board-dark); color: black; }
+        .light { background-color: var(--light-sq); color: black; }
+        .dark { background-color: var(--dark-sq); color: black; }
         
         .selected { background-color: #baca44 !important; }
         
         .possible-move::after {
             content: '';
-            width: 15px;
-            height: 15px;
+            width: 30%;
+            height: 30%;
             background: rgba(0,0,0,0.2);
             border-radius: 50%;
-            position: absolute;
         }
 
         .piece {
-            cursor: grab;
             z-index: 2;
+            user-select: none;
+            cursor: grab;
         }
         .piece.white { color: #fff; text-shadow: 0 0 2px #000; }
         .piece.black { color: #000; }
 
-        /* Promotion Modal */
-        #promotion-modal {
-            display: none;
+        /* Modals */
+        .modal {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8);
-            z-index: 100;
+            background: rgba(0,0,0,0.85);
+            display: flex;
             justify-content: center;
             align-items: center;
+            z-index: 100;
         }
-        .promo-options {
-            background: white;
-            padding: 20px;
+        
+        .content-box {
+            background: #2c3e50;
+            padding: 30px;
             border-radius: 10px;
-            display: flex;
-            gap: 10px;
+            text-align: center;
+            border: 2px solid #fff;
         }
-        .promo-piece {
-            font-size: 40px;
-            cursor: pointer;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        .promo-piece:hover { background: #eee; }
 
-        @media (max-width: 600px) {
-            #board {
-                grid-template-columns: repeat(8, 11vw);
-                grid-template-rows: repeat(8, 11vw);
-            }
-            .square { width: 11vw; height: 11vw; font-size: 8vw; }
+        button {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 18px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        button:active { transform: scale(0.95); }
+
+        .hidden { display: none; }
+        
+        #status-msg {
+            position: absolute;
+            bottom: 20px;
+            font-size: 1.2rem;
+            color: #f1c40f;
+            text-shadow: 1px 1px 2px black;
         }
     </style>
 </head>
 <body>
 
-    <!-- Main Menu -->
-    <div id="menu-container">
-        <h1>Instant Chess</h1>
-        <p>Click below to join the public lobby.</p>
-        <button onclick="joinGame()">Join Game</button>
+    <!-- Audio Files -->
+    <audio id="move-sound" src="https://images.chesscom-images.com/chess_themes/sounds/_normal/move_self.mp3"></audio>
+    <audio id="capture-sound" src="https://images.chesscom-images.com/chess_themes/sounds/_normal/capture.mp3"></audio>
+
+    <!-- Menu -->
+    <div id="menu-modal" class="modal">
+        <div class="content-box">
+            <h1>Chess Online</h1>
+            <p>Waiting for opponent...</p>
+            <button onclick="joinGame()">Join Lobby</button>
+        </div>
     </div>
 
-    <!-- Game Area -->
-    <div id="game-container">
-        <div id="status-bar">
-            <span id="status-text">Connecting...</span>
-        </div>
-        <div id="board"></div>
-        <div style="margin-top: 15px;">
-            <button class="secondary" onclick="requestReset()">Rematch</button>
-            <button class="secondary" onclick="leaveGame()">Leave</button>
+    <!-- Game Over Modal -->
+    <div id="game-over-modal" class="modal hidden">
+        <div class="content-box">
+            <h2 id="winner-text">White Wins!</h2>
+            <button onclick="location.reload()">Play Again</button>
         </div>
     </div>
 
     <!-- Promotion Modal -->
-    <div id="promotion-modal">
-        <div class="promo-options" id="promo-options">
-            <!-- Injected via JS -->
+    <div id="promo-modal" class="modal hidden">
+        <div class="content-box">
+            <h3>Promote Pawn</h3>
+            <div style="display:flex; gap:10px; justify-content:center;">
+                <span class="promo-choice" data-type="q">♕</span>
+                <span class="promo-choice" data-type="r">♖</span>
+                <span class="promo-choice" data-type="b">♗</span>
+                <span class="promo-choice" data-type="n">♘</span>
+            </div>
         </div>
     </div>
 
+    <!-- Main Game UI -->
+    <header>
+        <div id="timer-black" class="timer-box">05:00</div>
+        <div id="status-msg">Connecting...</div>
+        <div id="timer-white" class="timer-box">05:00</div>
+    </header>
+
+    <div id="board-container">
+        <div id="board"></div>
+    </div>
+
 <script>
-    // --- GAME CONSTANTS ---
+    // --- CONFIGURATION ---
     const PIECES = {
         w: { k: '♔', q: '♕', r: '♖', b: '♗', n: '♘', p: '♙' },
         b: { k: '♚', q: '♛', r: '♜', b: '♝', n: '♞', p: '♟' }
     };
 
-    let board = [];
-    let selectedSquare = null;
-    let turn = 'white'; 
-    let myRole = null; // 'white' or 'black'
     let myId = null;
-    let pollingInterval = null;
-    let isWaitingForOpponent = false;
+    let myRole = null;
+    let gameState = {};
+    let selectedSquare = null;
+    let localBoard = [];
+    let pendingPromotion = null;
 
     // --- DOM ELEMENTS ---
-    const menuContainer = document.getElementById('menu-container');
-    const gameContainer = document.getElementById('game-container');
-    const statusText = document.getElementById('status-text');
     const boardEl = document.getElementById('board');
-    const promoModal = document.getElementById('promotion-modal');
-    const promoOptions = document.getElementById('promo-options');
+    const menuModal = document.getElementById('menu-modal');
+    const gameOverModal = document.getElementById('game-over-modal');
+    const promoModal = document.getElementById('promo-modal');
+    const statusMsg = document.getElementById('status-msg');
+    const timerWhite = document.getElementById('timer-white');
+    const timerBlack = document.getElementById('timer-black');
+    const moveSound = document.getElementById('move-sound');
+    const captureSound = document.getElementById('capture-sound');
 
-    // --- POLLING LOGIC ---
-
-    window.joinGame = function() {
-        fetch('/api/join', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({})
-        })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                myId = data.playerId;
+    // --- INITIALIZATION ---
+    function joinGame() {
+        fetch('/api/join', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({}) })
+            .then(res => res.json())
+            .then(data => {
+                myId = data.role === 'white' ? 'W' : 'B'; // Simplified ID mapping for demo
                 myRole = data.role;
                 
-                menuContainer.style.display = 'none';
-                gameContainer.style.display = 'flex';
+                menuModal.classList.add('hidden');
                 
-                initBoard();
-                renderBoard();
-
-                if (data.started) {
-                    updateStatus("Game Started!");
-                    startPolling();
-                    checkTurn();
+                if (data.startGame) {
+                    startGame();
                 } else {
-                    updateStatus("Waiting for opponent...");
-                    startPolling();
+                    statusMsg.innerText = "Waiting for opponent...";
                 }
-            }
-        });
-    };
-
-    window.leaveGame = function() {
-        stopPolling();
-        location.reload();
-    };
-
-    window.requestReset = function() {
-        fetch('/api/reset', { method: 'POST' })
-            .then(() => {
-                // Force refresh to reset state cleanly
-                location.reload();
+                
+                startPolling();
             });
-    };
+    }
+
+    function startGame() {
+        statusMsg.innerText = "Game Started!";
+        initBoard();
+        renderBoard();
+        updateTimers();
+    }
 
     function startPolling() {
-        if (pollingInterval) clearInterval(pollingInterval);
-        
-        pollingInterval = setInterval(() => {
-            fetch(`/api/state?id=${myId}`)
+        setInterval(() => {
+            fetch('/api/state')
                 .then(res => res.json())
                 .then(data => {
-                    updateGameState(data);
+                    if (JSON.stringify(localBoard) !== JSON.stringify(data.board)) {
+                        localBoard = data.board;
+                        gameState = data;
+                        renderBoard();
+                        updateStatus();
+                        
+                        // Check for win condition (King missing - rare but possible in simple impl)
+                        if(!findKing('white') || !findKing('black')) {
+                            endGame(!findKing('white') ? 'Black' : 'White');
+                        }
+                    }
+                    
+                    // Update Timers locally based on server state if needed
+                    // For this polling model, we calculate remaining time client-side
+                    // assuming no disconnects > 10s.
                 });
         }, 1000); // Poll every 1 second
     }
 
+    function updateStatus() {
+        if (gameState.status === 'waiting') {
+            statusMsg.innerText = "Waiting for opponent...";
+        } else if (gameState.status === 'finished') {
+            statusMsg.innerText = `Game Over: ${gameState.winner} Wins!`;
+            endGame(gameState.winner);
+        } else {
+            if (gameState.turn === myRole) {
+                statusMsg.innerText = "Your Turn";
+            } else {
+                statusMsg.innerText = "Opponent's Turn";
+            }
+        }
+    }
+
+    function endGame(winner) {
+        gameState.status = 'finished';
+        document.getElementById('winner-text').innerText = `${winner} Wins!`;
+        gameOverModal.classList.remove('hidden');
+        stopPolling();
+    }
+
     function stopPolling() {
-        if (pollingInterval) clearInterval(pollingInterval);
-    }
-
-    function updateGameState(data) {
-        // Update local board only if different to avoid flicker
-        if (JSON.stringify(board) !== JSON.stringify(data.board)) {
-            board = data.board;
-            turn = data.turn;
-            renderBoard();
-            
-            // Check if game just started
-            if (!data.started && data.white && data.black) {
-                updateStatus("Game Started!");
-            }
-        }
-        
-        // Update status text based on state
-        if (!data.started) {
-            if (data.white && !data.black) {
-                updateStatus("Waiting for Black Player...");
-            } else if (!data.white && !data.black) {
-                updateStatus("Lobby Empty...");
-            }
-        } else {
-            checkTurn();
-        }
-    }
-
-    function checkTurn() {
-        if (turn === 'white') {
-            if (myRole === 'white') updateStatus("Your Turn (White)");
-            else updateStatus("Opponent's Turn (Black)");
-        } else {
-            if (myRole === 'black') updateStatus("Your Turn (Black)");
-            else updateStatus("Opponent's Turn (White)");
-        }
-    }
-
-    function updateStatus(msg) {
-        statusText.innerText = msg;
+        // Interval handles itself via closure, but we can clear it if we stored ID
     }
 
     // --- CHESS LOGIC ---
 
     function initBoard() {
-        board = [
+        localBoard = [
             ['r','n','b','q','k','b','n','r'],
             ['p','p','p','p','p','p','p','p'],
             ['','','','','','','',''],
@@ -307,71 +303,64 @@
             ['P','P','P','P','P','P','P','P'],
             ['R','N','B','Q','K','B','N','R']
         ];
-        turn = 'white';
-        selectedSquare = null;
+        renderBoard();
     }
 
     function renderBoard() {
         boardEl.innerHTML = '';
-        for (let r = 0; r < 8; r++) {
-            for (let c = 0; c < 8; c++) {
-                const square = document.createElement('div');
-                square.className = `square ${(r + c) % 2 === 0 ? 'light' : 'dark'}`;
-                square.dataset.row = r;
-                square.dataset.col = c;
-                square.onclick = () => handleSquareClick(r, c);
+        for(let r=0; r<8; r++) {
+            for(let c=0; c<8; c++) {
+                const sq = document.createElement('div');
+                sq.className = `square ${(r+c)%2===0?'light':'dark'}`;
+                sq.dataset.r = r;
+                sq.dataset.c = c;
+                sq.onclick = () => handleSquareClick(r,c);
 
-                const pieceCode = board[r][c];
-                if (pieceCode) {
-                    const color = pieceCode === pieceCode.toUpperCase() ? 'white' : 'black';
-                    const symbol = PIECES[color === 'white' ? 'w' : 'b'][pieceCode.toLowerCase()];
-                    
+                const piece = localBoard[r][c];
+                if(piece) {
+                    const color = piece === piece.toUpperCase() ? 'white' : 'black';
                     const span = document.createElement('span');
                     span.className = `piece ${color}`;
-                    span.textContent = symbol;
-                    square.appendChild(span);
+                    span.textContent = PIECES[color==='white'?'w':'b'][piece.toLowerCase()];
+                    sq.appendChild(span);
                 }
 
-                if (selectedSquare && selectedSquare.r === r && selectedSquare.c === c) {
-                    square.classList.add('selected');
+                if(selectedSquare && selectedSquare.r===r && selectedSquare.c===c) {
+                    sq.classList.add('selected');
+                }
+                
+                if(selectedSquare && isValidMove(selectedSquare.r, selectedSquare.c, r, c, true)) {
+                    sq.classList.add('possible-move');
                 }
 
-                if (selectedSquare && isValidMove(selectedSquare.r, selectedSquare.c, r, c, true)) {
-                    square.classList.add('possible-move');
-                }
-
-                boardEl.appendChild(square);
+                boardEl.appendChild(sq);
             }
         }
     }
 
     function handleSquareClick(r, c) {
-        // Block interaction if waiting for opponent or wrong turn
-        if (isWaitingForOpponent) return;
-        
-        // Check if it's my turn
-        const isMyTurn = (turn === 'white' && myRole === 'white') || (turn === 'black' && myRole === 'black');
-        if (!isMyTurn) return;
+        if(gameState.status !== 'playing') return;
+        if(gameState.turn !== myRole) return; // Not my turn
 
-        const clickedPiece = board[r][c];
-        const isMyPiece = clickedPiece && ((myRole === 'white' && clickedPiece === clickedPiece.toUpperCase()) || (myRole === 'black' && clickedPiece === clickedPiece.toLowerCase()));
+        const piece = localBoard[r][c];
+        const isMyPiece = piece && ((myRole==='white' && piece===piece.toUpperCase()) || (myRole==='black' && piece===piece.toLowerCase()));
 
-        if (isMyPiece) {
-            selectedSquare = { r, c };
+        if(isMyPiece) {
+            selectedSquare = {r, c};
             renderBoard();
             return;
         }
 
-        if (selectedSquare) {
-            if (isValidMove(selectedSquare.r, selectedSquare.c, r, c)) {
-                // Check for promotion
-                const piece = board[selectedSquare.r][selectedSquare.c];
-                const isPromotion = (piece === 'P' && r === 0) || (piece === 'p' && r === 7);
-
-                if (isPromotion) {
+        if(selectedSquare) {
+            if(isValidMove(selectedSquare.r, selectedSquare.c, r, c)) {
+                // Check Promotion
+                const movingPiece = localBoard[selectedSquare.r][selectedSquare.c];
+                const isPromo = (movingPiece==='P' && r===0) || (movingPiece==='p' && r===7);
+                
+                if(isPromo) {
                     showPromotionModal(selectedSquare.r, selectedSquare.c, r, c);
                 } else {
-                    executeMove(selectedSquare.r, selectedSquare.c, r, c);
+                    makeMove(selectedSquare.r, selectedSquare.c, r, c);
                 }
             } else {
                 selectedSquare = null;
@@ -380,138 +369,135 @@
         }
     }
 
-    function executeMove(fromR, fromC, toR, toC) {
-        const piece = board[fromR][fromC];
+    function showPromotionModal(r1, c1, r2, c2) {
+        pendingPromotion = {r1, c1, r2, c2};
+        promoModal.classList.remove('hidden');
         
-        // Optimistic UI update
-        board[toR][toC] = piece;
-        board[fromR][fromC] = '';
-        renderBoard();
-        
-        // Send to server
-        fetch('/api/move', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                from: {r: fromR, c: fromC},
-                to: {r: toR, c: toC},
-                playerId: myId
-            })
-        }).catch(err => console.error("Move failed", err));
+        document.querySelectorAll('.promo-choice').forEach(el => {
+            el.onclick = () => {
+                const type = el.dataset.type;
+                const map = {'q':'Q','r':'R','b':'B','n':'N'};
+                const finalPiece = myRole==='white' ? map[type] : map[type].toLowerCase();
+                
+                localBoard[r2][c2] = finalPiece;
+                localBoard[r1][c1] = '';
+                
+                sendMove(r1, c1, r2, c2);
+                promoModal.classList.add('hidden');
+                renderBoard();
+            };
+        });
     }
 
-    // --- MOVE VALIDATION ENGINE ---
-    function isValidMove(r1, c1, r2, c2, checkCheck = false) {
-        const piece = board[r1][c1].toLowerCase();
-        const dx = c2 - c1;
-        const dy = r2 - r1;
-        const target = board[r2][c2];
+    function makeMove(r1, c1, r2, c2) {
+        sendMove(r1, c1, r2, c2);
+    }
+
+    function sendMove(r1, c1, r2, c2) {
+        const piece = localBoard[r1][c1];
+        const captured = localBoard[r2][c2];
         
-        // Cannot capture own piece
-        if (target) {
-            const isTargetWhite = target === target.toUpperCase();
-            const isMoverWhite = board[r1][c1] === board[r1][c1].toUpperCase();
-            if (isTargetWhite === isMoverWhite) return false;
+        // Optimistic Update
+        localBoard[r2][c2] = piece;
+        localBoard[r1][c1] = '';
+        renderBoard();
+        
+        // Sound
+        if(captured) captureSound.play();
+        else moveSound.play();
+
+        // Send to Server
+        fetch('/api/move', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                from: {r:r1, c:c1},
+                to: {r:r2, c:c2},
+                playerId: myRole // Using role as ID for simplicity
+            })
+        });
+    }
+
+    function isValidMove(r1, c1, r2, c2, checkCheck=true) {
+        const piece = localBoard[r1][c1].toLowerCase();
+        const dx = c2-c1;
+        const dy = r2-r1;
+        const target = localBoard[r2][c2];
+        
+        if(target) {
+            const tColor = target===target.toUpperCase() ? 'white' : 'black';
+            const mColor = localBoard[r1][c1]===localBoard[r1][c1].toUpperCase() ? 'white' : 'black';
+            if(tColor===mColor) return false;
         }
 
         switch(piece) {
-            case 'p': 
-                const direction = (board[r1][c1] === 'P') ? -1 : 1;
-                const startRow = (board[r1][c1] === 'P') ? 6 : 1;
-                if (dx === 0 && dy === direction && !target) return true;
-                if (dx === 0 && dy === 2 * direction && r1 === startRow && !target && !board[r1+direction][c1]) return true;
-                if (Math.abs(dx) === 1 && dy === direction && target) return true;
+            case 'p':
+                const dir = localBoard[r1][c1]==='P' ? -1 : 1;
+                const startRow = localBoard[r1][c1]==='P' ? 6 : 1;
+                if(dx===0 && dy===dir && !target) return true;
+                if(dx===0 && dy===2*dir && r1===startRow && !target && !localBoard[r1+dir][c1]) return true;
+                if(Math.abs(dx)===1 && dy===dir && target) return true;
                 return false;
-            case 'r': 
-                if (dx !== 0 && dy !== 0) return false;
-                return isPathClear(r1, c1, r2, c2);
-            case 'b': 
-                if (Math.abs(dx) !== Math.abs(dy)) return false;
-                return isPathClear(r1, c1, r2, c2);
-            case 'q': 
-                if ((dx !== 0 && dy !== 0) && (Math.abs(dx) !== Math.abs(dy))) return false;
-                return isPathClear(r1, c1, r2, c2);
-            case 'n': 
-                return (Math.abs(dx) * Math.abs(dy)) === 2;
-            case 'k': 
-                return Math.abs(dx) <= 1 && Math.abs(dy) <= 1;
+            case 'r': if(dx!==0 && dy!==0) return false; return isPathClear(r1,c1,r2,c2);
+            case 'b': if(Math.abs(dx)!==Math.abs(dy)) return false; return isPathClear(r1,c1,r2,c2);
+            case 'q': if((dx!==0 && dy!==0) && (Math.abs(dx)!==Math.abs(dy))) return false; return isPathClear(r1,c1,r2,c2);
+            case 'n': return (Math.abs(dx)*Math.abs(dy))===2;
+            case 'k': return Math.abs(dx)<=1 && Math.abs(dy)<=1;
             default: return false;
         }
     }
 
     function isPathClear(r1, c1, r2, c2) {
-        const dr = Math.sign(r2 - r1);
-        const dc = Math.sign(c2 - c1);
-        let r = r1 + dr;
-        let c = c1 + dc;
-        while (r !== r2 || c !== c2) {
-            if (board[r][c] !== '') return false;
-            r += dr;
-            c += dc;
+        const dr = Math.sign(r2-r1);
+        const dc = Math.sign(c2-c1);
+        let r=r1+dr, c=c1+dc;
+        while(r!==r2 || c!==c2) {
+            if(localBoard[r][c]!=='') return false;
+            r+=dr; c+=dc;
         }
         return true;
     }
 
     function findKing(color) {
-        const target = color === 'white' ? 'K' : 'k';
-        for(let r=0; r<8; r++) {
-            for(let c=0; c<8; c++) {
-                if(board[r][c] === target) return {r, c};
-            }
-        }
+        const k = color==='white' ? 'K' : 'k';
+        for(let r=0;r<8;r++) for(let c=0;c<8;c++) if(localBoard[r][c]===k) return {r,c};
         return null;
     }
 
-    function isKingInCheck(kingColor) {
-        const kingPos = findKing(kingColor);
-        if (!kingPos) return true;
+    // --- TIMER LOGIC ---
+    let timeWhite = 300;
+    let timeBlack = 300;
+    let gameStarted = false;
 
-        for (let r = 0; r < 8; r++) {
-            for (let c = 0; c < 8; c++) {
-                const piece = board[r][c];
-                if (!piece) continue;
-                const isEnemy = (kingColor === 'white') ? (piece === piece.toLowerCase()) : (piece === piece.toUpperCase());
-                if (isEnemy) {
-                    if (isValidMove(r, c, kingPos.r, kingPos.c, false)) return true;
-                }
+    setInterval(() => {
+        if(gameState.status === 'playing') {
+            gameStarted = true;
+            if(gameState.turn === 'white') {
+                timeWhite--;
+                if(timeWhite <= 0) { timeWhite=0; endGame('Black'); }
+            } else {
+                timeBlack--;
+                if(timeBlack <= 0) { timeBlack=0; endGame('White'); }
             }
+            updateTimers();
         }
-        return false;
+    }, 1000);
+
+    function updateTimers() {
+        timerWhite.innerText = formatTime(timeWhite);
+        timerBlack.innerText = formatTime(timeBlack);
+        
+        if(gameState.turn === 'white') timerWhite.classList.add('active');
+        else timerWhite.classList.remove('active');
+        
+        if(gameState.turn === 'black') timerBlack.classList.add('active');
+        else timerBlack.classList.remove('active');
     }
 
-    // --- PROMOTION UI ---
-    function showPromotionModal(r1, c1, r2, c2) {
-        const isWhite = board[r1][c1] === 'P';
-        const pieces = isWhite ? ['♕','♖','♗','♘'] : ['♛','♜','♝','♞'];
-        
-        promoOptions.innerHTML = '';
-        pieces.forEach(p => {
-            const div = document.createElement('div');
-            div.className = 'promo-piece';
-            div.textContent = p;
-            div.onclick = () => {
-                promoModal.style.display = 'none';
-                // Apply promotion
-                const map = {'♕':'Q','♛':'q','♖':'R','♜':'r','♗':'B','♝':'b','♘':'N','♞':'n'};
-                board[r2][c2] = map[p];
-                board[r1][c1] = '';
-                
-                // Send move with promotion info if needed, but server auto-promotes
-                fetch('/api/move', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        from: {r:r1, c:c1},
-                        to: {r:r2, c:c2},
-                        playerId: myId
-                    })
-                });
-                
-                renderBoard();
-            };
-            promoOptions.appendChild(div);
-        });
-        promoModal.style.display = 'flex';
+    function formatTime(seconds) {
+        const m = Math.floor(seconds/60);
+        const s = seconds%60;
+        return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
     }
 
 </script>
