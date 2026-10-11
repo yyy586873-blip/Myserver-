@@ -956,7 +956,7 @@ h1 {
 
         var suggestButton = document.getElementById("suggestMoveButton");
         if (suggestButton) {
-            suggestButton.disabled = !(snapshot.started && status.state === "playing");
+            suggestButton.disabled = !(snapshot.started && status.state === "playing" && role && snapshot.turn === role);
         }
         var clearButton = document.getElementById("clearSuggestionButton");
         if (clearButton) clearButton.disabled = !suggestedMove;
@@ -986,7 +986,7 @@ h1 {
             true
         );
 
-        socket.emit("joinGame");
+        socket.emit("joinGame", { admin: true });
     });
 
     socket.on("disconnect", function () {
@@ -1131,6 +1131,10 @@ h1 {
             showToast("Start a game before asking for a suggestion.");
             return;
         }
+        if (!role || snapshot.turn !== role) {
+            showToast("Suggestion is available only on your own turn.");
+            return;
+        }
         this.disabled = true;
         this.textContent = "Analysing...";
         document.getElementById("bestMoveResult").classList.remove("show");
@@ -1149,7 +1153,7 @@ h1 {
         var button = document.getElementById("suggestMoveButton");
         button.textContent = "✨ Suggest Best Move";
         if (snapshot && snapshot.started && snapshot.status.state === "playing") {
-            button.disabled = false;
+            button.disabled = !(role && snapshot.turn === role);
         }
         if (!data || data.error) {
             showToast(data && data.error ? data.error : "No suggestion returned.");
@@ -1159,11 +1163,21 @@ h1 {
             showToast("Position changed during analysis. Please try again.");
             return;
         }
+        if (data.role !== role || data.turn !== role || snapshot.turn !== role) {
+            showToast("Suggestion rejected: it is not your colour's turn.");
+            return;
+        }
         suggestedMove = data.move;
         suggestionFen = data.fen;
         var result = document.getElementById("bestMoveResult");
-        result.textContent = "Suggested move: " + data.move.san + " (" +
-            data.move.from + " → " + data.move.to + "). This is a recommendation, not an automatic move.";
+        var detail = data.move.forcedMate
+            ? " Forced checkmate found in the searched line!"
+            : data.move.avoidsMate
+                ? " Warning: this position appears to allow a forced mate against you in the searched line."
+                : " Best move found by deeper search; a guaranteed win is not possible in every position.";
+        result.textContent = "For " + (role === "w" ? "WHITE" : "BLACK") + ": " +
+            data.move.san + " (" + data.move.from + " → " + data.move.to + ")." +
+            detail + " Play it manually.";
         result.classList.add("show");
         renderBoard();
         updateStatus();
