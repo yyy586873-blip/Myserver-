@@ -25,7 +25,6 @@ const players = {
 
 let started = false;
 let lastMove = null;
-let adminSocketId = null;
 
 function getRole(socketId) {
     if (players.w === socketId) return "w";
@@ -122,14 +121,10 @@ function startIfReady() {
 }
 
 const PIECE_VALUES = { p: 100, n: 320, b: 335, r: 500, q: 900, k: 20000 };
-const MATE_SCORE = 100000;
 
-function evaluatePosition(position, perspective, ply) {
+function evaluatePosition(position, perspective) {
     if (position.isCheckmate()) {
-        // Prefer delivering mate sooner and delaying a forced mate against us.
-        return position.turn() === perspective
-            ? -MATE_SCORE + ply
-            : MATE_SCORE - ply;
+        return position.turn() === perspective ? -100000 : 100000;
     }
     if (position.isDraw()) return 0;
 
@@ -142,60 +137,37 @@ function evaluatePosition(position, perspective, ply) {
             let value = PIECE_VALUES[piece.type] || 0;
             if (piece.type === "p") {
                 const advance = piece.color === "w" ? 6 - row : row - 1;
-                value += Math.max(0, advance) * 8;
-            }
-            // Small central-square bonus for knights, bishops, and queens.
-            if (piece.type === "n" || piece.type === "b" || piece.type === "q") {
-                const center = 3.5 - (Math.abs(3.5 - row) + Math.abs(3.5 - col)) / 2;
-                value += center * (piece.type === "n" ? 9 : 4);
+                value += Math.max(0, advance) * 7;
             }
             score += piece.color === perspective ? value : -value;
         }
     }
-    if (position.isCheck()) score += position.turn() === perspective ? -45 : 45;
+    if (position.isCheck()) score += position.turn() === perspective ? -35 : 35;
     return score;
 }
 
-function orderMoves(moves) {
-    return moves.sort(function (a, b) {
-        function priority(m) {
-            let score = 0;
-            if (m.captured) score += 1000 + (PIECE_VALUES[m.captured] || 0) - (PIECE_VALUES[m.piece] || 0) / 10;
-            if (m.promotion) score += 800 + (PIECE_VALUES[m.promotion] || 0);
-            if (m.san && m.san.indexOf("#") !== -1) score += 100000;
-            else if (m.san && m.san.indexOf("+") !== -1) score += 80;
-            return score;
-        }
-        return priority(b) - priority(a);
-    });
-}
-
-function findBestMove(fen, maxDepth) {
+function findBestMove(fen, depth) {
     const position = new Chess(fen);
     const perspective = position.turn();
-    const rootMoves = orderMoves(position.moves({ verbose: true }));
+    const rootMoves = position.moves({ verbose: true });
     if (!rootMoves.length) return null;
 
     let bestMove = null;
     let bestScore = -Infinity;
 
-    function search(depth, alpha, beta, ply) {
-        if (position.isCheckmate() || position.isDraw()) {
-            return evaluatePosition(position, perspective, ply);
+    function search(currentDepth, alpha, beta) {
+        if (currentDepth === 0 || currentDepth > 0 && position.isGameOver()) {
+            return evaluatePosition(position, perspective);
         }
-        if (depth === 0) {
-            return evaluatePosition(position, perspective, ply);
-        }
-
-        const moves = orderMoves(position.moves({ verbose: true }));
-        if (!moves.length) return evaluatePosition(position, perspective, ply);
+        const moves = position.moves({ verbose: true });
+        if (!moves.length) return evaluatePosition(position, perspective);
 
         const maximizing = position.turn() === perspective;
         let best = maximizing ? -Infinity : Infinity;
         for (let i = 0; i < moves.length; i++) {
             const m = moves[i];
             position.move({ from: m.from, to: m.to, promotion: m.promotion || "q" });
-            const score = search(depth - 1, alpha, beta, ply + 1);
+            const score = search(currentDepth - 1, alpha, beta);
             position.undo();
 
             if (maximizing) {
@@ -210,12 +182,10 @@ function findBestMove(fen, maxDepth) {
         return best;
     }
 
-    // Search deeper than the old 2-ply version, using alpha-beta pruning and
-    // tactical move ordering so forced mates and checks are considered first.
     for (let i = 0; i < rootMoves.length; i++) {
         const m = rootMoves[i];
         position.move({ from: m.from, to: m.to, promotion: m.promotion || "q" });
-        const score = search(maxDepth - 1, -Infinity, Infinity, 1);
+        const score = search(depth - 1, -Infinity, Infinity);
         position.undo();
         if (score > bestScore) {
             bestScore = score;
@@ -224,9 +194,7 @@ function findBestMove(fen, maxDepth) {
                 to: m.to,
                 san: m.san,
                 promotion: m.promotion || null,
-                score: score,
-                forcedMate: score > MATE_SCORE - 20,
-                avoidsMate: score < -MATE_SCORE + 20
+                score: score
             };
         }
     }
@@ -236,7 +204,7 @@ function findBestMove(fen, maxDepth) {
 io.on("connection", function (socket) {
     console.log("Connected:", socket.id);
 
-    socket.on("joinGame", function (joinData) {
+    socket.on("joinGame", function () {
         let role = getRole(socket.id);
 
         if (role) {
@@ -262,14 +230,9 @@ io.on("connection", function (socket) {
             return;
         }
 
-        if (joinData && joinData.admin === true && !adminSocketId) {
-            adminSocketId = socket.id;
-        }
-
         socket.emit("joined", {
             role: role,
-            accepted: true,
-            isAdmin: socket.id === adminSocketId
+            accepted: true
         });
 
         startIfReady();
@@ -387,39 +350,23 @@ io.on("connection", function (socket) {
 
     socket.on("suggestBestMove", function () {
         const role = getRole(socket.id);
-        if (socket.id !== adminSocketId) {
-            socket.emit("bestMoveResult", {
-                error: "Best-move suggestions are available only from Admin.html."
-            });
-            return;
-        }
         if (!role || !started || chess.isGameOver()) {
             socket.emit("bestMoveResult", {
                 error: "The game must be active and you must be one of its players."
             });
             return;
         }
-        // Only analyse the Admin page player's own colour, and only on that turn.
-        if (chess.turn() !== role) {
-            socket.emit("bestMoveResult", {
-                error: "Suggestion is available only on your own turn. You are " +
-                    (role === "w" ? "White" : "Black") + "."
-            });
-            return;
-        }
 
         try {
-            const currentFen = chess.fen();
-            const suggestion = findBestMove(currentFen, 4);
+            const suggestion = findBestMove(chess.fen(), 2);
             if (!suggestion) {
                 socket.emit("bestMoveResult", { error: "No legal move is available." });
                 return;
             }
             socket.emit("bestMoveResult", {
                 move: suggestion,
-                role: role,
                 turn: chess.turn(),
-                fen: currentFen
+                fen: chess.fen()
             });
         } catch (error) {
             console.error("Best-move analysis failed:", error);
@@ -442,7 +389,6 @@ io.on("connection", function (socket) {
 
     socket.on("disconnect", function () {
         const role = getRole(socket.id);
-        if (socket.id === adminSocketId) adminSocketId = null;
 
         if (role) {
             players[role] = null;
