@@ -8,7 +8,7 @@ WHAT CHANGED
 - The suggested move is not played automatically.
 
 FILES
-- server.js: multiplayer server and route for the Stockfish engine assets
+- server.js: multiplayer server and route for Stockfish engine assets from node_modules/stockfish/bin
 - index.html: original player UI (unchanged)
 - Admin.html: AI Coach runs in a browser Worker
 - package.json: pinned Stockfish dependency and start script
@@ -26,7 +26,7 @@ URLS
 - Admin: /Admin.html
 
 TROUBLESHOOTING
-- If the engine reports a loading error, confirm these assets return HTTP 200 after deployment:
+- If the engine reports a loading error, after deploying the latest server.js, confirm these assets return HTTP 200 (not 404):
   /stockfish/stockfish-19-lite-single.js
   /stockfish/stockfish-19-lite-single.wasm
 - If you already have a package-lock.json, regenerate/commit it after adding the pinned dependency.

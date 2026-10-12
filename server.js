@@ -14,9 +14,19 @@ app.use(express.static(__dirname));
 
 // Serve Stockfish's small single-threaded browser engine. It runs in a Web Worker
 // on the Admin page, keeping CPU-heavy analysis away from the multiplayer server.
-app.use("/stockfish", express.static(path.join(__dirname, "node_modules", "stockfish"), {
+// Stockfish's published npm package puts the browser engine assets in /bin.
+// Serving the package root causes the engine URLs to return 404.
+const stockfishAssetDir = path.join(__dirname, "node_modules", "stockfish", "bin");
+app.use("/stockfish", express.static(stockfishAssetDir, {
     maxAge: "1d",
-    fallthrough: false
+    fallthrough: false,
+    setHeaders: function (res, filePath) {
+        if (filePath.endsWith(".wasm")) {
+            res.setHeader("Content-Type", "application/wasm");
+        } else if (filePath.endsWith(".js")) {
+            res.setHeader("Content-Type", "text/javascript; charset=utf-8");
+        }
+    }
 }));
 
 app.get("/", function (req, res) {
