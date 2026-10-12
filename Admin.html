@@ -560,7 +560,7 @@ h1 {
         </div>
 
         <div class="actions admin-tools">
-            <button class="btn primary" id="suggestMoveButton" disabled>✨ Suggest Best Move</button>
+            <button class="btn primary" id="suggestMoveButton" disabled>♟ Stockfish AI Coach</button>
             <button class="btn" id="clearSuggestionButton" disabled>✕ Clear Suggestion</button>
         </div>
         <div class="best-move-result" id="bestMoveResult" aria-live="polite"></div>
@@ -956,7 +956,7 @@ h1 {
 
         var suggestButton = document.getElementById("suggestMoveButton");
         if (suggestButton) {
-            suggestButton.disabled = !(snapshot.started && status.state === "playing");
+            suggestButton.disabled = !(snapshot.started && status.state === "playing" && role && snapshot.turn === role);
         }
         var clearButton = document.getElementById("clearSuggestionButton");
         if (clearButton) clearButton.disabled = !suggestedMove;
@@ -986,7 +986,7 @@ h1 {
             true
         );
 
-        socket.emit("joinGame");
+        socket.emit("joinGame", { admin: true });
     });
 
     socket.on("disconnect", function () {
@@ -1131,8 +1131,12 @@ h1 {
             showToast("Start a game before asking for a suggestion.");
             return;
         }
+        if (!role || snapshot.turn !== role) {
+            showToast("Suggestion is available only on your own turn.");
+            return;
+        }
         this.disabled = true;
-        this.textContent = "Analysing...";
+        this.textContent = "⚡ Stockfish analysing...";
         document.getElementById("bestMoveResult").classList.remove("show");
         socket.emit("suggestBestMove");
     });
@@ -1147,9 +1151,9 @@ h1 {
 
     socket.on("bestMoveResult", function (data) {
         var button = document.getElementById("suggestMoveButton");
-        button.textContent = "✨ Suggest Best Move";
+        button.textContent = "♟ Stockfish AI Coach";
         if (snapshot && snapshot.started && snapshot.status.state === "playing") {
-            button.disabled = false;
+            button.disabled = !(role && snapshot.turn === role);
         }
         if (!data || data.error) {
             showToast(data && data.error ? data.error : "No suggestion returned.");
@@ -1159,11 +1163,33 @@ h1 {
             showToast("Position changed during analysis. Please try again.");
             return;
         }
+        if (data.role !== role || data.turn !== role || snapshot.turn !== role) {
+            showToast("Suggestion rejected: it is not your colour's turn.");
+            return;
+        }
         suggestedMove = data.move;
         suggestionFen = data.fen;
         var result = document.getElementById("bestMoveResult");
-        result.textContent = "Suggested move: " + data.move.san + " (" +
-            data.move.from + " → " + data.move.to + "). This is a recommendation, not an automatic move.";
+        var detail = data.move.forcedMate
+            ? " CHECKMATE LINE FOUND" + (data.move.mateIn ? " (about " + data.move.mateIn + " move(s))" : "") + ". "
+            : data.move.avoidsMate
+                ? " Danger: the quick search found a likely forced mate against you. "
+                : " No forced mate was confirmed within the quick analysis window. ";
+        var stats = data.move.elapsedMs != null
+            ? " Analysis: " + data.move.elapsedMs + " ms, depth " + (data.move.depth || "—") + ". "
+            : "";
+        var lineText = data.move.pvSan && data.move.pvSan.length
+            ? " Line: " + data.move.pvSan.join(" → ") + ". "
+            : "";
+        var evaluationText = data.move.scoreType === "mate"
+            ? " Engine evaluation: mate in " + Math.abs(data.move.score) + ". "
+            : data.move.score != null
+                ? " Engine evaluation: " + (data.move.score >= 0 ? "+" : "") + (data.move.score / 100).toFixed(2) + ". "
+                : "";
+        result.textContent = "STOCKFISH AI COACH — " + (role === "w" ? "WHITE" : "BLACK") + ": " +
+            data.move.san + " (" + data.move.from + " → " + data.move.to + "). " +
+            (data.move.reason || "Play this move manually.") + " " + detail + stats + evaluationText + lineText +
+            "The highlighted move is a suggestion; play it yourself.";
         result.classList.add("show");
         renderBoard();
         updateStatus();

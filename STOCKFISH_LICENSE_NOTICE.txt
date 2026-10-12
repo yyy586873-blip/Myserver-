@@ -1,0 +1,10 @@
+Stockfish.js / Stockfish engine notice
+
+This project uses the Stockfish.js package (version range ^19.0.1), selecting its lite-single engine.
+Stockfish engine code is distributed under the GNU General Public License version 3 (GPL-3.0).
+
+Project source: https://github.com/nmrugg/stockfish.js/
+Official Stockfish source: https://github.com/official-stockfish/Stockfish
+License text and source are available from the repositories above. The npm dependency is installed during deployment; this project ZIP does not embed Stockfish engine binaries.
+
+If you redistribute a deployed bundle that includes Stockfish engine files, comply with GPL-3.0, including providing the corresponding source and license.
