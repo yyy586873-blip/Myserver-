@@ -634,10 +634,188 @@ h1 {
     var toastTimer = null;
     var suggestedMove = null;
     var suggestionFen = null;
+    var stockfishWorker = null;
+    var stockfishReady = false;
+    var stockfishReadyWaiters = [];
+    var stockfishAnalysis = null;
 
     var boardElement = document.getElementById("board");
     var overlay = document.getElementById("waitingOverlay");
     var promotionOverlay = document.getElementById("promotionOverlay");
+
+    function uciToSquarePair(token) {
+        var match = /^([a-h][1-8])([a-h][1-8])([qrbn])?$/.exec(token || "");
+        if (!match) return null;
+        return { from: match[1], to: match[2], promotion: match[3] || null };
+    }
+
+    function ensureStockfish() {
+        if (stockfishWorker) {
+            if (stockfishReady) return Promise.resolve();
+            return new Promise(function (resolve, reject) {
+                stockfishReadyWaiters.push({ resolve: resolve, reject: reject });
+            });
+        }
+
+        return new Promise(function (resolve, reject) {
+            var settled = false;
+            var readyTimer = setTimeout(function () {
+                if (settled) return;
+                settled = true;
+                reject(new Error("Stockfish engine load timed out. Check the latest deployment and try again."));
+                stopStockfishWorker();
+            }, 12000);
+
+            try {
+                stockfishWorker = new Worker("/stockfish/stockfish-19-lite-single.js");
+            } catch (error) {
+                clearTimeout(readyTimer);
+                reject(new Error("Could not start Stockfish in this browser: " + error.message));
+                return;
+            }
+
+            stockfishWorker.onerror = function () {
+                var error = new Error("Stockfish engine failed to load. Redeploy the latest files and check the server logs.");
+                if (!settled) {
+                    settled = true;
+                    clearTimeout(readyTimer);
+                    reject(error);
+                }
+                failActiveAnalysis(error);
+                stopStockfishWorker();
+            };
+
+            stockfishWorker.onmessage = function (event) {
+                var line = String(event.data || "").trim();
+                if (!line) return;
+                if (line === "uciok") {
+                    stockfishWorker.postMessage("isready");
+                    return;
+                }
+                if (line === "readyok") {
+                    stockfishReady = true;
+                    if (!settled) {
+                        settled = true;
+                        clearTimeout(readyTimer);
+                        resolve();
+                    }
+                    var waiters = stockfishReadyWaiters.slice();
+                    stockfishReadyWaiters = [];
+                    for (var wi = 0; wi < waiters.length; wi++) waiters[wi].resolve();
+                    return;
+                }
+                if (!stockfishAnalysis) return;
+                if (line.indexOf("info ") === 0) {
+                    var depthMatch = /\bdepth\s+(\d+)/.exec(line);
+                    var scoreMatch = /\bscore\s+(cp|mate)\s+(-?\d+)/.exec(line);
+                    var pvMatch = /\bpv\s+(.+)$/.exec(line);
+                    if (depthMatch) stockfishAnalysis.depth = parseInt(depthMatch[1], 10);
+                    if (scoreMatch) {
+                        stockfishAnalysis.scoreType = scoreMatch[1];
+                        stockfishAnalysis.score = parseInt(scoreMatch[2], 10);
+                    }
+                    if (pvMatch) stockfishAnalysis.pv = pvMatch[1].trim().split(/\s+/);
+                } else if (line.indexOf("bestmove ") === 0) {
+                    var token = line.split(/\s+/)[1];
+                    finishBrowserAnalysis(token);
+                }
+            };
+
+            stockfishWorker.postMessage("uci");
+            stockfishReadyWaiters.push({ resolve: resolve, reject: reject });
+        });
+    }
+
+    function stopStockfishWorker() {
+        if (stockfishWorker) {
+            try { stockfishWorker.terminate(); } catch (ignore) {}
+        }
+        stockfishWorker = null;
+        stockfishReady = false;
+    }
+
+    function failActiveAnalysis(error) {
+        if (!stockfishAnalysis) return;
+        var current = stockfishAnalysis;
+        stockfishAnalysis = null;
+        clearTimeout(current.timeout);
+        current.reject(error);
+    }
+
+    function finishBrowserAnalysis(token) {
+        if (!stockfishAnalysis) return;
+        var current = stockfishAnalysis;
+        stockfishAnalysis = null;
+        clearTimeout(current.timeout);
+        var parsed = uciToSquarePair(token);
+        if (!parsed) {
+            current.reject(new Error("Stockfish did not return a usable move. Please try again."));
+            return;
+        }
+        var elapsed = Date.now() - current.startedAt;
+        var pv = [];
+        var tokens = current.pv && current.pv.length ? current.pv : [token];
+        for (var i = 0; i < tokens.length && i < 8; i++) {
+            var pair = uciToSquarePair(tokens[i]);
+            if (!pair) break;
+            pv.push(pair.from + "→" + pair.to + (pair.promotion ? "=" + pair.promotion.toUpperCase() : ""));
+        }
+        current.resolve({
+            from: parsed.from,
+            to: parsed.to,
+            promotion: parsed.promotion,
+            uci: token,
+            score: current.score,
+            scoreType: current.scoreType || "cp",
+            depth: current.depth || 0,
+            elapsedMs: elapsed,
+            pv: pv,
+            forcedMate: current.scoreType === "mate" && current.score > 0,
+            avoidsMate: current.scoreType === "mate" && current.score < 0,
+            mateIn: current.scoreType === "mate" ? Math.abs(current.score) : null
+        });
+    }
+
+    function analyzePosition(fen) {
+        return ensureStockfish().then(function () {
+            return new Promise(function (resolve, reject) {
+                if (!stockfishWorker || !stockfishReady) {
+                    reject(new Error("Stockfish is not ready. Please try again."));
+                    return;
+                }
+                if (stockfishAnalysis) {
+                    reject(new Error("An analysis is already running. Please wait a moment."));
+                    return;
+                }
+                var analysis = {
+                    fen: fen,
+                    startedAt: Date.now(),
+                    depth: 0,
+                    score: 0,
+                    scoreType: "cp",
+                    pv: [],
+                    resolve: resolve,
+                    reject: reject,
+                    timeout: null
+                };
+                stockfishAnalysis = analysis;
+                analysis.timeout = setTimeout(function () {
+                    if (stockfishAnalysis !== analysis) return;
+                    stockfishAnalysis = null;
+                    try { stockfishWorker.postMessage("stop"); } catch (ignore) {}
+                    reject(new Error("Analysis took too long. Please tap Analyze again."));
+                }, 6500);
+                try {
+                    stockfishWorker.postMessage("position fen " + fen);
+                    stockfishWorker.postMessage("go movetime 1100");
+                } catch (error) {
+                    clearTimeout(analysis.timeout);
+                    stockfishAnalysis = null;
+                    reject(error);
+                }
+            });
+        });
+    }
 
     function showToast(message) {
         var toast = document.getElementById("toast");
@@ -1138,7 +1316,43 @@ h1 {
         this.disabled = true;
         this.textContent = "⚡ Stockfish analysing...";
         document.getElementById("bestMoveResult").classList.remove("show");
-        socket.emit("suggestBestMove");
+        var fenAtStart = snapshot.fen;
+        analyzePosition(fenAtStart).then(function (move) {
+            if (!snapshot || snapshot.fen !== fenAtStart || snapshot.turn !== role) {
+                showToast("Position changed during analysis. Please try again.");
+                return;
+            }
+            suggestedMove = move;
+            suggestionFen = fenAtStart;
+            var result = document.getElementById("bestMoveResult");
+            var detail = move.forcedMate
+                ? " CHECKMATE LINE FOUND (about " + move.mateIn + " move(s)). "
+                : move.avoidsMate
+                    ? " Warning: the engine sees a likely forced mate against you. "
+                    : " No forced mate was confirmed in this quick search. ";
+            var stats = " Analysis: " + move.elapsedMs + " ms, depth " + (move.depth || "—") + ". ";
+            var evalText = move.scoreType === "mate"
+                ? " Engine evaluation: mate in " + Math.abs(move.score) + ". "
+                : " Engine evaluation: " + (move.score >= 0 ? "+" : "") + (move.score / 100).toFixed(2) + ". ";
+            var lineText = move.pv && move.pv.length ? " Line: " + move.pv.join("  |  ") + ". " : "";
+            result.textContent = "STOCKFISH AI COACH — " + (role === "w" ? "WHITE" : "BLACK") + ": " +
+                move.uci + " (" + move.from + " → " + move.to + "). " +
+                (move.forcedMate ? "Stockfish found a mate line." : "Best move found by Stockfish.") +
+                detail + stats + evalText + lineText + " The highlighted move is a suggestion; play it yourself.";
+            result.classList.add("show");
+            renderBoard();
+            updateStatus();
+        }).catch(function (error) {
+            var message = error && error.message ? error.message : "Stockfish could not analyse this position.";
+            showToast(message);
+            var result = document.getElementById("bestMoveResult");
+            result.textContent = "STOCKFISH AI COACH ERROR: " + message;
+            result.classList.add("show");
+        }).then(function () {
+            var button = document.getElementById("suggestMoveButton");
+            button.textContent = "♟ Stockfish AI Coach";
+            button.disabled = !(snapshot && snapshot.started && snapshot.status.state === "playing" && role && snapshot.turn === role);
+        });
     });
 
     document.getElementById("clearSuggestionButton").addEventListener("click", function () {
@@ -1149,50 +1363,9 @@ h1 {
         updateStatus();
     });
 
-    socket.on("bestMoveResult", function (data) {
-        var button = document.getElementById("suggestMoveButton");
-        button.textContent = "♟ Stockfish AI Coach";
-        if (snapshot && snapshot.started && snapshot.status.state === "playing") {
-            button.disabled = !(role && snapshot.turn === role);
-        }
-        if (!data || data.error) {
-            showToast(data && data.error ? data.error : "No suggestion returned.");
-            return;
-        }
-        if (!snapshot || data.fen !== snapshot.fen) {
-            showToast("Position changed during analysis. Please try again.");
-            return;
-        }
-        if (data.role !== role || data.turn !== role || snapshot.turn !== role) {
-            showToast("Suggestion rejected: it is not your colour's turn.");
-            return;
-        }
-        suggestedMove = data.move;
-        suggestionFen = data.fen;
-        var result = document.getElementById("bestMoveResult");
-        var detail = data.move.forcedMate
-            ? " CHECKMATE LINE FOUND" + (data.move.mateIn ? " (about " + data.move.mateIn + " move(s))" : "") + ". "
-            : data.move.avoidsMate
-                ? " Danger: the quick search found a likely forced mate against you. "
-                : " No forced mate was confirmed within the quick analysis window. ";
-        var stats = data.move.elapsedMs != null
-            ? " Analysis: " + data.move.elapsedMs + " ms, depth " + (data.move.depth || "—") + ". "
-            : "";
-        var lineText = data.move.pvSan && data.move.pvSan.length
-            ? " Line: " + data.move.pvSan.join(" → ") + ". "
-            : "";
-        var evaluationText = data.move.scoreType === "mate"
-            ? " Engine evaluation: mate in " + Math.abs(data.move.score) + ". "
-            : data.move.score != null
-                ? " Engine evaluation: " + (data.move.score >= 0 ? "+" : "") + (data.move.score / 100).toFixed(2) + ". "
-                : "";
-        result.textContent = "STOCKFISH AI COACH — " + (role === "w" ? "WHITE" : "BLACK") + ": " +
-            data.move.san + " (" + data.move.from + " → " + data.move.to + "). " +
-            (data.move.reason || "Play this move manually.") + " " + detail + stats + evaluationText + lineText +
-            "The highlighted move is a suggestion; play it yourself.";
-        result.classList.add("show");
-        renderBoard();
-        updateStatus();
+
+    window.addEventListener("beforeunload", function () {
+        stopStockfishWorker();
     });
 
     renderBoard();

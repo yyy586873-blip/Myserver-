@@ -1,22 +1,36 @@
-CHESS ARENA + STOCKFISH AI COACH
+CHESS ARENA + STABLE STOCKFISH AI COACH
 
-Files in this update:
-- server.js: multiplayer server + Stockfish Lite Single engine integration
-- index.html: original normal game UI
-- Admin.html: same chess UI, Stockfish AI Coach button, suggested move highlight and principal variation
-- package.json: dependencies/start command for Render
-- STOCKFISH_LICENSE_NOTICE.txt: Stockfish license/source notice
+WHAT CHANGED
+- Stockfish now runs inside a browser Web Worker on Admin.html, not inside the Node.js multiplayer server.
+- This keeps chess analysis from blocking the server event loop and reduces the chance of a reconnect during analysis.
+- The engine is reused after first load. Analysis targets about 1.1 seconds, with a timeout and visible error feedback.
+- The Admin board highlights the recommended from/to squares and shows the engine score, depth, and principal variation.
+- The suggested move is not played automatically.
 
-DEPLOY:
-1. Copy all files to the root of your existing GitHub repository.
-2. Replace server.js, index.html, and Admin.html; add package.json if the repository does not already have one.
-   If you already have a package.json, merge the dependencies and start script rather than deleting unrelated project settings.
-3. Commit and push to GitHub, then wait for Render to deploy.
-4. Normal page: /
-   Admin page: /Admin.html
+FILES
+- server.js: multiplayer server and route for the Stockfish engine assets
+- index.html: original player UI (unchanged)
+- Admin.html: AI Coach runs in a browser Worker
+- package.json: pinned Stockfish dependency and start script
+- STOCKFISH_LICENSE_NOTICE.txt: license/source notice
 
-The server installs the Stockfish npm package and selects the lite-single engine. First startup may take a little longer while the engine initializes. Analysis runs for about 1.4 seconds after startup and returns the best move Stockfish found, its principal variation, depth, evaluation and mate score when detected.
+DEPLOY
+1. Copy these files to the root of your existing GitHub repository.
+2. Replace server.js and Admin.html; keep index.html unchanged. Add package.json only if the repo does not already have one.
+   If package.json already exists, merge the stockfish dependency and preserve existing settings/scripts.
+3. Commit and push to GitHub, then wait for Render to finish deploying. Render must run npm install (or npm ci if a lockfile is used) so node_modules/stockfish contains the engine files.
+4. Open /Admin.html and start a two-player game. The first analysis may take longer because the browser loads/initializes the engine.
 
-Stockfish is strong, but no engine can guarantee a win in every position. The board highlights the recommended move; it does not play the move automatically.
+URLS
+- Player: /
+- Admin: /Admin.html
 
-Note: the current Admin flag is not password-based authentication. Do not treat the Admin URL/flag as a secure access control.
+TROUBLESHOOTING
+- If the engine reports a loading error, confirm these assets return HTTP 200 after deployment:
+  /stockfish/stockfish-19-lite-single.js
+  /stockfish/stockfish-19-lite-single.wasm
+- If you already have a package-lock.json, regenerate/commit it after adding the pinned dependency.
+- The Admin flag is not password-based authentication; do not treat the Admin URL/flag as secure access control.
+
+TEST NOTE
+JavaScript syntax was checked locally. A live Render/browser runtime test was not possible in this environment, so verify the two engine asset URLs after deploying.
