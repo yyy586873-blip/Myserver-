@@ -34,3 +34,8 @@ TROUBLESHOOTING
 
 TEST NOTE
 JavaScript syntax was checked locally. A live Render/browser runtime test was not possible in this environment, so verify the two engine asset URLs after deploying.
+
+
+CONSOLE SETTINGS
+----------------
+Open /console.html to view live room status and move history. To unlock controls, add a CONSOLE_KEY environment variable in Render and enter the same value in the console. Use a private, hard-to-guess value. The console can switch between the original Classic UI and the optional Modern UI, toggle move animation (OFF by default), and undo/redo moves for both players.

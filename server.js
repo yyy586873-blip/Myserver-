@@ -43,6 +43,28 @@ const players = {
 let started = false;
 let lastMove = null;
 let adminSocketId = null;
+let consoleSocketId = null;
+let redoStack = [];
+let uiSettings = { boardStyle: "classic", moveAnimation: false };
+
+function isConsole(socket) {
+    return !!consoleSocketId && socket.id === consoleSocketId;
+}
+
+function emitSettings() {
+    io.emit("uiSettings", uiSettings);
+}
+
+function updateLastMoveFromHistory() {
+    const history = chess.history({ verbose: true });
+    const move = history.length ? history[history.length - 1] : null;
+    lastMove = move ? {
+        from: move.from,
+        to: move.to,
+        san: move.san,
+        color: move.color
+    } : null;
+}
 
 function getRole(socketId) {
     if (players.w === socketId) return "w";
@@ -122,7 +144,10 @@ function getSnapshot() {
             white: !!players.w,
             black: !!players.b
         },
-        status: getGameStatus()
+        status: getGameStatus(),
+        history: chess.history(),
+        canUndo: chess.history().length > 0,
+        canRedo: redoStack.length > 0
     };
 }
 
@@ -140,6 +165,72 @@ function startIfReady() {
 
 io.on("connection", function (socket) {
     console.log("Connected:", socket.id);
+    socket.emit("uiSettings", uiSettings);
+    socket.emit("gameState", getSnapshot());
+
+    socket.on("consoleAuth", function (data) {
+        const configuredKey = process.env.CONSOLE_KEY;
+        if (!configuredKey) {
+            socket.emit("consoleAuthResult", {
+                ok: false,
+                message: "Console controls are locked. Set CONSOLE_KEY in Render environment variables."
+            });
+            return;
+        }
+        if (!data || typeof data.key !== "string" || data.key !== configuredKey) {
+            socket.emit("consoleAuthResult", { ok: false, message: "Invalid console key." });
+            return;
+        }
+        consoleSocketId = socket.id;
+        socket.emit("consoleAuthResult", { ok: true, message: "Console controls unlocked." });
+        socket.emit("uiSettings", uiSettings);
+        socket.emit("gameState", getSnapshot());
+    });
+
+    socket.on("setUiSettings", function (data) {
+        if (!isConsole(socket) || !data) return;
+        uiSettings = {
+            boardStyle: data.boardStyle === "modern" ? "modern" : "classic",
+            moveAnimation: data.moveAnimation === true
+        };
+        emitSettings();
+    });
+
+    socket.on("consoleUndo", function () {
+        if (!isConsole(socket)) return;
+        const move = chess.undo();
+        if (!move) {
+            socket.emit("consoleActionResult", { ok: false, message: "There are no moves to undo." });
+            return;
+        }
+        redoStack.push({ from: move.from, to: move.to, promotion: move.promotion || "q" });
+        updateLastMoveFromHistory();
+        sendState();
+        socket.emit("consoleActionResult", { ok: true, message: "Last move undone." });
+    });
+
+    socket.on("consoleRedo", function () {
+        if (!isConsole(socket)) return;
+        const move = redoStack.pop();
+        if (!move) {
+            socket.emit("consoleActionResult", { ok: false, message: "There are no moves to redo." });
+            return;
+        }
+        try {
+            const replayed = chess.move(move);
+            if (!replayed) {
+                redoStack.push(move);
+                socket.emit("consoleActionResult", { ok: false, message: "This move cannot be replayed in the current position." });
+                return;
+            }
+            updateLastMoveFromHistory();
+            sendState();
+            socket.emit("consoleActionResult", { ok: true, message: "Move restored." });
+        } catch (error) {
+            redoStack.push(move);
+            socket.emit("consoleActionResult", { ok: false, message: "Redo failed for this position." });
+        }
+    });
 
     socket.on("joinGame", function (joinData) {
         let role = getRole(socket.id);
@@ -277,6 +368,7 @@ io.on("connection", function (socket) {
                 san: move.san,
                 color: move.color
             };
+            redoStack = [];
 
             console.log(
                 role === "w" ? "White:" : "Black:",
@@ -299,6 +391,7 @@ io.on("connection", function (socket) {
 
         chess.reset();
         lastMove = null;
+        redoStack = [];
 
         sendState();
     });
@@ -306,6 +399,7 @@ io.on("connection", function (socket) {
     socket.on("disconnect", function () {
         const role = getRole(socket.id);
         if (socket.id === adminSocketId) adminSocketId = null;
+        if (socket.id === consoleSocketId) consoleSocketId = null;
 
         if (role) {
             players[role] = null;

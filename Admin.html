@@ -474,6 +474,31 @@ h1 {
 .best-move-result.show { display:block; }
 .square.suggest-from { box-shadow:inset 0 0 0 4px #56a6ff; }
 .square.suggest-to { box-shadow:inset 0 0 0 4px #ffd35b; }
+
+
+/* Optional console-controlled UI theme. Classic is the unchanged default. */
+body.ui-modern {
+    --bg: #0b1020;
+    --panel: #151d31;
+    --border: #344665;
+    --text: #f2f6ff;
+    --muted: #9eafd0;
+    --accent: #65d9cf;
+    --light-square: #dce8f7;
+    --dark-square: #6683a8;
+}
+body.ui-modern .panel { background: linear-gradient(145deg, rgba(25,37,61,.98), rgba(17,26,45,.98)); border-color: #344968; box-shadow: 0 8px 24px rgba(0,0,0,.16); }
+body.ui-modern .board-wrap { background: linear-gradient(145deg, #1a2943, #101a2d); border-color: #415b82; padding: 11px; }
+body.ui-modern .board { border-radius: 10px; box-shadow: 0 8px 22px rgba(0,0,0,.25); }
+body.ui-modern .square.light { background: #dce8f7; }
+body.ui-modern .square.dark { background: #6683a8; }
+body.ui-modern .square.selected { background: #b5e3a7; }
+body.ui-modern .logo { background: linear-gradient(145deg, #2e5475, #27375d); }
+body.ui-modern .btn.primary { background: linear-gradient(135deg, #4e8cbd, #3b6eaa); }
+.piece.move-animate { animation: chessPieceTravel 230ms cubic-bezier(.2,.75,.25,1) both; }
+@keyframes chessPieceTravel { from { transform: translate(var(--move-x), var(--move-y)) scale(.94); } to { transform: translate(0,0) scale(1); } }
+@media (prefers-reduced-motion: reduce) { .piece.move-animate { animation-duration: 1ms; } }
+
 </style>
 </head>
 
@@ -627,6 +652,8 @@ h1 {
 
     var role = null;
     var snapshot = null;
+    var moveAnimationEnabled = false;
+    var animationPositionFen = null;
     var selected = null;
     var legalMoves = [];
     var pendingPromotion = null;
@@ -870,6 +897,10 @@ h1 {
             return;
         }
 
+        var shouldAnimateMove = !!(
+            moveAnimationEnabled && snapshot.lastMove && snapshot.fen &&
+            animationPositionFen !== null && animationPositionFen !== snapshot.fen
+        );
         boardElement.innerHTML = "";
 
         var rowStart = flipped ? 7 : 0;
@@ -931,6 +962,18 @@ h1 {
                         (piece.color === "w" ? "white" : "black");
 
                     span.textContent = symbols[piece.color + piece.type];
+                    if (shouldAnimateMove && snapshot.lastMove.to === name) {
+                        var fromFile = files.indexOf(snapshot.lastMove.from.charAt(0));
+                        var fromRank = 8 - parseInt(snapshot.lastMove.from.charAt(1), 10);
+                        var squareSize = boardElement.clientWidth / 8;
+                        var sourceRow = flipped ? 7 - fromRank : fromRank;
+                        var sourceCol = flipped ? 7 - fromFile : fromFile;
+                        var targetRow = flipped ? 7 - r : r;
+                        var targetCol = flipped ? 7 - c : c;
+                        span.classList.add("move-animate");
+                        span.style.setProperty("--move-x", ((sourceCol - targetCol) * squareSize) + "px");
+                        span.style.setProperty("--move-y", ((sourceRow - targetRow) * squareSize) + "px");
+                    }
 
                     button.appendChild(span);
                 }
@@ -971,6 +1014,7 @@ h1 {
 
             document.getElementById("ranks").appendChild(rank);
         }
+        animationPositionFen = snapshot.fen || null;
     }
 
     function onSquareClick(event) {
@@ -1151,6 +1195,13 @@ h1 {
                 "Tap a piece to see legal moves.";
         }
     }
+
+    socket.on("uiSettings", function (settings) {
+        settings = settings || {};
+        document.body.classList.toggle("ui-modern", settings.boardStyle === "modern");
+        moveAnimationEnabled = settings.moveAnimation === true;
+        if (snapshot) renderBoard();
+    });
 
     socket.on("connect", function () {
         document.getElementById("connectionText").textContent =
