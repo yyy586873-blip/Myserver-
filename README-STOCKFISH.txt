@@ -56,3 +56,6 @@ UI POLISH UPDATE (2026-10-14)
 - Minimal Paper moves Flip Board into the header area; Monochrome places it beside its turn indicator under the board.
 - Default movement preset is ON: smooth glide with spin layered into the path, plus a fading captured-piece effect and distinct arrival animations by capturing piece type.
 - The animation preset is fixed; Console keeps a master on/off switch.
+
+
+UI style options (final polish): Classic Original (default), Modern Glass, and Red & White Split. Minimal Paper has been removed. Red & White Split keeps the side-rail layout while using the Classic board-square palette, Classic piece rendering, and Classic legal-move dots. The permanent Spin + Smooth Glide + Capture FX animation bundle remains enabled by default and can be toggled off in Console.

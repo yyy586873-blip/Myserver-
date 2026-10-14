@@ -191,7 +191,7 @@ io.on("connection", function (socket) {
 
     socket.on("setUiSettings", function (data) {
         if (!isConsole(socket) || !data) return;
-        const allowedStyles = ["classic", "modern", "minimal", "mono"];
+        const allowedStyles = ["classic", "modern", "mono"];
         const allowedAnimations = ["spin"];
         uiSettings = {
             boardStyle: allowedStyles.includes(data.boardStyle) ? data.boardStyle : "classic",
