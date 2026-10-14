@@ -489,27 +489,27 @@ body.ui-modern .square.light { background:#dce8f7; } body.ui-modern .square.dark
 body.ui-modern .logo { background:linear-gradient(145deg,#3c6c8c,#263d65); box-shadow:0 5px 18px #0004; }
 body.ui-modern .avatar { background:linear-gradient(145deg,#2c405f,#1c2a43); }
 body.ui-modern .btn { border-radius:14px; background:#1b2b43; border-color:#3a5274; } body.ui-modern .btn.primary { background:linear-gradient(135deg,#4c9eaa,#4274ac); border-color:#5aaeb6; color:#fff; }
-/* Monochrome Split refined into a red-and-white information layout. */
-body.ui-mono { color-scheme:dark; --bg:#160b0d; --panel:#fff; --border:#c92836; --text:#191919; --muted:#5d5555; --light-square:#e8e2d5; --dark-square:#78917d; background:linear-gradient(145deg,#18090b,#2a0d12 58%,#110809); }
+/* Monochrome Split: black interface with a white-and-red chessboard. */
+body.ui-mono { color-scheme:dark; --bg:#08090b; --panel:#15171b; --border:#383b42; --text:#f2f2f2; --muted:#a4a8b0; --light-square:#ffffff; --dark-square:#c92836; background:linear-gradient(145deg,#050505,#15171b 58%,#080808); }
 body.ui-mono .app { max-width:1120px; display:grid; grid-template-columns:260px minmax(0,1fr); grid-template-areas:"head head" "white board" "status board" "black board"; gap:12px 22px; align-items:start; padding-top:16px; }
-body.ui-mono .header { grid-area:head; border-bottom:1px solid #a92130; padding-bottom:13px; margin-bottom:2px; }
+body.ui-mono .header { grid-area:head; border-bottom:1px solid #3a3d44; padding-bottom:13px; margin-bottom:2px; }
 body.ui-mono .white-player { grid-area:white; margin:0; } body.ui-mono .black-player { grid-area:black; margin:0 !important; }
 body.ui-mono .board-wrap { grid-area:board; width:100%; min-width:0; align-self:start; background:#fff; border:2px solid #c92836; border-radius:8px; padding:10px; box-shadow:0 14px 34px #0008; }
 body.ui-mono .board { border-radius:2px; border:1px solid #c6bdbd; }
-/* Keep the familiar Classic board squares, pieces, legal dots and capture rings. */
-body.ui-mono .square.light { background:#e8e2d5; } body.ui-mono .square.dark { background:#78917d; }
-body.ui-mono .square.selected { background:#b7ca91; } body.ui-mono .square.last-move { box-shadow:inset 0 0 0 100px #d5b55b70; }
+/* Red-and-white board squares; piece rendering and legal-move dots remain Classic. */
+body.ui-mono .square.light { background:#ffffff; } body.ui-mono .square.dark { background:#c92836; }
+body.ui-mono .square.selected { background:#ffb5bd; } body.ui-mono .square.last-move { box-shadow:inset 0 0 0 100px #e7b94d70; }
 body.ui-mono .status-panel { grid-area:status; margin:0; }
-body.ui-mono .panel { color:#191919; background:#fff; border:1px solid #d43b48; border-radius:10px; box-shadow:0 5px 15px #0002; }
-body.ui-mono .panel h2,body.ui-mono .panel .player-name { color:#8f1724; }
-body.ui-mono .logo,body.ui-mono .avatar,body.ui-mono .status-icon { color:#fff; background:#b91f30; border:1px solid #e66a75; border-radius:8px; filter:none; }
-body.ui-mono .online,body.ui-mono .turn-tag { background:#fff; color:#8f1724; border:1px solid #d43b48; border-radius:18px; }
-body.ui-mono .turn-tag.active { background:#b91f30; color:#fff; border-color:#b91f30; }
-body.ui-mono .btn,body.ui-mono .btn.primary { background:#fff; color:#9e1726; border:1px solid #c92836; border-radius:8px; font-weight:750; }
-body.ui-mono .btn.primary { background:#b91f30; color:#fff; border-color:#b91f30; }
-body.ui-mono .btn:disabled { background:#f2eeee; color:#9b8b8d; border-color:#dfc6c9; }
+body.ui-mono .panel { color:#f2f2f2; background:linear-gradient(145deg,#191b20,#101114); border:1px solid #393c43; border-radius:10px; box-shadow:0 8px 22px #0008; }
+body.ui-mono .panel h2,body.ui-mono .panel .player-name { color:#f2f2f2; }
+body.ui-mono .logo,body.ui-mono .avatar,body.ui-mono .status-icon { color:#fff; background:#25272d; border:1px solid #555962; border-radius:8px; filter:none; }
+body.ui-mono .online,body.ui-mono .turn-tag { background:#202227; color:#f2f2f2; border:1px solid #454851; border-radius:18px; }
+body.ui-mono .turn-tag.active { background:#c92836; color:#fff; border-color:#e34a58; }
+body.ui-mono .btn,body.ui-mono .btn.primary { background:#202227; color:#f2f2f2; border:1px solid #454851; border-radius:8px; font-weight:750; }
+body.ui-mono .btn.primary { background:#c92836; color:#fff; border-color:#e34a58; }
+body.ui-mono .btn:disabled { background:#17181c; color:#777b84; border-color:#303239; }
 body.ui-mono .board-mono-tools { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:10px; }
-body.ui-mono .board-mono-tools .mono-indicator { color:#8f1724; border:1px solid #d43b48; padding:10px 12px; font:700 10px ui-monospace,monospace; letter-spacing:1.2px; flex:1; text-align:center; background:#fff; border-radius:8px; }
+body.ui-mono .board-mono-tools .mono-indicator { color:#f2f2f2; border:1px solid #454851; padding:10px 12px; font:700 10px ui-monospace,monospace; letter-spacing:1.2px; flex:1; text-align:center; background:#17181c; border-radius:8px; }
 body.ui-mono #flipButton { min-width:118px; }
 /* Permanent movement preset: smooth travel with spin layered into the path. */
 .piece.move-animate { animation:chessPieceSpinGlide 660ms cubic-bezier(.22,.78,.22,1) both; will-change:transform,opacity; }

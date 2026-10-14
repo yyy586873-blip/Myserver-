@@ -58,4 +58,10 @@ UI POLISH UPDATE (2026-10-14)
 - The animation preset is fixed; Console keeps a master on/off switch.
 
 
-UI style options (final polish): Classic Original (default), Modern Glass, and Red & White Split. Minimal Paper has been removed. Red & White Split keeps the side-rail layout while using the Classic board-square palette, Classic piece rendering, and Classic legal-move dots. The permanent Spin + Smooth Glide + Capture FX animation bundle remains enabled by default and can be toggled off in Console.
+UI style options (final polish): Classic Original (default), Modern Glass, and Monochrome Split. Minimal Paper has been removed. Monochrome Split keeps the side-rail layout and uses a black/dark interface with a white-and-red chessboard, while retaining Classic piece rendering and Classic legal-move dots. The permanent Spin + Smooth Glide + Capture FX animation bundle remains enabled by default and can be toggled off in Console.
+
+
+MONOCHROME SPLIT UPDATE (2026-10-14)
+- Information panels and controls use a black/dark theme.
+- Chessboard squares use white and red; Classic piece appearance and legal-move dots are retained.
+- Existing split layout, board tools, and animation behavior remain unchanged.
