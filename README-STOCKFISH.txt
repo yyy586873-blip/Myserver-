@@ -39,3 +39,11 @@ JavaScript syntax was checked locally. A live Render/browser runtime test was no
 CONSOLE SETTINGS
 ----------------
 Open /console.html to view live room status and move history. To unlock controls, add a CONSOLE_KEY environment variable in Render and enter the same value in the console. Use a private, hard-to-guess value. The console can switch among five complete UI layouts: Classic (original/default), Modern Glass, Arena Side Rail, Compact, and Minimal Paper. It can also choose Glide, Bounce, Fade, Spin, or Arc piece movement effects. Piece animation remains OFF by default. Undo/redo controls and Stockfish AI Coach remain included. Settings reset to Classic + animation OFF + Glide after a server restart.
+
+
+DYNAMIC UI / ANIMATION UPDATE
+- Console UI choices: Classic (original/default), Modern Glass, Minimal Paper, and Monochrome Split (high-contrast black/white with a different layout).
+- Movement animation defaults OFF. The selected preset defaults to Smooth Glide; Spin is the alternative.
+- When movement animation is enabled, captures have piece-specific effects: Pawn pop, Rook impact, Bishop shimmer, Knight jump, King pulse, and Queen fade/bubble arrival.
+- These settings are broadcast to both index.html and Admin.html. The console controls still require the Render CONSOLE_KEY environment variable.
+- UI settings are stored in server memory and reset after a server restart.

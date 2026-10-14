@@ -476,61 +476,61 @@ h1 {
 .square.suggest-to { box-shadow:inset 0 0 0 4px #ffd35b; }
 
 
-/* Console-controlled complete layouts. Classic remains the original default. */
-body.ui-modern {
-    --bg: #0b1020; --panel: #151d31; --border: #344665; --text: #f2f6ff;
-    --muted: #9eafd0; --accent: #65d9cf; --light-square: #dce8f7; --dark-square: #6683a8;
-}
-body.ui-modern .panel { background: linear-gradient(145deg, rgba(25,37,61,.98), rgba(17,26,45,.98)); border-color: #344968; box-shadow: 0 8px 24px rgba(0,0,0,.16); }
-body.ui-modern .board-wrap { background: linear-gradient(145deg, #1a2943, #101a2d); border-color: #415b82; padding: 11px; }
-body.ui-modern .board { border-radius: 10px; box-shadow: 0 8px 22px rgba(0,0,0,.25); }
-body.ui-modern .square.light { background: #dce8f7; } body.ui-modern .square.dark { background: #6683a8; }
-body.ui-modern .square.selected { background: #b5e3a7; }
-body.ui-modern .logo { background: linear-gradient(145deg, #2e5475, #27375d); }
-body.ui-modern .btn.primary { background: linear-gradient(135deg, #4e8cbd, #3b6eaa); }
-
-/* Arena: wide desktop board with players and controls in a right-hand rail. */
-body.ui-arena .app { max-width: 1120px; display: grid; grid-template-columns: minmax(0,1fr) minmax(280px,340px); grid-template-areas: "head head" "board white" "board black" "board status"; gap: 12px 20px; align-items: start; }
-body.ui-arena .header { grid-area: head; margin-bottom: 4px; }
-body.ui-arena .app > .player:first-of-type { grid-area: white; margin: 0; }
-body.ui-arena .board-wrap { grid-area: board; align-self: center; width: 100%; }
-body.ui-arena .app > .player[style] { grid-area: black; margin: 0 !important; }
-body.ui-arena .app > .panel:last-of-type { grid-area: status; margin: 0; }
-body.ui-arena .panel { border-radius: 12px; }
-
-/* Compact: denser controls and smaller margins, useful on phones. */
-body.ui-compact .app { max-width: 540px; padding: 9px 8px 16px; }
-body.ui-compact .header { margin-bottom: 9px; }
-body.ui-compact .panel { padding: 9px; border-radius: 11px; margin-bottom: 8px; }
-body.ui-compact .board-wrap { padding: 5px; border-radius: 8px; }
-body.ui-compact .avatar { width: 32px; height: 32px; font-size: 21px; }
-body.ui-compact h1 { font-size: 18px; }
-body.ui-compact .app > .player[style] { margin-top: 8px !important; }
-body.ui-compact .btn { padding: 10px 9px; }
-
-/* Minimal: light paper-like table, flatter cards, centered chessboard. */
-body.ui-minimal { --bg:#e9edf2; --panel:#ffffff; --border:#cbd3de; --text:#202b3a; --muted:#657184; --light-square:#f0eee5; --dark-square:#8da39a; }
-body.ui-minimal { background: linear-gradient(160deg,#f6f8fb,#dfe5ec); }
-body.ui-minimal .panel { background:#fff; border-color:#d0d7e1; border-radius:8px; box-shadow:0 3px 12px rgba(30,45,65,.07); }
-body.ui-minimal .board-wrap { background:#dce2e9; border-color:#c0cad5; border-radius:7px; }
-body.ui-minimal .board { border-radius:2px; }
-body.ui-minimal .online, body.ui-minimal .turn-tag { background:#eef2f6; color:#354155; border-color:#cbd3de; }
-body.ui-minimal .avatar { background:#e8edf3; }
-body.ui-minimal .btn { color:#263246; background:#edf1f5; border-color:#c8d0dc; }
-body.ui-minimal .btn.primary { color:#fff; background:#315f9c; }
-
-/* All movement animations are optional and disabled by default. */
-.piece.move-animate { animation: chessPieceTravel 230ms cubic-bezier(.2,.75,.25,1) both; }
-@keyframes chessPieceTravel { from { transform: translate(var(--move-x), var(--move-y)) scale(.94); } to { transform: translate(0,0) scale(1); } }
-body.anim-bounce .piece.move-animate { animation-name: chessPieceBounce; animation-duration: 420ms; }
-@keyframes chessPieceBounce { 0% { transform:translate(var(--move-x),var(--move-y)) scale(.8); } 65% { transform:translate(0,-9px) scale(1.06); } 100% { transform:translate(0,0) scale(1); } }
-body.anim-fade .piece.move-animate { animation-name: chessPieceFade; animation-duration:300ms; }
-@keyframes chessPieceFade { from { opacity:.05; transform:translate(var(--move-x),var(--move-y)) scale(.72); } to { opacity:1; transform:translate(0,0) scale(1); } }
-body.anim-spin .piece.move-animate { animation-name: chessPieceSpin; animation-duration:360ms; }
-@keyframes chessPieceSpin { from { transform:translate(var(--move-x),var(--move-y)) rotate(-150deg) scale(.65); } to { transform:translate(0,0) rotate(0) scale(1); } }
-body.anim-arc .piece.move-animate { animation-name: chessPieceArc; animation-duration:380ms; }
-@keyframes chessPieceArc { 0% { transform:translate(var(--move-x),var(--move-y)) scale(.9); } 50% { transform:translate(calc(var(--move-x) * .5),calc(var(--move-y) * .5 - 24px)) scale(1.08); } 100% { transform:translate(0,0) scale(1); } }
-@media (max-width: 760px) { body.ui-arena .app { display:block; max-width:680px; padding:12px 10px 22px; } body.ui-arena .header { margin-bottom:12px; } body.ui-arena .board-wrap, body.ui-arena .app > .player:first-of-type, body.ui-arena .app > .player[style], body.ui-arena .app > .panel:last-of-type { margin-bottom:10px; } }
+/* Console-controlled layouts. Classic remains untouched and is the default. */
+body.ui-modern { --bg:#080d18; --panel:#131d30; --border:#304766; --text:#f2f7ff; --muted:#9eb1d1; --accent:#7ce0d5; --light-square:#e3edf9; --dark-square:#5d7da5; }
+body.ui-modern { background:radial-gradient(ellipse at 15% 0%,#203b5b 0%,transparent 42%),linear-gradient(145deg,#080d18,#101b2d 65%,#0b1422); }
+body.ui-modern .app { max-width:760px; }
+body.ui-modern .panel { background:linear-gradient(145deg,rgba(26,42,66,.92),rgba(14,24,42,.96)); border-color:#344d70; border-radius:22px; box-shadow:0 12px 30px #0003,inset 0 1px #ffffff0c; backdrop-filter:blur(14px); }
+body.ui-modern .online,body.ui-modern .turn-tag { background:#1b2b43; border:1px solid #3b5578; }
+body.ui-modern .board-wrap { background:linear-gradient(145deg,#203552,#101b2e); border:1px solid #456287; padding:12px; border-radius:20px; box-shadow:0 18px 42px #0005; }
+body.ui-modern .board { border-radius:12px; box-shadow:0 6px 24px #0005; }
+body.ui-modern .square.light { background:#dce8f7; } body.ui-modern .square.dark { background:#617fa5; } body.ui-modern .square.selected { background:#b8e4b0; }
+body.ui-modern .logo { background:linear-gradient(145deg,#3c6c8c,#263d65); box-shadow:0 5px 18px #0004; }
+body.ui-modern .avatar { background:linear-gradient(145deg,#2c405f,#1c2a43); }
+body.ui-modern .btn { border-radius:14px; background:#1b2b43; border-color:#3a5274; } body.ui-modern .btn.primary { background:linear-gradient(135deg,#4c9eaa,#4274ac); border-color:#5aaeb6; color:#fff; }
+/* Minimal Paper: brighter editorial layout, flatter cards and restrained controls. */
+body.ui-minimal { --bg:#f2f4f7; --panel:#fff; --border:#d3d9e2; --text:#202a37; --muted:#687487; --light-square:#f6f4ed; --dark-square:#9eafa6; color-scheme:light; background:#f2f4f7; }
+body.ui-minimal .app { max-width:620px; padding-top:16px; } body.ui-minimal .header { padding:0 2px 13px; border-bottom:2px solid #d9dfe7; }
+body.ui-minimal .panel { background:#fff; border:1px solid #d7dde5; border-radius:8px; box-shadow:0 2px 7px #1b2b3b0a; }
+body.ui-minimal .board-wrap { background:#e7ebef; border:1px solid #cbd3dc; border-radius:6px; padding:7px; } body.ui-minimal .board { border-radius:2px; }
+body.ui-minimal .online,body.ui-minimal .turn-tag { background:#f1f3f6; color:#354155; border-color:#d3d9e2; } body.ui-minimal .avatar,body.ui-minimal .status-icon { background:#eef1f5; }
+body.ui-minimal .btn { color:#263246; background:#f5f7f9; border-color:#cbd3dd; border-radius:7px; } body.ui-minimal .btn.primary { color:#fff; background:#315f9c; border-color:#315f9c; } body.ui-minimal .square.selected { background:#d3df9a; }
+/* Monochrome Split: high-contrast black/white layout with different board/control placement. */
+body.ui-mono { color-scheme:dark; --bg:#050505; --panel:#101010; --border:#454545; --text:#fff; --muted:#b7b7b7; --light-square:#f4f4f4; --dark-square:#242424; background:#050505; }
+body.ui-mono .app { max-width:1040px; display:grid; grid-template-columns:minmax(0,1fr) 250px; grid-template-areas:"head head" "board white" "board black" "board status"; gap:10px 22px; align-items:start; padding-top:14px; }
+body.ui-mono .header { grid-area:head; border-bottom:1px solid #555; padding-bottom:12px; margin-bottom:4px; }
+body.ui-mono .app > .player:first-of-type { grid-area:white; margin:0; } body.ui-mono .board-wrap { grid-area:board; width:100%; align-self:start; background:#000; border:2px solid #f5f5f5; border-radius:0; padding:8px; }
+body.ui-mono .board { border-radius:0; border:1px solid #777; } body.ui-mono .square.light { background:#f4f4f4; } body.ui-mono .square.dark { background:#242424; } body.ui-mono .square.selected { background:#c9c9c9; } body.ui-mono .square.last-move { box-shadow:inset 0 0 0 100px #7777; }
+body.ui-mono .app > .player[style] { grid-area:black; margin:0 !important; } body.ui-mono .app > .panel:last-of-type { grid-area:status; margin:0; }
+body.ui-mono .panel { background:#101010; border:1px solid #4b4b4b; border-radius:2px; box-shadow:none; }
+body.ui-mono .logo,body.ui-mono .avatar,body.ui-mono .status-icon { background:#222; border:1px solid #777; border-radius:0; filter:grayscale(1); }
+body.ui-mono .online,body.ui-mono .turn-tag { background:#151515; color:#fff; border:1px solid #555; border-radius:0; } body.ui-mono .turn-tag.active { background:#fff; color:#000; }
+body.ui-mono .btn,body.ui-mono .btn.primary { background:#f4f4f4; color:#050505; border:1px solid #fff; border-radius:0; font-weight:800; } body.ui-mono .btn:disabled { background:#292929; color:#888; border-color:#555; }
+body.ui-mono .board-mono-tools { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-top:8px; } body.ui-mono .board-mono-tools .mono-indicator { color:#fff; border:1px solid #777; padding:9px 10px; font:700 10px ui-monospace,monospace; letter-spacing:1px; } body.ui-mono #flipButton { min-width:112px; }
+/* Smooth Glide is the final/default preset. The global animation toggle stays OFF by default. */
+.piece.move-animate { animation:chessPieceGlide 560ms cubic-bezier(.16,1,.3,1) both; will-change:transform,opacity; }
+@keyframes chessPieceGlide { 0% { transform:translate(var(--move-x),var(--move-y)) scale(.94); opacity:.86; } 70% { transform:translate(calc(var(--move-x) * .08),calc(var(--move-y) * .08)) scale(1.035); opacity:1; } 100% { transform:translate(0,0) scale(1); opacity:1; } }
+body.anim-spin .piece.move-animate { animation-name:chessPieceSpin; animation-duration:560ms; }
+@keyframes chessPieceSpin { 0% { transform:translate(var(--move-x),var(--move-y)) rotate(-270deg) scale(.66); opacity:.4; } 72% { transform:translate(calc(var(--move-x) * .08),calc(var(--move-y) * .08)) rotate(12deg) scale(1.06); opacity:1; } 100% { transform:translate(0,0) rotate(0) scale(1); opacity:1; } }
+/* Distinct capture finishers, gated by the same animation toggle. */
+.square .capture-burst { position:absolute; z-index:3; width:74%; height:74%; border:2px solid #fff; border-radius:50%; pointer-events:none; animation:captureRing 520ms ease-out both; }
+body.ui-minimal .square .capture-burst { border-color:#293847; } body.ui-mono .square .capture-burst { border-color:#000; }
+@keyframes captureRing { 0% { opacity:.9; transform:scale(.18); } 65% { opacity:.7; transform:scale(1.18); } 100% { opacity:0; transform:scale(1.55); } }
+.piece.capture-animate { animation-duration:620ms; animation-fill-mode:both; will-change:transform,opacity; }
+.piece.capture-p { animation-name:capturePawn; } @keyframes capturePawn { 0% { transform:translate(var(--move-x),var(--move-y)) scale(.8); } 62% { transform:translate(0,-5px) scale(1.18); } 100% { transform:translate(0,0) scale(1); } }
+.piece.capture-r { animation-name:captureRook; } @keyframes captureRook { 0% { transform:translate(var(--move-x),var(--move-y)) scale(.8); } 45% { transform:translate(0,0) scale(1.18,.82); } 70% { transform:translate(0,0) scale(.94,1.08); } 100% { transform:translate(0,0) scale(1); } }
+.piece.capture-b { animation-name:captureBishop; } @keyframes captureBishop { 0% { transform:translate(var(--move-x),var(--move-y)) rotate(-18deg) scale(.75); opacity:.55; } 55% { transform:translate(0,0) rotate(8deg) scale(1.16); opacity:1; } 100% { transform:translate(0,0) rotate(0) scale(1); opacity:1; } }
+.piece.capture-n { animation-name:captureKnight; } @keyframes captureKnight { 0% { transform:translate(var(--move-x),var(--move-y)) scale(.65); } 48% { transform:translate(0,-15px) scale(1.16); } 75% { transform:translate(0,3px) scale(.96); } 100% { transform:translate(0,0) scale(1); } }
+.piece.capture-k { animation-name:captureKing; } @keyframes captureKing { 0% { transform:translate(var(--move-x),var(--move-y)) scale(.72); } 38% { transform:translate(0,0) scale(1.2); filter:drop-shadow(0 0 8px #fff); } 100% { transform:translate(0,0) scale(1); filter:none; } }
+.piece.capture-q { animation-name:captureQueen; } @keyframes captureQueen { 0% { transform:translate(var(--move-x),var(--move-y)) scale(.12); opacity:0; filter:blur(3px); } 58% { transform:translate(0,0) scale(1.22); opacity:.9; filter:blur(0); } 78% { transform:translate(0,0) scale(.92); opacity:1; } 100% { transform:translate(0,0) scale(1); opacity:1; filter:none; } }
+@media (max-width:760px) { body.ui-mono .app { display:block; max-width:620px; padding:10px 8px 20px; } body.ui-mono .header { margin-bottom:10px; } body.ui-mono .board-wrap,body.ui-mono .app > .player:first-of-type,body.ui-mono .app > .player[style],body.ui-mono .app > .panel:last-of-type { margin-bottom:9px; } }
+/* Capture styles take precedence over the optional Spin travel preset. */
+body.anim-spin .piece.capture-p { animation-name:capturePawn; animation-duration:620ms; }
+body.anim-spin .piece.capture-r { animation-name:captureRook; animation-duration:620ms; }
+body.anim-spin .piece.capture-b { animation-name:captureBishop; animation-duration:620ms; }
+body.anim-spin .piece.capture-n { animation-name:captureKnight; animation-duration:620ms; }
+body.anim-spin .piece.capture-k { animation-name:captureKing; animation-duration:620ms; }
+body.anim-spin .piece.capture-q { animation-name:captureQueen; animation-duration:620ms; }
 @media (prefers-reduced-motion: reduce) { .piece.move-animate { animation-duration: 1ms !important; } }
 
 </style>
@@ -586,6 +586,7 @@ body.anim-arc .piece.move-animate { animation-name: chessPieceArc; animation-dur
             <span>a</span><span>b</span><span>c</span><span>d</span>
             <span>e</span><span>f</span><span>g</span><span>h</span>
         </div>
+        <div class="board-mono-tools" id="boardMonoTools" style="display:none"><span class="mono-indicator" id="monoTurnIndicator">WAITING FOR PLAYERS</span></div>
 
     </section>
 
@@ -1007,6 +1008,12 @@ body.anim-arc .piece.move-animate { animation-name: chessPieceArc; animation-dur
                         span.classList.add("move-animate");
                         span.style.setProperty("--move-x", ((sourceCol - targetCol) * squareSize) + "px");
                         span.style.setProperty("--move-y", ((sourceRow - targetRow) * squareSize) + "px");
+                        if (snapshot.lastMove.captured) {
+                            span.classList.add("capture-animate", "capture-" + (snapshot.lastMove.piece || "p"));
+                            var burst = document.createElement("span");
+                            burst.className = "capture-burst";
+                            button.appendChild(burst);
+                        }
                     }
 
                     button.appendChild(span);
@@ -1049,6 +1056,8 @@ body.anim-arc .piece.move-animate { animation-name: chessPieceArc; animation-dur
             document.getElementById("ranks").appendChild(rank);
         }
         animationPositionFen = snapshot.fen || null;
+        var monoIndicator = document.getElementById("monoTurnIndicator");
+        if (monoIndicator) monoIndicator.textContent = snapshot.started ? (snapshot.turn === "w" ? "WHITE TO MOVE" : "BLACK TO MOVE") : "WAITING FOR PLAYERS";
     }
 
     function onSquareClick(event) {
@@ -1233,14 +1242,26 @@ body.anim-arc .piece.move-animate { animation-name: chessPieceArc; animation-dur
     socket.on("uiSettings", function (settings) {
         settings = settings || {};
         var body = document.body;
-        var styles = ["classic", "modern", "arena", "compact", "minimal"];
+        var styles = ["classic", "modern", "minimal", "mono"];
         for (var si = 0; si < styles.length; si++) {
             body.classList.toggle("ui-" + styles[si], settings.boardStyle === styles[si] && styles[si] !== "classic");
         }
-        var animations = ["glide", "bounce", "fade", "spin", "arc"];
+        var animations = ["glide", "spin"];
         for (var ai = 0; ai < animations.length; ai++) body.classList.remove("anim-" + animations[ai]);
         body.classList.add("anim-" + (animations.indexOf(settings.animationStyle) >= 0 ? settings.animationStyle : "glide"));
         moveAnimationEnabled = settings.moveAnimation === true;
+        var flip = document.getElementById("flipButton");
+        var tools = document.getElementById("boardMonoTools");
+        if (flip && tools) {
+            if (!window._flipHome) { window._flipHome = flip.parentNode; window._flipNext = flip.nextSibling; }
+            if (settings.boardStyle === "mono") {
+                tools.style.display = "flex";
+                if (flip.parentNode !== tools) tools.appendChild(flip);
+            } else {
+                tools.style.display = "none";
+                if (flip.parentNode !== window._flipHome) window._flipHome.insertBefore(flip, window._flipNext);
+            }
+        }
         if (snapshot) renderBoard();
     });
 

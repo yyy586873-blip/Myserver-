@@ -62,7 +62,9 @@ function updateLastMoveFromHistory() {
         from: move.from,
         to: move.to,
         san: move.san,
-        color: move.color
+        color: move.color,
+        piece: move.piece,
+        captured: move.captured || null
     } : null;
 }
 
@@ -189,8 +191,8 @@ io.on("connection", function (socket) {
 
     socket.on("setUiSettings", function (data) {
         if (!isConsole(socket) || !data) return;
-        const allowedStyles = ["classic", "modern", "arena", "compact", "minimal"];
-        const allowedAnimations = ["glide", "bounce", "fade", "spin", "arc"];
+        const allowedStyles = ["classic", "modern", "minimal", "mono"];
+        const allowedAnimations = ["glide", "spin"];
         uiSettings = {
             boardStyle: allowedStyles.includes(data.boardStyle) ? data.boardStyle : "classic",
             moveAnimation: data.moveAnimation === true,
@@ -369,7 +371,9 @@ io.on("connection", function (socket) {
                 from: move.from,
                 to: move.to,
                 san: move.san,
-                color: move.color
+                color: move.color,
+                piece: move.piece,
+                captured: move.captured || null
             };
             redoStack = [];
 
