@@ -38,4 +38,4 @@ JavaScript syntax was checked locally. A live Render/browser runtime test was no
 
 CONSOLE SETTINGS
 ----------------
-Open /console.html to view live room status and move history. To unlock controls, add a CONSOLE_KEY environment variable in Render and enter the same value in the console. Use a private, hard-to-guess value. The console can switch between the original Classic UI and the optional Modern UI, toggle move animation (OFF by default), and undo/redo moves for both players.
+Open /console.html to view live room status and move history. To unlock controls, add a CONSOLE_KEY environment variable in Render and enter the same value in the console. Use a private, hard-to-guess value. The console can switch among five complete UI layouts: Classic (original/default), Modern Glass, Arena Side Rail, Compact, and Minimal Paper. It can also choose Glide, Bounce, Fade, Spin, or Arc piece movement effects. Piece animation remains OFF by default. Undo/redo controls and Stockfish AI Coach remain included. Settings reset to Classic + animation OFF + Glide after a server restart.

@@ -45,7 +45,7 @@ let lastMove = null;
 let adminSocketId = null;
 let consoleSocketId = null;
 let redoStack = [];
-let uiSettings = { boardStyle: "classic", moveAnimation: false };
+let uiSettings = { boardStyle: "classic", moveAnimation: false, animationStyle: "glide" };
 
 function isConsole(socket) {
     return !!consoleSocketId && socket.id === consoleSocketId;
@@ -189,9 +189,12 @@ io.on("connection", function (socket) {
 
     socket.on("setUiSettings", function (data) {
         if (!isConsole(socket) || !data) return;
+        const allowedStyles = ["classic", "modern", "arena", "compact", "minimal"];
+        const allowedAnimations = ["glide", "bounce", "fade", "spin", "arc"];
         uiSettings = {
-            boardStyle: data.boardStyle === "modern" ? "modern" : "classic",
-            moveAnimation: data.moveAnimation === true
+            boardStyle: allowedStyles.includes(data.boardStyle) ? data.boardStyle : "classic",
+            moveAnimation: data.moveAnimation === true,
+            animationStyle: allowedAnimations.includes(data.animationStyle) ? data.animationStyle : "glide"
         };
         emitSettings();
     });
