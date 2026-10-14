@@ -47,3 +47,12 @@ DYNAMIC UI / ANIMATION UPDATE
 - When movement animation is enabled, captures have piece-specific effects: Pawn pop, Rook impact, Bishop shimmer, Knight jump, King pulse, and Queen fade/bubble arrival.
 - These settings are broadcast to both index.html and Admin.html. The console controls still require the Render CONSOLE_KEY environment variable.
 - UI settings are stored in server memory and reset after a server restart.
+
+
+UI POLISH UPDATE (2026-10-14)
+- Classic remains the original/default layout.
+- Modern Glass, Minimal Paper, and Monochrome Split have been polished.
+- Monochrome uses high-contrast black/white piece glyphs and legal-move dots.
+- Minimal Paper moves Flip Board into the header area; Monochrome places it beside its turn indicator under the board.
+- Default movement preset is ON: smooth glide with spin layered into the path, plus a fading captured-piece effect and distinct arrival animations by capturing piece type.
+- The animation preset is fixed; Console keeps a master on/off switch.
