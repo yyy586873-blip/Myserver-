@@ -65,3 +65,10 @@ MONOCHROME SPLIT UPDATE (2026-10-14)
 - Information panels and controls use a black/dark theme.
 - Chessboard squares use white and red; Classic piece appearance and legal-move dots are retained.
 - Existing split layout, board tools, and animation behavior remain unchanged.
+
+
+UI / animation update (October 2026)
+- Added Modern Glass Split: the Monochrome Split responsive layout with Modern Glass panels and the Modern Glass blue/gray chessboard. It does not use the red-and-white board.
+- Existing Classic Original, Modern Glass, and Monochrome Split options remain available.
+- Default movement is a lightweight smooth glide. Spin and Capture FX are optional, independently controlled in Console and default OFF.
+- Server settings reset on restart to Classic Original + smooth movement ON + Spin OFF + Capture FX OFF.

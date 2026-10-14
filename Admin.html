@@ -489,6 +489,24 @@ body.ui-modern .square.light { background:#dce8f7; } body.ui-modern .square.dark
 body.ui-modern .logo { background:linear-gradient(145deg,#3c6c8c,#263d65); box-shadow:0 5px 18px #0004; }
 body.ui-modern .avatar { background:linear-gradient(145deg,#2c405f,#1c2a43); }
 body.ui-modern .btn { border-radius:14px; background:#1b2b43; border-color:#3a5274; } body.ui-modern .btn.primary { background:linear-gradient(135deg,#4c9eaa,#4274ac); border-color:#5aaeb6; color:#fff; }
+/* Modern Glass Split: Monochrome's responsive layout with Modern Glass panels and board. */
+body.ui-modern-split { --bg:#080d18; --panel:#131d30; --border:#304766; --text:#f2f7ff; --muted:#9eb1d1; --accent:#7ce0d5; --light-square:#dce8f7; --dark-square:#617fa5; background:radial-gradient(ellipse at 15% 0%,#203b5b 0%,transparent 42%),linear-gradient(145deg,#080d18,#101b2d 65%,#0b1422); }
+body.ui-modern-split .app { max-width:1120px; display:grid; grid-template-columns:260px minmax(0,1fr); grid-template-areas:"head head" "white board" "status board" "black board"; gap:12px 22px; align-items:start; padding-top:16px; }
+body.ui-modern-split .header { grid-area:head; border-bottom:1px solid #344d70; padding-bottom:15px; margin-bottom:2px; }
+body.ui-modern-split .white-player { grid-area:white; margin:0; } body.ui-modern-split .black-player { grid-area:black; margin:0 !important; }
+body.ui-modern-split .status-panel { grid-area:status; margin:0; }
+body.ui-modern-split .panel { background:linear-gradient(145deg,rgba(26,42,66,.94),rgba(14,24,42,.97)); border-color:#344d70; border-radius:22px; box-shadow:0 12px 30px #0003,inset 0 1px #ffffff0c; backdrop-filter:blur(14px); }
+body.ui-modern-split .board-wrap { grid-area:board; width:100%; min-width:0; align-self:start; background:linear-gradient(145deg,#203552,#101b2e); border:1px solid #456287; border-radius:20px; padding:12px; box-shadow:0 18px 42px #0005; }
+body.ui-modern-split .board { border-radius:12px; box-shadow:0 6px 24px #0005; }
+body.ui-modern-split .square.light { background:#dce8f7; } body.ui-modern-split .square.dark { background:#617fa5; } body.ui-modern-split .square.selected { background:#b8e4b0; }
+body.ui-modern-split .logo { background:linear-gradient(145deg,#3c6c8c,#263d65); box-shadow:0 5px 18px #0004; }
+body.ui-modern-split .avatar { background:linear-gradient(145deg,#2c405f,#1c2a43); }
+body.ui-modern-split .online,body.ui-modern-split .turn-tag { background:#1b2b43; border:1px solid #3b5578; }
+body.ui-modern-split .btn { border-radius:14px; background:#1b2b43; border-color:#3a5274; } body.ui-modern-split .btn.primary { background:linear-gradient(135deg,#4c9eaa,#4274ac); border-color:#5aaeb6; color:#fff; }
+body.ui-modern-split .board-mono-tools { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:10px; }
+body.ui-modern-split .board-mono-tools .mono-indicator { color:#d9e8ff; border:1px solid #3b5578; padding:10px 12px; font:700 10px ui-monospace,monospace; letter-spacing:1.2px; flex:1; text-align:center; background:#13233a; border-radius:12px; }
+body.ui-modern-split #flipButton { min-width:118px; }
+
 /* Monochrome Split: black interface with a white-and-red chessboard. */
 body.ui-mono { color-scheme:dark; --bg:#08090b; --panel:#15171b; --border:#383b42; --text:#f2f2f2; --muted:#a4a8b0; --light-square:#ffffff; --dark-square:#c92836; background:linear-gradient(145deg,#050505,#15171b 58%,#080808); }
 body.ui-mono .app { max-width:1120px; display:grid; grid-template-columns:260px minmax(0,1fr); grid-template-areas:"head head" "white board" "status board" "black board"; gap:12px 22px; align-items:start; padding-top:16px; }
@@ -511,9 +529,11 @@ body.ui-mono .btn:disabled { background:#17181c; color:#777b84; border-color:#30
 body.ui-mono .board-mono-tools { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:10px; }
 body.ui-mono .board-mono-tools .mono-indicator { color:#f2f2f2; border:1px solid #454851; padding:10px 12px; font:700 10px ui-monospace,monospace; letter-spacing:1.2px; flex:1; text-align:center; background:#17181c; border-radius:8px; }
 body.ui-mono #flipButton { min-width:118px; }
-/* Permanent movement preset: smooth travel with spin layered into the path. */
-.piece.move-animate { animation:chessPieceSpinGlide 660ms cubic-bezier(.22,.78,.22,1) both; will-change:transform,opacity; }
-@keyframes chessPieceSpinGlide { 0% { transform:translate(var(--move-x),var(--move-y)) rotate(-240deg) scale(.72); opacity:.22; } 58% { transform:translate(calc(var(--move-x) * .30),calc(var(--move-y) * .30)) rotate(-55deg) scale(1.08); opacity:1; } 82% { transform:translate(calc(var(--move-x) * .035),calc(var(--move-y) * .035)) rotate(8deg) scale(1.025); } 100% { transform:translate(0,0) rotate(0) scale(1); opacity:1; } }
+/* Default is a light, smooth glide. Spin is an optional overlay enabled by the Console. */
+.piece.move-animate { animation:chessPieceGlide 300ms cubic-bezier(.2,.72,.25,1) both; will-change:transform,opacity; }
+@keyframes chessPieceGlide { 0% { transform:translate(var(--move-x),var(--move-y)) scale(.98); opacity:.7; } 100% { transform:translate(0,0) scale(1); opacity:1; } }
+body.anim-spin .piece.move-animate { animation-name:chessPieceSpinGlide; animation-duration:520ms; }
+@keyframes chessPieceSpinGlide { 0% { transform:translate(var(--move-x),var(--move-y)) rotate(-180deg) scale(.86); opacity:.45; } 65% { transform:translate(calc(var(--move-x) * .12),calc(var(--move-y) * .12)) rotate(-18deg) scale(1.04); opacity:1; } 100% { transform:translate(0,0) rotate(0) scale(1); opacity:1; } }
 /* A captured defender fades away while the capturing piece follows its own piece-specific arrival. */
 .square .capture-victim-fade { position:absolute; inset:0; width:100%; height:100%; display:grid; place-items:center; z-index:1; animation:victimFade 360ms ease-out both; }
 @keyframes victimFade { 0% { opacity:1; transform:scale(1); filter:blur(0); } 100% { opacity:0; transform:scale(.35) rotate(18deg); filter:blur(3px); } }
@@ -533,6 +553,11 @@ body.ui-mono .square .capture-burst { border-color:#c92836; }
  body.ui-mono .board-wrap { order:2; } body.ui-mono .white-player { order:1; } body.ui-mono .status-panel { order:3; } body.ui-mono .black-player { order:4; }
  body.ui-mono .board-mono-tools { gap:7px; } body.ui-mono .board-mono-tools .mono-indicator { padding:9px 5px; font-size:9px; }
  body.ui-mono #flipButton { min-width:100px; padding:9px 8px; }
+ body.ui-modern-split .app { display:flex; flex-direction:column; max-width:620px; padding:10px 8px 20px; gap:9px; }
+ body.ui-modern-split .header,body.ui-modern-split .white-player,body.ui-modern-split .black-player,body.ui-modern-split .board-wrap,body.ui-modern-split .status-panel { width:100%; margin:0 !important; }
+ body.ui-modern-split .header { order:0; } body.ui-modern-split .white-player { order:1; } body.ui-modern-split .board-wrap { order:2; } body.ui-modern-split .status-panel { order:3; } body.ui-modern-split .black-player { order:4; }
+ body.ui-modern-split .board-mono-tools { gap:7px; } body.ui-modern-split .board-mono-tools .mono-indicator { padding:9px 5px; font-size:9px; }
+ body.ui-modern-split #flipButton { min-width:100px; padding:9px 8px; }
 
 }
 @media (prefers-reduced-motion: reduce) { .piece.move-animate,.piece.capture-animate,.capture-victim-fade,.capture-burst { animation-duration:1ms !important; } }
@@ -692,6 +717,8 @@ body.ui-mono .square .capture-burst { border-color:#c92836; }
     var role = null;
     var snapshot = null;
     var moveAnimationEnabled = true;
+    var spinAnimationEnabled = false;
+    var captureFxEnabled = false;
     var animationPositionFen = null;
     var selected = null;
     var legalMoves = [];
@@ -941,7 +968,7 @@ body.ui-mono .square .capture-burst { border-color:#c92836; }
             animationPositionFen !== null && animationPositionFen !== snapshot.fen
         );
         var victimClone = null;
-        if (shouldAnimateMove && snapshot.lastMove.captured) {
+        if (shouldAnimateMove && captureFxEnabled && snapshot.lastMove.captured) {
             var oldTarget = boardElement.querySelector('[data-square="' + snapshot.lastMove.to + '"] .piece');
             if (oldTarget) {
                 victimClone = oldTarget.cloneNode(true);
@@ -1021,7 +1048,7 @@ body.ui-mono .square .capture-burst { border-color:#c92836; }
                         span.classList.add("move-animate");
                         span.style.setProperty("--move-x", ((sourceCol - targetCol) * squareSize) + "px");
                         span.style.setProperty("--move-y", ((sourceRow - targetRow) * squareSize) + "px");
-                        if (snapshot.lastMove.captured) {
+                        if (captureFxEnabled && snapshot.lastMove.captured) {
                             span.classList.add("capture-animate", "capture-" + (snapshot.lastMove.piece || "p"));
                             var burst = document.createElement("span");
                             burst.className = "capture-burst";
@@ -1259,20 +1286,22 @@ body.ui-mono .square .capture-burst { border-color:#c92836; }
     socket.on("uiSettings", function (settings) {
         settings = settings || {};
         var body = document.body;
-        var styles = ["classic", "modern", "mono"];
+        var styles = ["classic", "modern", "mono", "modern-split"];
         for (var si = 0; si < styles.length; si++) {
             body.classList.toggle("ui-" + styles[si], settings.boardStyle === styles[si] && styles[si] !== "classic");
         }
-        body.classList.remove("anim-glide");
-        body.classList.add("anim-spin");
+        body.classList.toggle("anim-spin", settings.spinAnimation === true);
+        body.classList.toggle("anim-capture", settings.captureFx === true);
         moveAnimationEnabled = settings.moveAnimation !== false;
+        spinAnimationEnabled = settings.spinAnimation === true;
+        captureFxEnabled = settings.captureFx === true;
         var flip = document.getElementById("flipButton");
         var tools = document.getElementById("boardMonoTools");
         var online = document.querySelector(".header .online");
         if (flip && tools) {
             if (!window._flipHome) { window._flipHome = flip.parentNode; window._flipNext = flip.nextSibling; }
-            tools.style.display = settings.boardStyle === "mono" ? "flex" : "none";
-            if (settings.boardStyle === "mono") {
+            tools.style.display = (settings.boardStyle === "mono" || settings.boardStyle === "modern-split") ? "flex" : "none";
+            if (settings.boardStyle === "mono" || settings.boardStyle === "modern-split") {
                 if (flip.parentNode !== tools) tools.appendChild(flip);
             } else if (flip.parentNode !== window._flipHome) {
                 window._flipHome.insertBefore(flip, window._flipNext);
