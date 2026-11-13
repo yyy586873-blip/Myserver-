@@ -95,3 +95,19 @@ ADMIN LOBBY AND MULTI-ROOM CONSOLE UPDATE
 - Console now unlocks once and can list/select any active room. Room monitor, move history, undo and redo apply to the selected room. UI settings remain global and apply to all rooms.
 - Open /console.html, unlock with CONSOLE_KEY, refresh the room list, then choose a room and press Open room.
 - Room state is held in memory; restarting the Render service clears all rooms. Empty rooms expire after 10 minutes.
+
+
+SERVER RELIABILITY UPDATE (2026-11-13)
+-------------------------------------
+- Kept all existing chess pages, layout, styling, board behavior, and controls unchanged.
+- Added /health for a lightweight service health check (HTTP 200 JSON).
+- Added basic room API request throttling, request-size limits, and safer input validation.
+- Added HTTP response security headers and disabled Express version disclosure.
+- Console authentication now supports multiple authenticated console tabs/sessions instead of a single global console socket.
+- Room selection, undo, redo, room list updates, and settings are validated server-side.
+- Socket.IO heartbeat and payload limits are configured for more reliable connections.
+- Server handles SIGTERM/SIGINT shutdown and clears room timers cleanly.
+- MAX_ROOMS can optionally be set in the Render environment (default 500).
+- CONSOLE_KEY remains required to unlock Console controls.
+
+NOTE: Rooms and UI settings remain in process memory by design to preserve the current architecture. A Render restart or multiple independent server instances will not share room state; durable cross-instance rooms require an external database/Redis service.
