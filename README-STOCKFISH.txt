@@ -95,3 +95,41 @@ ADMIN LOBBY AND MULTI-ROOM CONSOLE UPDATE
 - Console now unlocks once and can list/select any active room. Room monitor, move history, undo and redo apply to the selected room. UI settings remain global and apply to all rooms.
 - Open /console.html, unlock with CONSOLE_KEY, refresh the room list, then choose a room and press Open room.
 - Room state is held in memory; restarting the Render service clears all rooms. Empty rooms expire after 10 minutes.
+
+
+STABILITY / RECONNECT FIX (NOVEMBER 2026)
+-----------------------------------------
+- Each browser/app room gets a persistent random player session token in localStorage.
+- Reconnecting with the same token reclaims the same White/Black seat instead of taking the other seat.
+- If the same session is opened in another tab/device, the newest connection takes over that seat; the old socket is disconnected and cannot release the new socket's seat.
+- A dropped connection shows the other player as disconnected and pauses the game. The seat is held for 45 seconds for automatic reconnect, then released if the session does not return.
+- Socket.IO heartbeat and reconnect timing are tuned for transient network/Render wake-up interruptions.
+- The join-room API checks only that a room exists. Seat assignment is done once, atomically, by the Socket.IO joinGame event, avoiding the old API-check / socket-claim race.
+- Console automatically re-authenticates after a temporary reconnect if its key remains in the page, and reopens its previously selected room.
+- Console undo/redo refreshes the room list move counts.
+- Added /health endpoint for a basic server health check.
+
+ANDROID APP PROJECT
+-------------------
+- AndroidApp/ contains a Java 7 Android project and local HTML UI assets.
+- MainActivity.java uses only Android SDK classes, no lambdas, no AndroidX, and no AppCompat.
+- Minimum SDK is API 26 (Android 8).
+- App launch opens the normal local lobby. Website's Open in Chess Arena App intent link transfers player/admin mode, room code and the player session token where available.
+- The Android UI is loaded from bundled assets under appassets.androidplatform.net; it does not load the hosted website as its UI.
+- The app uses the same Render server as the authoritative game engine and Socket.IO server. Internet is required for creating/joining a room and playing.
+- The Socket.IO client script is loaded from the Render server at runtime, so the lobby/HTML UI is bundled offline but live multiplayer is not offline.
+- Admin Stockfish Worker behavior inside Android WebView needs device testing; the Chrome Admin page remains the fallback if WebView blocks the cross-origin engine Worker.
+
+SECURITY NOTES
+--------------
+- HTTPS only for app-to-server communication. WebView file/content access is disabled, Safe Browsing is enabled where supported, and no JavaScript bridge is exposed.
+- Player session tokens are for reconnect continuity, not user identity or account authentication.
+- Admin.html is still a public admin-mode page, not password-protected. Protect any sensitive admin operations with a server-side admin login before exposing them.
+- Console controls remain protected by the CONSOLE_KEY environment variable.
+
+TESTING
+-------
+- Node server syntax checked successfully.
+- Inline JavaScript in the web pages and bundled app HTML checked successfully.
+- ZIP integrity checked before delivery.
+- A live Render two-device test and Android APK build/device test were not available here. Test a disconnect/reconnect on two devices after deploying.
