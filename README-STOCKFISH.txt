@@ -133,3 +133,6 @@ TESTING
 - Inline JavaScript in the web pages and bundled app HTML checked successfully.
 - ZIP integrity checked before delivery.
 - A live Render two-device test and Android APK build/device test were not available here. Test a disconnect/reconnect on two devices after deploying.
+
+ANDROID NATIVE APP NOTE (v3.0)
+The AndroidApp module now uses a native Java/XML interface and a Java Socket.IO client. It no longer loads the local HTML UI. The hosted browser pages remain unchanged except that the Open in Chess Arena App link has been moved into the board action row beside Flip Board. The native app currently supports room create/join, player seat joining/reconnect, live board state, legal move requests, moves, board flip and game-over New Game. The browser Admin page retains the full Stockfish AI Coach; that specific coach UI/action is not yet ported to the native Android screen.
