@@ -556,6 +556,8 @@ body.ui-mono .square .capture-burst { border-color:#c92836; }
 }
 @media (prefers-reduced-motion: reduce) { .piece.move-animate,.piece.capture-animate,.capture-victim-fade,.capture-burst { animation-duration:1ms !important; } }
 
+
+.inline-waiting{display:flex;align-items:center;gap:12px;margin:12px 0;padding:12px 15px;border:1px solid #8ba6ff55;border-radius:14px;background:rgba(85,112,175,.13);color:#eaf0ff;font-size:12px;line-height:1.5}.inline-waiting strong{display:block;font-size:13px;margin-bottom:2px}.inline-waiting[style*="display: none"]{display:none!important}.inline-loader{width:17px;height:17px;flex:0 0 17px;border:2px solid #53658b;border-top-color:#a9c4ff;border-radius:50%;animation:spin .8s linear infinite}
 </style>
 </head>
 
@@ -577,6 +579,8 @@ body.ui-mono .square .capture-burst { border-color:#c92836; }
             <span id="connectionText">Connecting...</span>
         </div>
     </header>
+
+    <div id="inlineWaiting" class="inline-waiting"><span class="inline-loader" id="waitingLoader"></span><div><strong id="overlayTitle">Connecting to room</strong><div id="overlayText">Connecting to the chess server...</div></div></div>
 
     <section class="panel player white-player">
         <div class="player-info">
@@ -649,17 +653,6 @@ body.ui-mono .square .capture-burst { border-color:#c92836; }
 
 </main>
 
-<div class="overlay show" id="waitingOverlay">
-    <div class="dialog">
-        <div class="dialog-icon">♟</div>
-        <div class="loader" id="waitingLoader"></div>
-        <h2 id="overlayTitle">Connecting...</h2>
-        <p id="overlayText">
-            Connecting to the chess server.
-        </p>
-    </div>
-</div>
-
 <div class="overlay" id="promotionOverlay">
     <div class="dialog">
         <div class="dialog-icon">♛</div>
@@ -683,7 +676,9 @@ body.ui-mono .square .capture-burst { border-color:#c92836; }
 (function () {
     "use strict";
 
-    var socket = io();
+    var roomCode = new URLSearchParams(window.location.search).get("room") || "";
+    if (!/^\d{3}$/.test(roomCode)) { window.location.replace("/"); }
+    var socket = io({ query: { room: roomCode } });
 
     var files = ["a", "b", "c", "d", "e", "f", "g", "h"];
 
@@ -715,7 +710,7 @@ body.ui-mono .square .capture-burst { border-color:#c92836; }
     var toastTimer = null;
 
     var boardElement = document.getElementById("board");
-    var overlay = document.getElementById("waitingOverlay");
+    var overlay = document.getElementById("inlineWaiting");
     var promotionOverlay = document.getElementById("promotionOverlay");
 
     function showToast(message) {
@@ -739,11 +734,11 @@ body.ui-mono .square .capture-burst { border-color:#c92836; }
         document.getElementById("waitingLoader").style.display =
             loader ? "block" : "none";
 
-        overlay.classList.add("show");
+        overlay.style.display = "flex";
     }
 
     function hideWaiting() {
-        overlay.classList.remove("show");
+        overlay.style.display = "none";
     }
 
     function squareName(row, col) {
@@ -1169,8 +1164,8 @@ body.ui-mono .square .capture-burst { border-color:#c92836; }
             showWaiting(
                 "Waiting for Player",
                 data.players.white
-                    ? "You are in the room. Waiting for the second player to join..."
-                    : "Waiting for players to join the chess room...",
+                    ? "Room " + roomCode + " is ready. Share this code and wait for the second player..."
+                    : "Room " + roomCode + " is ready. Waiting for the other player...",
                 true
             );
         } else {

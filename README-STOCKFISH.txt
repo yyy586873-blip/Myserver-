@@ -72,3 +72,15 @@ UI / animation update (October 2026)
 - Existing Classic Original, Modern Glass, and Monochrome Split options remain available.
 - Default movement is a lightweight smooth glide. Spin and Capture FX are optional, independently controlled in Console and default OFF.
 - Server settings reset on restart to Classic Original + smooth movement ON + Spin OFF + Capture FX OFF.
+
+MULTIPLAYER ROOM LOBBY
+----------------------
+The site root (/) opens lobby.html. Players choose Create Game or Join Game.
+Create Game reserves an available 3-digit room code; Join Game validates that
+code before entering the board. The chess board URL is /index.html?room=123.
+Each room has its own independent chess position and two player seats. A room
+with no connected players is removed after 10 minutes, allowing that code to
+be created again. Room state is held in server memory and resets if the Render
+service restarts. Admin.html and console.html can be opened with ?room=123 to
+work with a specific room. Waiting status is displayed inline above the board,
+not as a blocking popup.

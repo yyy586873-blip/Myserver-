@@ -695,7 +695,9 @@ body.ui-mono .square .capture-burst { border-color:#c92836; }
 (function () {
     "use strict";
 
-    var socket = io();
+    var roomCode = new URLSearchParams(window.location.search).get("room") || "";
+    if (!/^\d{3}$/.test(roomCode)) { window.location.replace("/"); }
+    var socket = io({ query: { room: roomCode } });
 
     var files = ["a", "b", "c", "d", "e", "f", "g", "h"];
 
