@@ -29,3 +29,12 @@ Deploy:
 
 Note:
 Room/player state is held in server memory. A Render restart clears active rooms, as in the base build.
+
+
+THEME UPDATE
+- Only two Console UI choices are supported: Classic Original and Yellow & Black Arena.
+- Classic's original CSS/layout is retained.
+- Yellow & Black uses a near-black interface with light-yellow and black board cells.
+- Yellow & Black is desktop-optimized with a side panel + large board layout and stacks on mobile.
+- Admin inline waiting banner now sits directly below the header, matching the normal player page.
+- Reconnect/session token logic and grace-period handling are retained.

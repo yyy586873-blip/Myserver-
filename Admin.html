@@ -476,59 +476,55 @@ h1 {
 .square.suggest-to { box-shadow:inset 0 0 0 4px #ffd35b; }
 
 
-/* Console-controlled layouts. Classic remains the untouched original. */
-body.ui-modern { --bg:#080d18; --panel:#131d30; --border:#304766; --text:#f2f7ff; --muted:#9eb1d1; --accent:#7ce0d5; --light-square:#e3edf9; --dark-square:#5d7da5; }
-body.ui-modern { background:radial-gradient(ellipse at 15% 0%,#203b5b 0%,transparent 42%),linear-gradient(145deg,#080d18,#101b2d 65%,#0b1422); }
-body.ui-modern .app { max-width:780px; }
-body.ui-modern .header { padding-bottom:15px; }
-body.ui-modern .panel { background:linear-gradient(145deg,rgba(26,42,66,.94),rgba(14,24,42,.97)); border-color:#344d70; border-radius:22px; box-shadow:0 12px 30px #0003,inset 0 1px #ffffff0c; backdrop-filter:blur(14px); }
-body.ui-modern .online,body.ui-modern .turn-tag { background:#1b2b43; border:1px solid #3b5578; }
-body.ui-modern .board-wrap { background:linear-gradient(145deg,#203552,#101b2e); border:1px solid #456287; padding:12px; border-radius:20px; box-shadow:0 18px 42px #0005; }
-body.ui-modern .board { border-radius:12px; box-shadow:0 6px 24px #0005; }
-body.ui-modern .square.light { background:#dce8f7; } body.ui-modern .square.dark { background:#617fa5; } body.ui-modern .square.selected { background:#b8e4b0; }
-body.ui-modern .logo { background:linear-gradient(145deg,#3c6c8c,#263d65); box-shadow:0 5px 18px #0004; }
-body.ui-modern .avatar { background:linear-gradient(145deg,#2c405f,#1c2a43); }
-body.ui-modern .btn { border-radius:14px; background:#1b2b43; border-color:#3a5274; } body.ui-modern .btn.primary { background:linear-gradient(135deg,#4c9eaa,#4274ac); border-color:#5aaeb6; color:#fff; }
-/* Modern Glass Split: Monochrome's responsive layout with Modern Glass panels and board. */
-body.ui-modern-split { --bg:#080d18; --panel:#131d30; --border:#304766; --text:#f2f7ff; --muted:#9eb1d1; --accent:#7ce0d5; --light-square:#dce8f7; --dark-square:#617fa5; background:radial-gradient(ellipse at 15% 0%,#203b5b 0%,transparent 42%),linear-gradient(145deg,#080d18,#101b2d 65%,#0b1422); }
-body.ui-modern-split .app { max-width:1120px; display:grid; grid-template-columns:260px minmax(0,1fr); grid-template-areas:"head head" "white board" "status board" "black board"; gap:12px 22px; align-items:start; padding-top:16px; }
-body.ui-modern-split .header { grid-area:head; border-bottom:1px solid #344d70; padding-bottom:15px; margin-bottom:2px; }
-body.ui-modern-split .white-player { grid-area:white; margin:0; } body.ui-modern-split .black-player { grid-area:black; margin:0 !important; }
-body.ui-modern-split .status-panel { grid-area:status; margin:0; }
-body.ui-modern-split .panel { background:linear-gradient(145deg,rgba(26,42,66,.94),rgba(14,24,42,.97)); border-color:#344d70; border-radius:22px; box-shadow:0 12px 30px #0003,inset 0 1px #ffffff0c; backdrop-filter:blur(14px); }
-body.ui-modern-split .board-wrap { grid-area:board; width:100%; min-width:0; align-self:start; background:linear-gradient(145deg,#203552,#101b2e); border:1px solid #456287; border-radius:20px; padding:12px; box-shadow:0 18px 42px #0005; }
-body.ui-modern-split .board { border-radius:12px; box-shadow:0 6px 24px #0005; }
-body.ui-modern-split .square.light { background:#dce8f7; } body.ui-modern-split .square.dark { background:#617fa5; } body.ui-modern-split .square.selected { background:#b8e4b0; }
-body.ui-modern-split .logo { background:linear-gradient(145deg,#3c6c8c,#263d65); box-shadow:0 5px 18px #0004; }
-body.ui-modern-split .avatar { background:linear-gradient(145deg,#2c405f,#1c2a43); }
-body.ui-modern-split .online,body.ui-modern-split .turn-tag { background:#1b2b43; border:1px solid #3b5578; }
-body.ui-modern-split .btn { border-radius:14px; background:#1b2b43; border-color:#3a5274; } body.ui-modern-split .btn.primary { background:linear-gradient(135deg,#4c9eaa,#4274ac); border-color:#5aaeb6; color:#fff; }
-body.ui-modern-split .board-mono-tools { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:10px; }
-body.ui-modern-split .board-mono-tools .mono-indicator { color:#d9e8ff; border:1px solid #3b5578; padding:10px 12px; font:700 10px ui-monospace,monospace; letter-spacing:1.2px; flex:1; text-align:center; background:#13233a; border-radius:12px; }
-body.ui-modern-split #flipButton { min-width:118px; }
+/* Console themes: Classic Original + Yellow/Black Arena. Classic base styles remain unchanged. */
+body.ui-yellow {
+  --bg:#08090b; --panel:#15171b; --border:#34373d; --text:#f5f2e8; --muted:#aaa69a;
+  --accent:#f0cf55; background:#08090b; color:var(--text);
+}
+body.ui-yellow .app {
+  max-width:1240px; display:grid; grid-template-columns:minmax(220px,270px) minmax(360px,1fr);
+  grid-template-areas:"head head" "wait wait" "white board" "status board" "black board";
+  gap:14px 24px; align-items:start; padding:20px 22px 30px;
+}
+body.ui-yellow .inline-waiting { grid-area:wait; }
+body.ui-yellow .header { grid-area:head; border-bottom:1px solid #34312a; padding-bottom:14px; margin-bottom:2px; }
+body.ui-yellow .white-player { grid-area:white; margin:0; }
+body.ui-yellow .black-player { grid-area:black; margin:0 !important; }
+body.ui-yellow .status-panel { grid-area:status; margin:0; }
+body.ui-yellow .panel { background:#15171b; border:1px solid #393a3d; border-radius:13px; box-shadow:none; }
+body.ui-yellow .logo,body.ui-yellow .avatar,body.ui-yellow .status-icon { background:#24262a; border:1px solid #4a4533; color:#f2d66c; border-radius:10px; }
+body.ui-yellow .online,body.ui-yellow .turn-tag { background:#202226; border:1px solid #414247; color:#eee8d8; }
+body.ui-yellow .turn-tag.active { background:#51451d; border-color:#d8b83f; color:#ffe98b; }
+body.ui-yellow .board-wrap { grid-area:board; width:100%; min-width:0; align-self:start; background:#111316; border:1px solid #444039; border-radius:13px; padding:14px; box-shadow:none; }
+body.ui-yellow .board { border-radius:3px; box-shadow:none; }
+body.ui-yellow .square.light { background:#f0d66f; }
+body.ui-yellow .square.dark { background:#17191d; }
+body.ui-yellow .square.selected { background:#ffe99a; }
+body.ui-yellow .square.last-move { box-shadow:inset 0 0 0 100px #d8a92855; }
+body.ui-yellow .btn,body.ui-yellow .btn.primary { background:#24262a; border:1px solid #514a32; color:#f6e8b0; border-radius:9px; box-shadow:none; }
+body.ui-yellow .btn.primary { background:#d9b83e; border-color:#f0d66f; color:#111; }
+body.ui-yellow .btn:disabled { opacity:.42; }
+body.ui-yellow .board-mono-tools { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:10px; }
+body.ui-yellow .board-mono-tools .mono-indicator { color:#f3df91; border:1px solid #5b502e; padding:10px 12px; font:700 10px ui-monospace,monospace; letter-spacing:1.2px; flex:1; text-align:center; background:#1a1b1e; border-radius:8px; }
+body.ui-yellow #flipButton { min-width:118px; }
+body.ui-yellow .inline-waiting { background:#1a1a17; border-color:#78652b; color:#f4e5ad; }
+body.ui-yellow .inline-loader { border-color:#65582d; border-top-color:#f0d66f; }
+body.ui-yellow .coordinates-top,body.ui-yellow .coordinates-bottom,body.ui-yellow .ranks { color:#d6c98f; }
+body.ui-yellow .hint,body.ui-yellow .player-meta,body.ui-yellow .status-text { color:#b7b09b; }
+@media (max-width:760px) {
+ body.ui-yellow .app { display:flex; flex-direction:column; max-width:620px; padding:10px 8px 22px; gap:9px; }
+ body.ui-yellow .header,body.ui-yellow .white-player,body.ui-yellow .black-player,body.ui-yellow .board-wrap,body.ui-yellow .status-panel { width:100%; margin:0 !important; }
+ body.ui-yellow .header { order:0; } body.ui-yellow .inline-waiting { order:1; } body.ui-yellow .white-player { order:2; }
+ body.ui-yellow .board-wrap { order:3; } body.ui-yellow .status-panel { order:4; } body.ui-yellow .black-player { order:5; }
+ body.ui-yellow .board-wrap { padding:9px; }
+ body.ui-yellow .board-mono-tools { gap:7px; }
+ body.ui-yellow .board-mono-tools .mono-indicator { padding:9px 5px; font-size:9px; }
+ body.ui-yellow #flipButton { min-width:100px; padding:9px 8px; }
+}
+@media (min-width:761px) and (max-width:980px) {
+ body.ui-yellow .app { grid-template-columns:210px minmax(0,1fr); gap:12px 16px; padding:14px; }
+}
 
-/* Monochrome Split: black interface with a white-and-red chessboard. */
-body.ui-mono { color-scheme:dark; --bg:#08090b; --panel:#15171b; --border:#383b42; --text:#f2f2f2; --muted:#a4a8b0; --light-square:#ffffff; --dark-square:#c92836; background:linear-gradient(145deg,#050505,#15171b 58%,#080808); }
-body.ui-mono .app { max-width:1120px; display:grid; grid-template-columns:260px minmax(0,1fr); grid-template-areas:"head head" "white board" "status board" "black board"; gap:12px 22px; align-items:start; padding-top:16px; }
-body.ui-mono .header { grid-area:head; border-bottom:1px solid #3a3d44; padding-bottom:13px; margin-bottom:2px; }
-body.ui-mono .white-player { grid-area:white; margin:0; } body.ui-mono .black-player { grid-area:black; margin:0 !important; }
-body.ui-mono .board-wrap { grid-area:board; width:100%; min-width:0; align-self:start; background:#fff; border:2px solid #c92836; border-radius:8px; padding:10px; box-shadow:0 14px 34px #0008; }
-body.ui-mono .board { border-radius:2px; border:1px solid #c6bdbd; }
-/* Red-and-white board squares; piece rendering and legal-move dots remain Classic. */
-body.ui-mono .square.light { background:#ffffff; } body.ui-mono .square.dark { background:#c92836; }
-body.ui-mono .square.selected { background:#ffb5bd; } body.ui-mono .square.last-move { box-shadow:inset 0 0 0 100px #e7b94d70; }
-body.ui-mono .status-panel { grid-area:status; margin:0; }
-body.ui-mono .panel { color:#f2f2f2; background:linear-gradient(145deg,#191b20,#101114); border:1px solid #393c43; border-radius:10px; box-shadow:0 8px 22px #0008; }
-body.ui-mono .panel h2,body.ui-mono .panel .player-name { color:#f2f2f2; }
-body.ui-mono .logo,body.ui-mono .avatar,body.ui-mono .status-icon { color:#fff; background:#25272d; border:1px solid #555962; border-radius:8px; filter:none; }
-body.ui-mono .online,body.ui-mono .turn-tag { background:#202227; color:#f2f2f2; border:1px solid #454851; border-radius:18px; }
-body.ui-mono .turn-tag.active { background:#c92836; color:#fff; border-color:#e34a58; }
-body.ui-mono .btn,body.ui-mono .btn.primary { background:#202227; color:#f2f2f2; border:1px solid #454851; border-radius:8px; font-weight:750; }
-body.ui-mono .btn.primary { background:#c92836; color:#fff; border-color:#e34a58; }
-body.ui-mono .btn:disabled { background:#17181c; color:#777b84; border-color:#303239; }
-body.ui-mono .board-mono-tools { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-top:10px; }
-body.ui-mono .board-mono-tools .mono-indicator { color:#f2f2f2; border:1px solid #454851; padding:10px 12px; font:700 10px ui-monospace,monospace; letter-spacing:1.2px; flex:1; text-align:center; background:#17181c; border-radius:8px; }
-body.ui-mono #flipButton { min-width:118px; }
 /* Default is a light, smooth glide. Spin is an optional overlay enabled by the Console. */
 .piece.move-animate { animation:chessPieceGlide 300ms cubic-bezier(.2,.72,.25,1) both; will-change:transform,opacity; }
 @keyframes chessPieceGlide { 0% { transform:translate(var(--move-x),var(--move-y)) scale(.98); opacity:.7; } 100% { transform:translate(0,0) scale(1); opacity:1; } }
@@ -538,7 +534,6 @@ body.anim-spin .piece.move-animate { animation-name:chessPieceSpinGlide; animati
 .square .capture-victim-fade { position:absolute; inset:0; width:100%; height:100%; display:grid; place-items:center; z-index:1; animation:victimFade 360ms ease-out both; }
 @keyframes victimFade { 0% { opacity:1; transform:scale(1); filter:blur(0); } 100% { opacity:0; transform:scale(.35) rotate(18deg); filter:blur(3px); } }
 .square .capture-burst { position:absolute; z-index:3; width:74%; height:74%; border:2px solid #fff; border-radius:50%; pointer-events:none; animation:captureRing 560ms ease-out both; }
-body.ui-mono .square .capture-burst { border-color:#c92836; }
 @keyframes captureRing { 0% { opacity:.95; transform:scale(.18); } 65% { opacity:.7; transform:scale(1.18); } 100% { opacity:0; transform:scale(1.58); } }
 .piece.capture-animate { animation-duration:700ms; animation-fill-mode:both; will-change:transform,opacity; }
 .piece.capture-p { animation-name:capturePawn; } @keyframes capturePawn { 0% { transform:translate(var(--move-x),var(--move-y)) rotate(-200deg) scale(.72); opacity:.2; } 58% { transform:translate(calc(var(--move-x) * .18),calc(var(--move-y) * .18)) rotate(-35deg) scale(1.16); opacity:1; } 82% { transform:translate(0,-4px) rotate(6deg) scale(1.04); } 100% { transform:translate(0,0) rotate(0) scale(1); } }
@@ -547,41 +542,10 @@ body.ui-mono .square .capture-burst { border-color:#c92836; }
 .piece.capture-n { animation-name:captureKnight; } @keyframes captureKnight { 0% { transform:translate(var(--move-x),var(--move-y)) rotate(-220deg) scale(.65); opacity:.2; } 48% { transform:translate(0,-14px) rotate(-35deg) scale(1.16); opacity:1; } 74% { transform:translate(0,3px) rotate(9deg) scale(.97); } 100% { transform:translate(0,0) rotate(0) scale(1); } }
 .piece.capture-k { animation-name:captureKing; } @keyframes captureKing { 0% { transform:translate(var(--move-x),var(--move-y)) rotate(-180deg) scale(.72); opacity:.2; } 42% { transform:translate(0,0) rotate(0) scale(1.2); filter:drop-shadow(0 0 8px #fff); opacity:1; } 70% { transform:translate(0,0) rotate(5deg) scale(.96); } 100% { transform:translate(0,0) rotate(0) scale(1); filter:none; } }
 .piece.capture-q { animation-name:captureQueen; } @keyframes captureQueen { 0% { transform:translate(var(--move-x),var(--move-y)) rotate(-260deg) scale(.08); opacity:0; filter:blur(5px); } 48% { transform:translate(calc(var(--move-x) * .14),calc(var(--move-y) * .14)) rotate(45deg) scale(1.25); opacity:.92; filter:blur(0); } 72% { transform:translate(0,0) rotate(-8deg) scale(.9); opacity:1; } 100% { transform:translate(0,0) rotate(0) scale(1); opacity:1; filter:none; } }
-@media (max-width:760px) {
- body.ui-mono .app { display:flex; flex-direction:column; max-width:620px; padding:10px 8px 20px; gap:9px; }
- body.ui-mono .header,body.ui-mono .white-player,body.ui-mono .black-player,body.ui-mono .board-wrap,body.ui-mono .status-panel { width:100%; margin:0 !important; }
- body.ui-mono .board-wrap { order:2; } body.ui-mono .white-player { order:1; } body.ui-mono .status-panel { order:3; } body.ui-mono .black-player { order:4; }
- body.ui-mono .board-mono-tools { gap:7px; } body.ui-mono .board-mono-tools .mono-indicator { padding:9px 5px; font-size:9px; }
- body.ui-mono #flipButton { min-width:100px; padding:9px 8px; }
- body.ui-modern-split .app { display:flex; flex-direction:column; max-width:620px; padding:10px 8px 20px; gap:9px; }
- body.ui-modern-split .header,body.ui-modern-split .white-player,body.ui-modern-split .black-player,body.ui-modern-split .board-wrap,body.ui-modern-split .status-panel { width:100%; margin:0 !important; }
- body.ui-modern-split .header { order:0; } body.ui-modern-split .white-player { order:1; } body.ui-modern-split .board-wrap { order:2; } body.ui-modern-split .status-panel { order:3; } body.ui-modern-split .black-player { order:4; }
- body.ui-modern-split .board-mono-tools { gap:7px; } body.ui-modern-split .board-mono-tools .mono-indicator { padding:9px 5px; font-size:9px; }
- body.ui-modern-split #flipButton { min-width:100px; padding:9px 8px; }
-
-}
 @media (prefers-reduced-motion: reduce) { .piece.move-animate,.piece.capture-animate,.capture-victim-fade,.capture-burst { animation-duration:1ms !important; } }
 
 
 .inline-waiting{display:flex;align-items:center;gap:12px;margin:12px 0;padding:12px 15px;border:1px solid #8ba6ff55;border-radius:14px;background:rgba(85,112,175,.13);color:#eaf0ff;font-size:12px;line-height:1.5}.inline-waiting strong{display:block;font-size:13px;margin-bottom:2px}.inline-waiting[style*="display: none"]{display:none!important}.inline-loader{width:17px;height:17px;flex:0 0 17px;border:2px solid #53658b;border-top-color:#a9c4ff;border-radius:50%;animation:spin .8s linear infinite}
-
-/* Lightweight rendering overrides for non-Classic themes. Classic is intentionally untouched. */
-body.ui-modern,body.ui-modern-split,body.ui-mono{background-color:var(--bg);background-image:none}
-body.ui-modern .panel,body.ui-modern-split .panel,body.ui-mono .panel{backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:0 3px 10px rgba(0,0,0,.16),inset 0 1px rgba(255,255,255,.035)}
-body.ui-modern .board-wrap,body.ui-modern-split .board-wrap,body.ui-mono .board-wrap{box-shadow:0 4px 12px rgba(0,0,0,.22)}
-body.ui-modern .logo,body.ui-modern-split .logo,body.ui-modern .avatar,body.ui-modern-split .avatar{box-shadow:none}
-body.ui-modern .btn.primary,body.ui-modern-split .btn.primary{background:#397f89}
-body.ui-modern .panel,body.ui-modern-split .panel{background:#17263b}
-body.ui-mono .panel{background:#17191e}
-@media (prefers-reduced-motion:reduce){body.ui-modern *,body.ui-modern-split *,body.ui-mono *{scroll-behavior:auto!important;transition-duration:.01ms!important}}
-
-
-body.ui-modern .board-wrap,body.ui-modern-split .board-wrap{background:#17283f}
-body.ui-modern .logo,body.ui-modern-split .logo{background:#315574}
-body.ui-modern .avatar,body.ui-modern-split .avatar{background:#263a56}
-body.ui-modern .btn,body.ui-modern-split .btn{box-shadow:none}
-body.ui-mono .board-wrap{background:#fff}
-body.ui-modern .square,body.ui-modern-split .square,body.ui-mono .square{background-image:none}
 
 </style>
 </head>
@@ -604,6 +568,8 @@ body.ui-modern .square,body.ui-modern-split .square,body.ui-mono .square{backgro
             <span id="connectionText">Connecting...</span>
         </div>
     </header>
+
+    <div id="inlineWaiting" class="inline-waiting"><span class="inline-loader" id="waitingLoader"></span><div><strong id="overlayTitle">Connecting to room</strong><div id="overlayText">Connecting to the chess server...</div></div></div>
 
     <section class="panel player white-player">
         <div class="player-info">
@@ -681,8 +647,6 @@ body.ui-modern .square,body.ui-modern-split .square,body.ui-mono .square{backgro
     </section>
 
 </main>
-
-<div id="inlineWaiting" class="inline-waiting"><span class="inline-loader" id="waitingLoader"></span><div><strong id="overlayTitle">Connecting to room</strong><div id="overlayText">Connecting to the chess server...</div></div></div>
 
 <div class="overlay" id="promotionOverlay">
     <div class="dialog">
@@ -1318,7 +1282,7 @@ var socket = io({
     socket.on("uiSettings", function (settings) {
         settings = settings || {};
         var body = document.body;
-        var styles = ["classic", "modern", "mono", "modern-split"];
+        var styles = ["classic", "yellow"];
         for (var si = 0; si < styles.length; si++) {
             body.classList.toggle("ui-" + styles[si], settings.boardStyle === styles[si] && styles[si] !== "classic");
         }
@@ -1332,8 +1296,8 @@ var socket = io({
         var online = document.querySelector(".header .online");
         if (flip && tools) {
             if (!window._flipHome) { window._flipHome = flip.parentNode; window._flipNext = flip.nextSibling; }
-            tools.style.display = (settings.boardStyle === "mono" || settings.boardStyle === "modern-split") ? "flex" : "none";
-            if (settings.boardStyle === "mono" || settings.boardStyle === "modern-split") {
+            tools.style.display = (settings.boardStyle === "yellow") ? "flex" : "none";
+            if (settings.boardStyle === "yellow") {
                 if (flip.parentNode !== tools) tools.appendChild(flip);
             } else if (flip.parentNode !== window._flipHome) {
                 window._flipHome.insertBefore(flip, window._flipNext);

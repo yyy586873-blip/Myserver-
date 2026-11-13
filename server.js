@@ -260,7 +260,7 @@ io.on('connection', socket => {
   socket.on('refreshRoomList', () => { if (isConsole(socket)) socket.emit('roomListUpdate', roomList()); });
   socket.on('setUiSettings', data => {
     if (!isConsole(socket) || !data) return;
-    const styles = ['classic', 'modern', 'mono', 'modern-split'];
+    const styles = ['classic', 'yellow'];
     uiSettings = {
       boardStyle: styles.includes(data.boardStyle) ? data.boardStyle : 'classic',
       moveAnimation: data.moveAnimation !== false,
