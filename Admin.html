@@ -696,7 +696,7 @@ body.ui-mono .square .capture-burst { border-color:#c92836; }
     "use strict";
 
     var roomCode = new URLSearchParams(window.location.search).get("room") || "";
-    if (!/^\d{3}$/.test(roomCode)) { window.location.replace("/"); }
+    if (!/^\d{3}$/.test(roomCode)) { window.location.replace("/lobby.html?mode=admin"); }
     var socket = io({ query: { room: roomCode } });
 
     var files = ["a", "b", "c", "d", "e", "f", "g", "h"];

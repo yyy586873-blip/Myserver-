@@ -84,3 +84,14 @@ be created again. Room state is held in server memory and resets if the Render
 service restarts. Admin.html and console.html can be opened with ?room=123 to
 work with a specific room. Waiting status is displayed inline above the board,
 not as a blocking popup.
+
+ADMIN LOBBY AND MULTI-ROOM CONSOLE UPDATE
+
+- Opening / shows the normal Create / Join lobby for index.html.
+- Opening /Admin.html without a room opens the Admin Create / Join lobby.
+- The Admin lobby creates or joins a room and then opens /Admin.html?room=123.
+- Admin joins as a real player seat (White if free, otherwise Black if free). It can play normally and use the existing Admin-only tools.
+- If the Admin tab/player disconnects, that seat is released. The remaining player sees the room return to Waiting for the missing player. Reopening the same Admin room URL can take the free seat again.
+- Console now unlocks once and can list/select any active room. Room monitor, move history, undo and redo apply to the selected room. UI settings remain global and apply to all rooms.
+- Open /console.html, unlock with CONSOLE_KEY, refresh the room list, then choose a room and press Open room.
+- Room state is held in memory; restarting the Render service clears all rooms. Empty rooms expire after 10 minutes.
