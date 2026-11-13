@@ -4,7 +4,7 @@ const path = require('path');
 const crypto = require('crypto');
 const { Server } = require('socket.io');
 const { Chess } = require('chess.js');
-const ALLOWED_ORIGINS = new Set(['https://appassets.androidplatform.net', 'https://myserver-b0ls.onrender.com']);
+const ALLOWED_ORIGINS = new Set(['https://myserver-b0ls.onrender.com']);
 
 const app = express();
 const server = http.createServer(app);
