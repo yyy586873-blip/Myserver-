@@ -581,17 +581,12 @@ body.anim-spin .piece.move-animate { animation-name:chessPieceSpinGlide; animati
             </div>
         </div>
 
-        <div class="actions">
-            <button class="btn" id="flipButton">↕ Flip Board</button>
-            <button class="btn primary" id="newGameButton" disabled>
-                ↻ New Game
-            </button>
-            <a class="btn" id="openChessApp" href="#" aria-disabled="true" style="display:inline-flex;align-items:center;justify-content:center;text-decoration:none;font-size:12px;padding:9px 12px">Open in Chess Arena App</a>
-        </div>
-
         <div class="actions admin-tools">
+            <button class="btn" id="flipButton">↕ Flip Board</button>
+            <button class="btn primary" id="newGameButton" disabled>↻ New Game</button>
             <button class="btn primary" id="suggestMoveButton" disabled>♟ Stockfish AI Coach</button>
             <button class="btn" id="clearSuggestionButton" disabled>✕ Clear Suggestion</button>
+            <a class="btn" id="openChessApp" href="#" aria-disabled="true">Open in Chess Arena App</a>
         </div>
         <div class="best-move-result" id="bestMoveResult" aria-live="polite"></div>
 
