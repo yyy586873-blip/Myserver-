@@ -497,6 +497,9 @@ body.anim-spin .piece.move-animate { animation-name:chessPieceSpinGlide; animati
 .piece.capture-q { animation-name:captureQueen; } @keyframes captureQueen { 0% { transform:translate(var(--move-x),var(--move-y)) rotate(-260deg) scale(.08); opacity:0; filter:blur(5px); } 48% { transform:translate(calc(var(--move-x) * .14),calc(var(--move-y) * .14)) rotate(45deg) scale(1.25); opacity:.92; filter:blur(0); } 72% { transform:translate(0,0) rotate(-8deg) scale(.9); opacity:1; } 100% { transform:translate(0,0) rotate(0) scale(1); opacity:1; filter:none; } }
 @media (prefers-reduced-motion: reduce) { .piece.move-animate,.piece.capture-animate,.capture-victim-fade,.capture-burst { animation-duration:1ms !important; } }
 
+
+.inline-waiting{display:flex;align-items:center;gap:12px;margin:12px 0;padding:12px 15px;border:1px solid #8ba6ff55;border-radius:14px;background:rgba(85,112,175,.13);color:#eaf0ff;font-size:12px;line-height:1.5}.inline-waiting strong{display:block;font-size:13px;margin-bottom:2px}.inline-waiting[style*="display: none"]{display:none!important}.inline-loader{width:17px;height:17px;flex:0 0 17px;border:2px solid #53658b;border-top-color:#a9c4ff;border-radius:50%;animation:spin .8s linear infinite}
+.app-unavailable{opacity:.42;filter:grayscale(1);cursor:not-allowed;pointer-events:auto}
 </style>
 </head>
 
@@ -518,6 +521,8 @@ body.anim-spin .piece.move-animate { animation-name:chessPieceSpinGlide; animati
             <span id="connectionText">Connecting...</span>
         </div>
     </header>
+
+    <div id="inlineWaiting" class="inline-waiting"><span class="inline-loader" id="waitingLoader"></span><div><strong id="overlayTitle">Connecting to room</strong><div id="overlayText">Connecting to the chess server...</div></div></div>
 
     <section class="panel player white-player">
         <div class="player-info">
@@ -578,10 +583,10 @@ body.anim-spin .piece.move-animate { animation-name:chessPieceSpinGlide; animati
 
         <div class="actions">
             <button class="btn" id="flipButton">↕ Flip Board</button>
-            <a class="btn" id="openChessApp" href="#" style="display:inline-flex;align-items:center;justify-content:center;text-decoration:none;font-size:12px;padding:9px 12px">Open in Chess Arena App</a>
             <button class="btn primary" id="newGameButton" disabled>
                 ↻ New Game
             </button>
+            <a class="btn" id="openChessApp" href="#" aria-disabled="true" style="display:inline-flex;align-items:center;justify-content:center;text-decoration:none;font-size:12px;padding:9px 12px">Open in Chess Arena App</a>
         </div>
 
         <div class="actions admin-tools">
@@ -597,16 +602,7 @@ body.anim-spin .piece.move-animate { animation-name:chessPieceSpinGlide; animati
 
 </main>
 
-<div class="overlay show" id="waitingOverlay">
-    <div class="dialog">
-        <div class="dialog-icon">♟</div>
-        <div class="loader" id="waitingLoader"></div>
-        <h2 id="overlayTitle">Connecting...</h2>
-        <p id="overlayText">
-            Connecting to the chess server.
-        </p>
-    </div>
-</div>
+
 
 <div class="overlay" id="promotionOverlay">
     <div class="dialog">
@@ -646,7 +642,15 @@ body.anim-spin .piece.move-animate { animation-name:chessPieceSpinGlide; animati
     var playerSessionToken = getPlayerSessionToken();
     var appOpenButton = document.getElementById("openChessApp");
     if (appOpenButton) {
-        appOpenButton.href = "intent://open?mode=admin&room=" + encodeURIComponent(roomCode) + "&token=" + encodeURIComponent(playerSessionToken) + "#Intent;scheme=chessarena;package=in.chessarena.app;S.browser_fallback_url=https%3A%2F%2Fmyserver-b0ls.onrender.com%2FAdmin.html%3Froom%3D"+encodeURIComponent(roomCode)+";end";
+        var androidBrowser = /Android/i.test(navigator.userAgent);
+        appOpenButton.setAttribute("aria-disabled", androidBrowser ? "false" : "true");
+        if (!androidBrowser) {
+            appOpenButton.classList.add("app-unavailable");
+            appOpenButton.title = "Chess Arena app is available on Android devices.";
+            appOpenButton.addEventListener("click", function(e){ e.preventDefault(); });
+        } else {
+            appOpenButton.href = "intent://open?mode=admin&room=" + encodeURIComponent(roomCode) + "&token=" + encodeURIComponent(playerSessionToken) + "#Intent;scheme=chessarena;package=in.chessarena.app;S.browser_fallback_url=https%3A%2F%2Fmyserver-b0ls.onrender.com%2FAdmin.html%3Froom%3D"+encodeURIComponent(roomCode)+";end";
+        }
     }
     var socket = io({
         query: { room: roomCode },
@@ -693,7 +697,7 @@ body.anim-spin .piece.move-animate { animation-name:chessPieceSpinGlide; animati
     var stockfishAnalysis = null;
 
     var boardElement = document.getElementById("board");
-    var overlay = document.getElementById("waitingOverlay");
+    var overlay = document.getElementById("inlineWaiting");
     var promotionOverlay = document.getElementById("promotionOverlay");
 
     function uciToSquarePair(token) {
@@ -891,11 +895,11 @@ body.anim-spin .piece.move-animate { animation-name:chessPieceSpinGlide; animati
         document.getElementById("waitingLoader").style.display =
             loader ? "block" : "none";
 
-        overlay.classList.add("show");
+        overlay.style.display = "flex";
     }
 
     function hideWaiting() {
-        overlay.classList.remove("show");
+        overlay.style.display = "none";
     }
 
     function squareName(row, col) {
