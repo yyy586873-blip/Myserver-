@@ -260,7 +260,7 @@ io.on('connection', socket => {
   socket.on('refreshRoomList', () => { if (isConsole(socket)) socket.emit('roomListUpdate', roomList()); });
   socket.on('setUiSettings', data => {
     if (!isConsole(socket) || !data) return;
-    const styles = ['classic', 'yellow'];
+    const styles = ['classic'];
     uiSettings = {
       boardStyle: styles.includes(data.boardStyle) ? data.boardStyle : 'classic',
       moveAnimation: data.moveAnimation !== false,
@@ -281,7 +281,8 @@ io.on('connection', socket => {
     socket.data.roomCode = code;
     socket.data.playerToken = token;
     updateStarted(room);
-    socket.emit('joined', { role: role, accepted: true, isAdmin: !!(joinData && joinData.admin === true), resumed: wasKnownSession });
+    socket.data.isAdmin = !!(joinData && joinData.admin === true);
+    socket.emit('joined', { role: role, accepted: true, isAdmin: socket.data.isAdmin, resumed: wasKnownSession });
     sendState(room);
     broadcastRoomList();
   });
@@ -309,6 +310,33 @@ io.on('connection', socket => {
       sendState(room);
       broadcastRoomList();
     } catch (e) { socket.emit('moveError', 'Invalid chess move.'); }
+  });
+  socket.on('adminSuggestMove', () => {
+    if (!room || !socket.data.isAdmin || !getRole(room, socket.id) || !room.started) {
+      return socket.emit('adminSuggestion', { ok: false, message: 'Admin mode is required and both players must be connected.' });
+    }
+    const chess = room.chess;
+    if (chess.isGameOver()) return socket.emit('adminSuggestion', { ok: false, message: 'The game has ended.' });
+    const side = getRole(room, socket.id);
+    if (chess.turn() !== side) return socket.emit('adminSuggestion', { ok: false, message: 'It is not your side\'s turn.' });
+    const moves = chess.moves({ verbose: true });
+    if (!moves.length) return socket.emit('adminSuggestion', { ok: false, message: 'No legal moves available.' });
+    const values = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 20000 };
+    let best = null, bestScore = -Infinity;
+    moves.forEach(function(m) {
+      let score = 0;
+      if (m.captured) score += (values[m.captured] || 0) * 1.15 - (values[m.piece] || 0) * 0.08;
+      if (m.promotion) score += (values[m.promotion] || 0) - 100;
+      const center = function(sq) { const f = sq.charCodeAt(0)-97, r = parseInt(sq.charAt(1),10)-1; return 7-Math.abs(3.5-f)-Math.abs(3.5-r); };
+      score += center(m.to) * 2;
+      chess.move({ from:m.from, to:m.to, promotion:m.promotion || 'q' });
+      if (chess.isCheckmate()) score += 1000000;
+      else if (chess.isCheck()) score += 45;
+      if (chess.isDraw()) score -= 80;
+      chess.undo();
+      if (score > bestScore) { bestScore = score; best = m; }
+    });
+    socket.emit('adminSuggestion', { ok:true, from:best.from, to:best.to, san:best.san, score:Math.round(bestScore), message:'Fast tactical suggestion. The server validates the move when played.' });
   });
   socket.on('newGame', () => {
     if (!room || !getRole(room, socket.id) || !room.started || !room.chess.isGameOver()) return;
