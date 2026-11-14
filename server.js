@@ -112,6 +112,92 @@ app.post('/api/join-room', (req, res) => {
   return res.json({ ok: true, code: code });
 });
 
+// Native Android HTTP API. Uses the same room state and seat tokens as the browser game.
+function apiFindSeat(room, token) {
+  if (!room || !validToken(token)) return null;
+  for (const side of ['w', 'b']) {
+    const seat = room.players[side];
+    if (seat && seat.token === token) return { side: side, seat: seat };
+  }
+  return null;
+}
+function apiClaimSeat(room, token) {
+  let found = apiFindSeat(room, token);
+  if (!found) {
+    const side = !room.players.w ? 'w' : (!room.players.b ? 'b' : null);
+    if (!side) return null;
+    room.players[side] = { token: token, socketId: 'http:' + token, connected: true, lastSeen: Date.now(), graceTimer: null };
+    found = { side: side, seat: room.players[side] };
+  } else {
+    clearTimer(found.seat);
+    found.seat.socketId = 'http:' + token;
+    found.seat.connected = true;
+    found.seat.lastSeen = Date.now();
+  }
+  updateStarted(room);
+  clearRoomTimer(room);
+  return found;
+}
+function apiAuth(req, res) {
+  const code = String(req.body && req.body.code || req.query.code || '');
+  const token = String(req.body && req.body.token || req.query.token || '');
+  if (!validCode(code) || !validToken(token)) { res.status(400).json({ ok:false, message:'Invalid room or player token.' }); return null; }
+  const room = rooms.get(code);
+  if (!room) { res.status(404).json({ ok:false, message:'Room not found or expired.' }); return null; }
+  let found = apiFindSeat(room, token);
+  if (found && !found.seat.connected && !found.seat.socketId) {
+    // Resume the same reserved seat if the app returns during the reconnect grace window.
+    found = apiClaimSeat(room, token);
+    sendState(room);
+  }
+  if (!found || found.seat.socketId !== 'http:' + token || !found.seat.connected) { res.status(403).json({ ok:false, message:'This app session is no longer active. Rejoin the room.' }); return null; }
+  found.seat.lastSeen = Date.now();
+  return { room: room, token: token, role: found.side };
+}
+app.post('/api/app/join', (req, res) => {
+  const code = String(req.body && req.body.code || ''), token = String(req.body && req.body.token || '');
+  if (!validCode(code) || !validToken(token)) return res.status(400).json({ok:false,message:'Enter a valid room code and session token.'});
+  const room = rooms.get(code);
+  if (!room) return res.status(404).json({ok:false,message:'Room not found or expired.'});
+  const found = apiClaimSeat(room, token);
+  if (!found) return res.status(409).json({ok:false,message:'Both player seats are occupied.'});
+  sendState(room); broadcastRoomList();
+  return res.json({ok:true,role:found.side,state:snapshot(room)});
+});
+app.get('/api/app/state', (req, res) => {
+  const auth = apiAuth(req,res); if (!auth) return;
+  return res.json({ok:true,role:auth.role,state:snapshot(auth.room)});
+});
+app.post('/api/app/legal-moves', (req,res) => {
+  const auth=apiAuth(req,res); if(!auth)return;
+  const square=String(req.body.square||'');
+  if(!auth.room.started || auth.room.chess.turn()!==auth.role) return res.json({ok:true,moves:[]});
+  try { const piece=auth.room.chess.get(square); if(!piece||piece.color!==auth.role)return res.json({ok:true,moves:[]});
+    return res.json({ok:true,moves:auth.room.chess.moves({square:square,verbose:true}).map(m=>({from:m.from,to:m.to,san:m.san,promotion:m.promotion||null}))});
+  } catch(e){ return res.json({ok:true,moves:[]}); }
+});
+app.post('/api/app/move', (req,res) => {
+  const auth=apiAuth(req,res); if(!auth)return;
+  const room=auth.room, chess=room.chess;
+  if(!room.started)return res.status(409).json({ok:false,message:'Waiting for the other player.'});
+  if(chess.isGameOver())return res.status(409).json({ok:false,message:'Game is already over.'});
+  if(chess.turn()!==auth.role)return res.status(403).json({ok:false,message:'It is not your turn.'});
+  try { const m=chess.move({from:String(req.body.from||''),to:String(req.body.to||''),promotion:String(req.body.promotion||'q')});
+    if(!m)return res.status(400).json({ok:false,message:'Invalid move.'});
+    room.redoStack=[]; updateLastMove(room); sendState(room); broadcastRoomList(); return res.json({ok:true,state:snapshot(room)});
+  } catch(e){return res.status(400).json({ok:false,message:'Invalid move.'});}
+});
+app.post('/api/app/new-game', (req,res)=>{
+  const auth=apiAuth(req,res); if(!auth)return;
+  if(!auth.room.chess.isGameOver())return res.status(409).json({ok:false,message:'The current game is not finished.'});
+  auth.room.chess.reset(); auth.room.lastMove=null; auth.room.redoStack=[]; sendState(auth.room); return res.json({ok:true,state:snapshot(auth.room)});
+});
+app.post('/api/app/leave', (req,res)=>{
+  const auth=apiAuth(req,res); if(!auth)return;
+  releaseDisconnectedSeat(auth.room,auth.role,'http:'+auth.token);
+  return res.json({ok:true});
+});
+
 function getRole(room, socketId) {
   if (room.players.w && room.players.w.socketId === socketId && room.players.w.connected) return 'w';
   if (room.players.b && room.players.b.socketId === socketId && room.players.b.connected) return 'b';
@@ -227,6 +313,19 @@ function releaseDisconnectedSeat(room, role, socketId) {
   if (seat.graceTimer.unref) seat.graceTimer.unref();
 }
 
+// HTTP app heartbeat expiry: lost mobile connections enter the same reconnect grace period.
+setInterval(() => {
+  const now = Date.now();
+  rooms.forEach(room => {
+    ['w','b'].forEach(side => {
+      const seat = room.players[side];
+      if (seat && seat.connected && seat.socketId && seat.socketId.indexOf('http:') === 0 && now - (seat.lastSeen || 0) > 15000) {
+        releaseDisconnectedSeat(room, side, seat.socketId);
+      }
+    });
+  });
+}, 5000).unref();
+
 io.on('connection', socket => {
   socket.emit('uiSettings', uiSettings);
   const code = String(socket.handshake.query.room || '');
@@ -260,7 +359,7 @@ io.on('connection', socket => {
   socket.on('refreshRoomList', () => { if (isConsole(socket)) socket.emit('roomListUpdate', roomList()); });
   socket.on('setUiSettings', data => {
     if (!isConsole(socket) || !data) return;
-    const styles = ['classic', 'yellow'];
+    const styles = ['classic'];
     uiSettings = {
       boardStyle: styles.includes(data.boardStyle) ? data.boardStyle : 'classic',
       moveAnimation: data.moveAnimation !== false,
